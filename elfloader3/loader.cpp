@@ -1,4 +1,4 @@
-
+ï»¿
 #include "loader.h"
 
 
@@ -10,12 +10,12 @@ static const unsigned char elf_magic_header[] =
   };
 
 
-/** Åëüô ëè ıòî? È äëÿ íàøåé ëè ïëàòôîğìû? */
+/** Ğ•Ğ»ÑŒÑ„ Ğ»Ğ¸ ÑÑ‚Ğ¾? Ğ˜ Ğ´Ğ»Ñ Ğ½Ğ°ÑˆĞµĞ¹ Ğ»Ğ¸ Ğ¿Ğ»Ğ°Ñ‚Ñ„Ğ¾Ñ€Ğ¼Ñ‹? */
 char isElfValid(Elf32_Ehdr *ehdr)
 {
 	if(memcmp(ehdr, elf_magic_header, sizeof(elf_magic_header)))
 	{
-		// î_Î
+		// Ğ¾_Ğ
 		return 0;
 	}
 	return 1;
@@ -33,11 +33,11 @@ int elf_to_binary(char *data, int size)
 	ex.bin = data;
 	ex.elfSize = size;
 
-	/** õåäåğ åëüôà */
+	/** Ñ…ĞµĞ´ĞµÑ€ ĞµĞ»ÑŒÑ„Ğ° */
 	memcpy(&ehdr, s, sizeof(Elf32_Ehdr));
 	s += sizeof(Elf32_Ehdr);
 
-	/** ïğîâåğêà */
+	/** Ğ¿Ñ€Ğ¾Ğ²ĞµÑ€ĞºĞ° */
 	if( !isElfValid(&ehdr) )
 	{
 		printf("Bad elf\n");
@@ -46,7 +46,7 @@ int elf_to_binary(char *data, int size)
 
 	dump(&ehdr);
 
-	/** ñåãìåíòàöèÿ*/
+	/** ÑĞµĞ³Ğ¼ĞµĞ½Ñ‚Ğ°Ñ†Ğ¸Ñ*/
 	readSegments(&ex);
 
 
@@ -85,7 +85,7 @@ void * readSegments(Elf32_Exec *ex)
 	printf("physic addres: %08X\n", ex->physAdr);
 
 
-	// ñåêöèè
+	// ÑĞµĞºÑ†Ğ¸Ğ¸
 	int scnt = ex->ehdr->e_phnum;
 	while (scnt--) {
 
@@ -100,7 +100,7 @@ void * readSegments(Elf32_Exec *ex)
 }
 
 
-/** ğàñ÷åò ğàçìåğà áèíàğíîãî ôàéëà */
+/** Ñ€Ğ°ÑÑ‡ĞµÑ‚ Ñ€Ğ°Ğ·Ğ¼ĞµÑ€Ğ° Ğ±Ğ¸Ğ½Ğ°Ñ€Ğ½Ğ¾Ğ³Ğ¾ Ñ„Ğ°Ğ¹Ğ»Ğ° */
 int calculateBinarySize(Elf32_Exec *ex)
 {
 	unsigned int scnt = ex->ehdr->e_phnum, binsz = 0;
