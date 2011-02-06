@@ -1,4 +1,3 @@
-ï»¿
 #include "loader.h"
 
 
@@ -10,12 +9,12 @@ static const unsigned char elf_magic_header[] =
   };
 
 
-/** Ð•Ð»ÑŒÑ„ Ð»Ð¸ ÑÑ‚Ð¾? Ð˜ Ð´Ð»Ñ Ð½Ð°ÑˆÐµÐ¹ Ð»Ð¸ Ð¿Ð»Ð°Ñ‚Ñ„Ð¾Ñ€Ð¼Ñ‹? */
+/** Åëüô ëè ýòî? È äëÿ íàøåé ëè ïëàòôîðìû? */
 char isElfValid(Elf32_Ehdr *ehdr)
 {
 	if(memcmp(ehdr, elf_magic_header, sizeof(elf_magic_header)))
 	{
-		// Ð¾_Ðž
+		// î_Î
 		return 0;
 	}
 	return 1;
@@ -33,11 +32,11 @@ int elf_to_binary(char *data, int size)
 	ex.bin = data;
 	ex.elfSize = size;
 
-	/** Ñ…ÐµÐ´ÐµÑ€ ÐµÐ»ÑŒÑ„Ð° */
+	/** õåäåð åëüôà */
 	memcpy(&ehdr, s, sizeof(Elf32_Ehdr));
 	s += sizeof(Elf32_Ehdr);
 
-	/** Ð¿Ñ€Ð¾Ð²ÐµÑ€ÐºÐ° */
+	/** ïðîâåðêà */
 	if( !isElfValid(&ehdr) )
 	{
 		printf("Bad elf\n");
@@ -46,7 +45,7 @@ int elf_to_binary(char *data, int size)
 
 	dump(&ehdr);
 
-	/** ÑÐµÐ³Ð¼ÐµÐ½Ñ‚Ð°Ñ†Ð¸Ñ*/
+	/** ñåãìåíòàöèÿ*/
 	readSegments(&ex);
 
 
@@ -63,6 +62,7 @@ void * readSegments(Elf32_Exec *ex)
 {
 	Elf32_Phdr *EPH = ( Elf32_Phdr *)(ex->bin + ex->ehdr->e_phoff);
     Elf32_Phdr *ESH = ( Elf32_Phdr *)(ex->bin + ex->ehdr->e_shoff);
+    Elf32_Dyn* dyn_sect;
 
 	printf("Program header table is found at %X\n", EPH);
 	printf("Sections header table is found at %X\n", ESH);
@@ -84,35 +84,71 @@ void * readSegments(Elf32_Exec *ex)
 
 	printf("physic addres: %08X\n", ex->physAdr);
 
-
-	// ÑÐµÐºÑ†Ð¸Ð¸
+	// ñåêöèè
 	int scnt = ex->ehdr->e_phnum;
 	while (scnt--) {
-
-		if (EPH->p_type == PT_LOAD) {
-			memcpy ((char*)ex->physAdr+EPH->p_vaddr, ex->bin + EPH->p_offset, EPH->p_filesz);
-			printf("Loading section (%X, size %i)\n", ex->bin + EPH->p_offset, EPH->p_filesz);
-		}
+ 
+		switch (EPH->p_type)
+		{
+            case PT_LOAD:
+	 			if(EPH->p_filesz == 0) break; // Skip empty sections
+				memcpy ((char*)ex->physAdr+EPH->p_vaddr, ex->bin + EPH->p_offset, EPH->p_filesz);
+				printf("Loading CODE section (%X, size %i)\n", ex->bin + EPH->p_offset, EPH->p_filesz);
+				break;
+            case PT_DYNAMIC:
+				dyn_sect = (Elf32_Dyn*)malloc(EPH->p_filesz);
+				memcpy (dyn_sect, ex->bin + EPH->p_offset, EPH->p_filesz);
+                printf("Loading Dynamic section (%X, size %i)\n", ex->bin + EPH->p_offset, EPH->p_filesz);
+                parseDynamicSection(dyn_sect);
+                free(dyn_sect);
+                break;
+            default:
+                if(EPH->p_filesz != 0) printf("Unknown section (%i)\n", EPH->p_type);
+        }
 		EPH = ( Elf32_Phdr *)((unsigned char *)EPH + ex->ehdr->e_phentsize);
 	}
 
 	return 0;
 }
 
+int parseDynamicSection(Elf32_Dyn* dyn_sect)
+{
+ 	Elf32_Word dyn[DT_BINDNOW+1];
+ 	int m = 0;
+ 	
+ 	printf("\n----- Parse Dynamic Section -----\n");
+    while (dyn_sect[m].d_tag!=DT_NULL)
+	{
+		if (dyn_sect[m].d_tag<=DT_BINDNOW)
+		{
+  		   dyn[dyn_sect[m].d_tag]=dyn_sect[m].d_un.d_val;
+		}
+		m++;
+    }
+    for (m = 0; m <= DT_BINDNOW; m++)
+	{
+		printf("%i = %X\n", m, dyn[m]);
+    }
+    printf("----- Parse Dynamic Section End -----\n\n");
+ 	return 0;
+}
 
-/** Ñ€Ð°ÑÑ‡ÐµÑ‚ Ñ€Ð°Ð·Ð¼ÐµÑ€Ð° Ð±Ð¸Ð½Ð°Ñ€Ð½Ð¾Ð³Ð¾ Ñ„Ð°Ð¹Ð»Ð° */
+/** ðàñ÷åò ðàçìåðà áèíàðíîãî ôàéëà */
 int calculateBinarySize(Elf32_Exec *ex)
 {
 	unsigned int scnt = ex->ehdr->e_phnum, binsz = 0;
+	unsigned long minadr=(unsigned long)-1, maxadr=0;
 	Elf32_Phdr *ph = ( Elf32_Phdr *)(ex->bin + ex->ehdr->e_phoff);
 
 	while (scnt--)
 	{
-		if (ph->p_type == PT_LOAD) {
-			binsz += ph->p_filesz;
+		if (ph->p_type == PT_LOAD)
+		{
+			if (minadr>ph->p_vaddr) minadr=ph->p_vaddr;
+		    if (maxadr<(ph->p_vaddr+ph->p_memsz)) maxadr=ph->p_vaddr+ph->p_memsz;
 		}
 		ph = ( Elf32_Phdr *)((unsigned char *)ph + ex->ehdr->e_phentsize);
 	}
 
-	return binsz;
+	return maxadr-minadr;
 }
