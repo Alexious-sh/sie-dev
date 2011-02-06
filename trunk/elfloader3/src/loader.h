@@ -16,8 +16,11 @@ typedef struct
 	char *bin;
 	Elf32_Ehdr *ehdr;
 	char *physAdr;
+	int virtAdr;
 	unsigned int binarySize;
 } Elf32_Exec;
+
+#define VIRT2PHYS(phys, virt, addr) ( phys + addr - virt )
 
 char isElfValid(Elf32_Ehdr *ehdr);
 int elf_to_binary(char *data, int size);
@@ -28,5 +31,6 @@ int calculateBinarySize(Elf32_Exec *ex);
 
 void dump(Elf32_Ehdr *ehdr);
 void dump(Elf32_Phdr *p);
+void dump(char *data, int sz);
 
 #endif

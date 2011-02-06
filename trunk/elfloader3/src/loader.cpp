@@ -31,6 +31,7 @@ int elf_to_binary(char *data, int size)
 	ex.ehdr = &ehdr;
 	ex.bin = data;
 	ex.elfSize = size;
+	ex.virtAdr = -1;
 
 	/** хедер ельфа */
 	memcpy(&ehdr, s, sizeof(Elf32_Ehdr));
@@ -46,9 +47,10 @@ int elf_to_binary(char *data, int size)
 	dump(&ehdr);
 
 	/** сегментация*/
-	readSegments(&ex);
+	void *adr = readSegments(&ex);
 
 
+	//((int (*)())adr)();
 
 
 	return 0;
@@ -64,6 +66,7 @@ void * readSegments(Elf32_Exec *ex)
     Elf32_Phdr *ESH = ( Elf32_Phdr *)(ex->bin + ex->ehdr->e_shoff);
     Elf32_Dyn* dyn_sect;
 
+	printf("Elf32_Ehdr: %x\n", sizeof(Elf32_Ehdr));
 	printf("Program header table is found at %X\n", EPH);
 	printf("Sections header table is found at %X\n", ESH);
 
@@ -92,8 +95,9 @@ void * readSegments(Elf32_Exec *ex)
 		{
             case PT_LOAD:
 	 			if(EPH->p_filesz == 0) break; // Skip empty sections
-				memcpy ((char*)ex->physAdr+EPH->p_vaddr, ex->bin + EPH->p_offset, EPH->p_filesz);
+				memcpy ((char*)VIRT2PHYS(ex->physAdr, ex->virtAdr, EPH->p_vaddr), ex->bin + 4+EPH->p_offset, EPH->p_filesz);
 				printf("Loading CODE section (%X, size %i)\n", ex->bin + EPH->p_offset, EPH->p_filesz);
+				//dump((char*)VIRT2PHYS(ex->physAdr, ex->virtAdr, EPH->p_vaddr), EPH->p_filesz);
 				break;
             case PT_DYNAMIC:
 				dyn_sect = (Elf32_Dyn*)malloc(EPH->p_filesz);
@@ -108,7 +112,9 @@ void * readSegments(Elf32_Exec *ex)
 		EPH = ( Elf32_Phdr *)((unsigned char *)EPH + ex->ehdr->e_phentsize);
 	}
 
-	return 0;
+
+	printf(" [+] EntryPoint: %X %X\n", VIRT2PHYS(ex->physAdr, ex->virtAdr, ex->ehdr->e_entry), ex->ehdr->e_entry-ex->virtAdr);
+	return (void*)VIRT2PHYS(ex->physAdr, ex->virtAdr, ex->ehdr->e_entry);
 }
 
 int parseDynamicSection(Elf32_Dyn* dyn_sect)
@@ -133,22 +139,24 @@ int parseDynamicSection(Elf32_Dyn* dyn_sect)
  	return 0;
 }
 
+
 /** расчет размера бинарного файла */
 int calculateBinarySize(Elf32_Exec *ex)
 {
 	unsigned int scnt = ex->ehdr->e_phnum, binsz = 0;
-	unsigned long minadr=(unsigned long)-1, maxadr=0;
+	unsigned int maxadr=0;
 	Elf32_Phdr *ph = ( Elf32_Phdr *)(ex->bin + ex->ehdr->e_phoff);
 
 	while (scnt--)
 	{
 		if (ph->p_type == PT_LOAD)
 		{
-			if (minadr>ph->p_vaddr) minadr=ph->p_vaddr;
-		    if (maxadr<(ph->p_vaddr+ph->p_memsz)) maxadr=ph->p_vaddr+ph->p_memsz;
+			if ( ph->p_vaddr < ex->virtAdr )
+					ex->virtAdr = ph->p_vaddr;
+		    if (maxadr < (ph->p_vaddr+ph->p_memsz)) maxadr=ph->p_vaddr+ph->p_memsz;
 		}
 		ph = ( Elf32_Phdr *)((unsigned char *)ph + ex->ehdr->e_phentsize);
 	}
 
-	return maxadr-minadr;
+	return maxadr-ex->virtAdr;
 }
