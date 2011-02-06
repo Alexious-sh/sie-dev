@@ -16,7 +16,7 @@ typedef struct
 	char *bin;
 	Elf32_Ehdr *ehdr;
 	char *physAdr;
-	int virtAdr;
+	unsigned int virtAdr;
 	unsigned int binarySize;
 } Elf32_Exec;
 
