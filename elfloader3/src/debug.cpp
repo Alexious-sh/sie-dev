@@ -33,3 +33,16 @@ void dump(Elf32_Phdr *p)
 	printf("p_type: %d\n", p->p_type);
 	printf("p_vaddr: %d\n", p->p_vaddr);
 }
+
+
+void dump(char *data, int sz)
+{
+	for(int i=0,a=0; i<sz; i++,a++)
+	{
+		if(a>5){
+			a=0;
+			printf("\n");
+		}
+		printf("%02x ", data[i]);
+	}
+}
