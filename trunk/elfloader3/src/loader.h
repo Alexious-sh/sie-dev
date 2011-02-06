@@ -22,6 +22,7 @@ typedef struct
 char isElfValid(Elf32_Ehdr *ehdr);
 int elf_to_binary(char *data, int size);
 void *readSegments(Elf32_Exec *ex);
+int parseDynamicSection(Elf32_Dyn* dyn_sect);
 int calculateBinarySize(Elf32_Exec *ex);
 
 
