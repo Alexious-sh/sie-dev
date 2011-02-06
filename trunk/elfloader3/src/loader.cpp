@@ -25,13 +25,14 @@ char isElfValid(Elf32_Ehdr *ehdr)
 int elf_to_binary(char *data, int size)
 {
 	char *s = data;
+	void *adr;
 	Elf32_Ehdr ehdr;
 	Elf32_Exec ex;
 
 	ex.ehdr = &ehdr;
 	ex.bin = data;
 	ex.elfSize = size;
-	ex.virtAdr = -1;
+	ex.virtAdr = 0xFFFFFFFF;
 
 	/** хедер ельфа */
 	memcpy(&ehdr, s, sizeof(Elf32_Ehdr));
@@ -47,7 +48,7 @@ int elf_to_binary(char *data, int size)
 	dump(&ehdr);
 
 	/** сегментация*/
-	void *adr = readSegments(&ex);
+	adr = readSegments(&ex);
 
 
 	//((int (*)())adr)();
@@ -100,11 +101,11 @@ void * readSegments(Elf32_Exec *ex)
 				//dump((char*)VIRT2PHYS(ex->physAdr, ex->virtAdr, EPH->p_vaddr), EPH->p_filesz);
 				break;
             case PT_DYNAMIC:
-				dyn_sect = (Elf32_Dyn*)malloc(EPH->p_filesz);
-				memcpy (dyn_sect, ex->bin + EPH->p_offset, EPH->p_filesz);
+				//dyn_sect = (Elf32_Dyn*)malloc(EPH->p_filesz);
+				//memcpy (dyn_sect, ex->bin + EPH->p_offset, EPH->p_filesz);
                 printf("Loading Dynamic section (%X, size %i)\n", ex->bin + EPH->p_offset, EPH->p_filesz);
-                parseDynamicSection(dyn_sect);
-                free(dyn_sect);
+                parseDynamicSection(ex, EPH);
+                //free(dyn_sect);
                 break;
             default:
                 if(EPH->p_filesz != 0) printf("Unknown section (%i)\n", EPH->p_type);
@@ -117,9 +118,10 @@ void * readSegments(Elf32_Exec *ex)
 	return (void*)VIRT2PHYS(ex->physAdr, ex->virtAdr, ex->ehdr->e_entry);
 }
 
-int parseDynamicSection(Elf32_Dyn* dyn_sect)
+int parseDynamicSection(Elf32_Exec *ex, Elf32_Phdr *EPH)
 {
- 	Elf32_Word dyn[DT_BINDNOW+1];
+ 	Elf32_Dyn *dyn_sect = (Elf32_Dyn*)(ex->bin + EPH->p_offset);
+	Elf32_Word dyn[DT_BINDNOW+1];
  	int m = 0;
  	
  	printf("\n----- Parse Dynamic Section -----\n");
@@ -127,7 +129,7 @@ int parseDynamicSection(Elf32_Dyn* dyn_sect)
 	{
 		if (dyn_sect[m].d_tag<=DT_BINDNOW)
 		{
-  		   dyn[dyn_sect[m].d_tag]=dyn_sect[m].d_un.d_val;
+  		   dyn[dyn_sect[m].d_tag]=dyn_sect[m].d_val;
 		}
 		m++;
     }
@@ -135,6 +137,43 @@ int parseDynamicSection(Elf32_Dyn* dyn_sect)
 	{
 		printf("%i = %X\n", m, dyn[m]);
     }
+    // Do Relocation
+    if (dyn[DT_RELSZ]!=0)
+	{
+ 	    m=0;
+ 	    long* addr;
+ 	    Elf32_Word r_type;
+ 	    Elf32_Rel* relTable = (Elf32_Rel*)(dyn_sect + dyn[DT_REL] - EPH->p_offset);
+ 	    while (m*sizeof(Elf32_Rel)<dyn[DT_RELSZ])
+		{
+  		 	r_type = ELF32_R_TYPE(relTable[m].r_info);
+  		 	switch(r_type)
+  		 	{
+ 			  	case R_ARM_NONE: break;
+			 	case R_ARM_RABS32:
+					 printf("R_ARM_RABS32: ");
+					 addr = (long*)(ex->physAdr + ((Elf32_Rel*)(dyn_sect+dyn[DT_REL] - EPH->p_vaddr))[m].r_offset);
+					 printf("from %X to %X\n", *addr, *addr + (long)(ex->physAdr - ex->virtAdr));
+					 *addr+=(long)(ex->physAdr - ex->virtAdr);
+					 break;
+				case R_ARM_ABS32:
+					 printf("R_ARM_ABS32: ");
+					 addr = (long*)(ex->physAdr + ((Elf32_Rel *)(dyn_sect+dyn[DT_REL] - EPH->p_vaddr))[m].r_offset - ex->virtAdr);
+					 printf("from %X to %X\n", *addr, *addr + (long)ex->physAdr);
+					 *addr+=(long)ex->physAdr;
+					 break;
+				case R_ARM_RELATIVE:
+					 printf("R_ARM_RELATIVE: ");
+					 addr = (long*)(ex->physAdr + ((Elf32_Rel *)(dyn_sect+dyn[DT_REL] - EPH->p_vaddr))[m].r_offset-ex->virtAdr);
+					 printf("from %X to %X\n", *addr, *addr + (long)(ex->physAdr - ex->virtAdr));
+					 *addr+=(long)(ex->physAdr - ex->virtAdr);
+					 break;
+			 	default:
+					 printf("Unknown REL type (%i)!\n", r_type);
+			}
+			m++;
+ 		}
+	}
     printf("----- Parse Dynamic Section End -----\n\n");
  	return 0;
 }
@@ -144,15 +183,16 @@ int parseDynamicSection(Elf32_Dyn* dyn_sect)
 int calculateBinarySize(Elf32_Exec *ex)
 {
 	unsigned int scnt = ex->ehdr->e_phnum, binsz = 0;
-	unsigned int maxadr=0, adr;
+	unsigned long maxadr=0;
+	unsigned int adr;
 	Elf32_Phdr *ph = ( Elf32_Phdr *)(ex->bin + ex->ehdr->e_phoff);
-	ex->virtAdr = -1;
+	ex->virtAdr = 0xFFFFFFFF;
 
 	while (scnt--)
 	{
 		if (ph->p_type == PT_LOAD)
 		{
-			if ( ph->p_vaddr < ex->virtAdr )
+			if (ex->virtAdr > ph->p_vaddr)
 					ex->virtAdr = ph->p_vaddr;
 
 			adr = (ph->p_vaddr+ph->p_memsz);
