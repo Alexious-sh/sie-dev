@@ -263,10 +263,10 @@ typedef int64_t  Elf64_Sxword;
 
 typedef struct dynamic{
   Elf32_Sword d_tag;
-  union{
+//  union{
     Elf32_Sword d_val;
-    Elf32_Addr  d_ptr;
-  } d_un;
+//    Elf32_Addr  d_ptr;
+//  } d_un;
 } Elf32_Dyn;
 
 typedef struct {
@@ -575,7 +575,7 @@ typedef struct {
 #define R_ARM_RSBREL32          250
 #define R_ARM_THM_RPC22         251
 #define R_ARM_RREL32            252
-#define R_ARM_RABS22            253
+#define R_ARM_RABS32            253
 #define R_ARM_RPC24             254
 #define R_ARM_RBASE             255
 /* Keep this the last entry.  */
