@@ -95,7 +95,7 @@ void * readSegments(Elf32_Exec *ex)
 		{
             case PT_LOAD:
 	 			if(EPH->p_filesz == 0) break; // Skip empty sections
-				memcpy ((char*)VIRT2PHYS(ex->physAdr, ex->virtAdr, EPH->p_vaddr), ex->bin + 4+EPH->p_offset, EPH->p_filesz);
+				memcpy ((char*)VIRT2PHYS(ex->physAdr, ex->virtAdr, EPH->p_vaddr), (ex->bin + EPH->p_offset), EPH->p_filesz);
 				printf("Loading CODE section (%X, size %i)\n", ex->bin + EPH->p_offset, EPH->p_filesz);
 				//dump((char*)VIRT2PHYS(ex->physAdr, ex->virtAdr, EPH->p_vaddr), EPH->p_filesz);
 				break;
@@ -144,8 +144,9 @@ int parseDynamicSection(Elf32_Dyn* dyn_sect)
 int calculateBinarySize(Elf32_Exec *ex)
 {
 	unsigned int scnt = ex->ehdr->e_phnum, binsz = 0;
-	unsigned int maxadr=0;
+	unsigned int maxadr=0, adr;
 	Elf32_Phdr *ph = ( Elf32_Phdr *)(ex->bin + ex->ehdr->e_phoff);
+	ex->virtAdr = -1;
 
 	while (scnt--)
 	{
@@ -153,7 +154,10 @@ int calculateBinarySize(Elf32_Exec *ex)
 		{
 			if ( ph->p_vaddr < ex->virtAdr )
 					ex->virtAdr = ph->p_vaddr;
-		    if (maxadr < (ph->p_vaddr+ph->p_memsz)) maxadr=ph->p_vaddr+ph->p_memsz;
+
+			adr = (ph->p_vaddr+ph->p_memsz);
+		    if (maxadr < adr)
+				maxadr = adr;
 		}
 		ph = ( Elf32_Phdr *)((unsigned char *)ph + ex->ehdr->e_phentsize);
 	}
