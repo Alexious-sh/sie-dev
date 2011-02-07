@@ -1,5 +1,6 @@
 #include "loader.h"
-
+#define _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES 1
+#define _CRT_SECURE_NO_DEPRECATE
 
 static const unsigned char elf_magic_header[] =
   {0x7f, 0x45, 0x4c, 0x46,  /* 0x7f, 'E', 'L', 'F' */
@@ -65,7 +66,6 @@ void * readSegments(Elf32_Exec *ex)
 {
 	Elf32_Phdr *EPH = ( Elf32_Phdr *)(ex->bin + ex->ehdr->e_phoff);
     Elf32_Phdr *ESH = ( Elf32_Phdr *)(ex->bin + ex->ehdr->e_shoff);
-    Elf32_Dyn* dyn_sect;
 
 	printf("Elf32_Ehdr: %x\n", sizeof(Elf32_Ehdr));
 	printf("Program header table is found at %X\n", EPH);
@@ -103,8 +103,8 @@ void * readSegments(Elf32_Exec *ex)
             case PT_DYNAMIC:
 				//dyn_sect = (Elf32_Dyn*)malloc(EPH->p_filesz);
 				//memcpy (dyn_sect, ex->bin + EPH->p_offset, EPH->p_filesz);
-                printf("Loading Dynamic section (%X, size %i)\n", ex->bin + EPH->p_offset, EPH->p_filesz);
-                parseDynamicSection(ex, EPH);
+                printf("Loading Dynamic section (%X, size %i):\n", ex->bin + EPH->p_offset, EPH->p_filesz);
+			    parseDynamicSection(ex, EPH);
                 //free(dyn_sect);
                 break;
             default:
@@ -122,14 +122,22 @@ int parseDynamicSection(Elf32_Exec *ex, Elf32_Phdr *EPH)
 {
  	Elf32_Dyn *dyn_sect = (Elf32_Dyn*)(ex->bin + EPH->p_offset);
 	Elf32_Word dyn[DT_BINDNOW+1];
+	memset(dyn, 0, sizeof(dyn));
  	int m = 0;
+ 	
+ 	printf(" phdr.p_type:%i\n", EPH->p_type);
+    printf(" phdr.p_offset:%X\n", EPH->p_offset);
+    printf(" phdr.p_vaddr:%X\n", EPH->p_vaddr);
+    printf(" phdr.p_paddr:%X\n", EPH->p_paddr);
+    printf(" phdr.p_filesz:%X\n", EPH->p_filesz);
+    printf(" phdr.p_memsz:%X\n", EPH->p_memsz);
  	
  	printf("\n----- Parse Dynamic Section -----\n");
     while (dyn_sect[m].d_tag!=DT_NULL)
 	{
 		if (dyn_sect[m].d_tag<=DT_BINDNOW)
 		{
-  		   dyn[dyn_sect[m].d_tag]=dyn_sect[m].d_val;
+			dyn[dyn_sect[m].d_tag]=dyn_sect[m].d_un.d_val;
 		}
 		m++;
     }
@@ -143,28 +151,35 @@ int parseDynamicSection(Elf32_Exec *ex, Elf32_Phdr *EPH)
  	    m=0;
  	    long* addr;
  	    Elf32_Word r_type;
- 	    Elf32_Rel* relTable = (Elf32_Rel*)(dyn_sect + dyn[DT_REL] - EPH->p_offset);
+ 	    Elf32_Rel *relTable = (Elf32_Rel*)((char*)dyn_sect + dyn[DT_REL] - EPH->p_vaddr);
+ 	    printf("relTable offset=%X, realAddr=%X, sectionAddr=%X\n", dyn[DT_REL] - EPH->p_vaddr, (char*)dyn_sect + dyn[DT_REL] - EPH->p_vaddr, dyn_sect);
+		
  	    while (m*sizeof(Elf32_Rel)<dyn[DT_RELSZ])
 		{
+		 	printf("rel: of=%X, sym_idx=%X, rel_type=%i\n",
+			 relTable[m].r_offset,
+			 ELF32_R_SYM(relTable[m].r_info),
+			 (int)ELF32_R_TYPE(relTable[m].r_info));
+  			
   		 	r_type = ELF32_R_TYPE(relTable[m].r_info);
   		 	switch(r_type)
   		 	{
  			  	case R_ARM_NONE: break;
 			 	case R_ARM_RABS32:
 					 printf("R_ARM_RABS32: ");
-					 addr = (long*)(ex->physAdr + ((Elf32_Rel*)(dyn_sect+dyn[DT_REL] - EPH->p_vaddr))[m].r_offset);
+					 addr = (long*)(ex->physAdr + ((Elf32_Rel*)((char*)dyn_sect+dyn[DT_REL] - EPH->p_vaddr))[m].r_offset);
 					 printf("from %X to %X\n", *addr, *addr + (long)(ex->physAdr - ex->virtAdr));
 					 *addr+=(long)(ex->physAdr - ex->virtAdr);
 					 break;
 				case R_ARM_ABS32:
 					 printf("R_ARM_ABS32: ");
-					 addr = (long*)(ex->physAdr + ((Elf32_Rel *)(dyn_sect+dyn[DT_REL] - EPH->p_vaddr))[m].r_offset - ex->virtAdr);
+					 addr = (long*)(ex->physAdr + ((Elf32_Rel *)((char*)dyn_sect+dyn[DT_REL] - EPH->p_vaddr))[m].r_offset - ex->virtAdr);
 					 printf("from %X to %X\n", *addr, *addr + (long)ex->physAdr);
 					 *addr+=(long)ex->physAdr;
 					 break;
 				case R_ARM_RELATIVE:
 					 printf("R_ARM_RELATIVE: ");
-					 addr = (long*)(ex->physAdr + ((Elf32_Rel *)(dyn_sect+dyn[DT_REL] - EPH->p_vaddr))[m].r_offset-ex->virtAdr);
+					 addr = (long*)(ex->physAdr + ((Elf32_Rel *)((char*)dyn_sect+dyn[DT_REL] - EPH->p_vaddr))[m].r_offset-ex->virtAdr);
 					 printf("from %X to %X\n", *addr, *addr + (long)(ex->physAdr - ex->virtAdr));
 					 *addr+=(long)(ex->physAdr - ex->virtAdr);
 					 break;

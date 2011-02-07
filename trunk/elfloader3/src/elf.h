@@ -263,10 +263,10 @@ typedef int64_t  Elf64_Sxword;
 
 typedef struct dynamic{
   Elf32_Sword d_tag;
-//  union{
+  union{
     Elf32_Sword d_val;
-//    Elf32_Addr  d_ptr;
-//  } d_un;
+    Elf32_Addr  d_ptr;
+  } d_un;
 } Elf32_Dyn;
 
 typedef struct {
