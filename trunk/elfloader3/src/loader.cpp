@@ -65,7 +65,7 @@ int elf_to_binary(char *data, int size)
 void * readSegments(Elf32_Exec *ex)
 {
 	Elf32_Phdr *EPH = ( Elf32_Phdr *)(ex->bin + ex->ehdr->e_phoff);
-    Elf32_Phdr *ESH = ( Elf32_Phdr *)(ex->bin + ex->ehdr->e_shoff);
+    Elf32_Shdr *ESH = ( Elf32_Shdr *)(ex->bin + ex->ehdr->e_shoff);
 
 	printf("Elf32_Ehdr: %x\n", sizeof(Elf32_Ehdr));
 	printf("Program header table is found at %X\n", EPH);
@@ -76,7 +76,8 @@ void * readSegments(Elf32_Exec *ex)
 	printf(" [+] Program header table struct dump\n");
 	dump(EPH);
 	printf(" [+] Sections header table struct dump\n");
-	dump(ESH);
+// !!! Тут другая структура же
+	//dump(ESH);
 
 	ex->binarySize = calculateBinarySize(ex);
 	printf("Raw binary output size: %d\n", ex->binarySize);
@@ -88,37 +89,57 @@ void * readSegments(Elf32_Exec *ex)
 
 	printf("physic addres: %08X\n", ex->physAdr);
 
-	// секции
+	// Перебор программных сегментов
 	int scnt = ex->ehdr->e_phnum;
 	while (scnt--) {
  
 		switch (EPH->p_type)
 		{
             case PT_LOAD:
-	 			if(EPH->p_filesz == 0) break; // Skip empty sections
+	 			if(EPH->p_filesz == 0) break; // Skip empty segments
 				memcpy ((char*)VIRT2PHYS(ex->physAdr, ex->virtAdr, EPH->p_vaddr), (ex->bin + EPH->p_offset), EPH->p_filesz);
-				printf("Loading CODE section (%X, size %i)\n", ex->bin + EPH->p_offset, EPH->p_filesz);
+				printf("Loading CODE segment (%X, size %i)\n", ex->bin + EPH->p_offset, EPH->p_filesz);
 				//dump((char*)VIRT2PHYS(ex->physAdr, ex->virtAdr, EPH->p_vaddr), EPH->p_filesz);
 				break;
             case PT_DYNAMIC:
-				//dyn_sect = (Elf32_Dyn*)malloc(EPH->p_filesz);
-				//memcpy (dyn_sect, ex->bin + EPH->p_offset, EPH->p_filesz);
-                printf("Loading Dynamic section (%X, size %i):\n", ex->bin + EPH->p_offset, EPH->p_filesz);
-			    parseDynamicSection(ex, EPH);
-                //free(dyn_sect);
+                printf("Loading Dynamic segment (%X, size %i):\n", ex->bin + EPH->p_offset, EPH->p_filesz);
+			    relocDynamicSection(ex, EPH);
                 break;
             default:
-                if(EPH->p_filesz != 0) printf("Unknown section (%i)\n", EPH->p_type);
+                if(EPH->p_filesz != 0) printf("Unknown segment (%i)\n", EPH->p_type);
         }
 		EPH = ( Elf32_Phdr *)((unsigned char *)EPH + ex->ehdr->e_phentsize);
 	}
 
+	// Перебор каких-то там секций =)
+	scnt = ex->ehdr->e_shnum;
+	printf("\n----- Load sections -----\n");
+	while (scnt--) {
+ 
+		switch (ESH->sh_type)
+		{
+            default:
+                printf("-->Section type %X\n", ESH->sh_type);
+				printf(" sh_name: %X\n", ESH->sh_name);
+				printf(" sh_flags: %X\n", ESH->sh_flags);
+				printf(" sh_addr: %X\n", ESH->sh_addr);
+				printf(" sh_offset: %X\n", ESH->sh_offset);
+				printf(" sh_size: %X\n", ESH->sh_size);
+				printf(" sh_link: %X\n", ESH->sh_link);
+				printf(" sh_info: %X\n", ESH->sh_info);
+				printf(" sh_addralign: %X\n", ESH->sh_addralign);
+				printf(" sh_entsize: %X\n", ESH->sh_entsize);
+
+        }
+		ESH = ( Elf32_Shdr *)((unsigned char *)ESH + ex->ehdr->e_shentsize);
+	}
+	printf("----- Load sections end -----\n\n");
 
 	printf(" [+] EntryPoint: %X %X\n", VIRT2PHYS(ex->physAdr, ex->virtAdr, ex->ehdr->e_entry), ex->ehdr->e_entry-ex->virtAdr);
 	return (void*)VIRT2PHYS(ex->physAdr, ex->virtAdr, ex->ehdr->e_entry);
 }
 
-int parseDynamicSection(Elf32_Exec *ex, Elf32_Phdr *EPH)
+int relocDynamicSection(Elf32_Exec *ex, Elf32_Phdr *EPH)
 {
  	Elf32_Dyn *dyn_sect = (Elf32_Dyn*)(ex->bin + EPH->p_offset);
 	Elf32_Word dyn[DT_BINDNOW+1];
