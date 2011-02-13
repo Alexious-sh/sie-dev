@@ -18,6 +18,8 @@ typedef struct
 	char *physAdr;
 	unsigned long virtAdr;
 	unsigned int binarySize;
+	char* needed[10];
+	int libs_count;
 } Elf32_Exec;
 
 #define VIRT2PHYS(phys, virt, addr) ( phys + addr - virt )
