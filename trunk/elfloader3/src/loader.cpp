@@ -33,7 +33,8 @@ int elf_to_binary(char *data, int size)
 	ex.ehdr = &ehdr;
 	ex.bin = data;
 	ex.elfSize = size;
-	ex.virtAdr = 0xFFFFFFFF;
+	ex.virtAdr = (unsigned long)-1;
+	ex.libs_count = 0;
 
 	/** хедер ельфа */
 	memcpy(&ehdr, s, sizeof(Elf32_Ehdr));
@@ -99,9 +100,9 @@ void * readSegments(Elf32_Exec *ex)
 	 			if(EPH->p_filesz == 0) break; // Skip empty segments
 				memcpy ((char*)VIRT2PHYS(ex->physAdr, ex->virtAdr, EPH->p_vaddr), (ex->bin + EPH->p_offset), EPH->p_filesz);
 				printf("Loading CODE segment (%X, size %i)\n", ex->bin + EPH->p_offset, EPH->p_filesz);
-				//dump((char*)VIRT2PHYS(ex->physAdr, ex->virtAdr, EPH->p_vaddr), EPH->p_filesz);
 				break;
             case PT_DYNAMIC:
+				if(EPH->p_filesz == 0) break; // Skip empty segments
                 printf("Loading Dynamic segment (%X, size %i):\n", ex->bin + EPH->p_offset, EPH->p_filesz);
 			    relocDynamicSection(ex, EPH);
                 break;
@@ -154,14 +155,28 @@ int relocDynamicSection(Elf32_Exec *ex, Elf32_Phdr *EPH)
     printf(" phdr.p_memsz:%X\n", EPH->p_memsz);
  	
  	printf("\n----- Parse Dynamic Section -----\n");
+	
     while (dyn_sect[m].d_tag!=DT_NULL)
 	{
 		if (dyn_sect[m].d_tag<=DT_BINDNOW)
 		{
-			dyn[dyn_sect[m].d_tag]=dyn_sect[m].d_un.d_val;
+			if(dyn_sect[m].d_tag == DT_NEEDED)
+			{
+				// Сохраняем смещения в .symtab на имена либ
+				ex->needed[ex->libs_count++] = (char*)dyn_sect[m].d_un.d_val;
+			}
+			else
+				dyn[dyn_sect[m].d_tag]=dyn_sect[m].d_un.d_val;
 		}
 		m++;
     }
+	
+	// Выводим список DT_NEEDED либ(пример получения)
+	char *strtab = ex->bin + dyn[DT_STRTAB] - ex->virtAdr;
+	int i = ex->libs_count;
+	while(i--)
+		printf(" --> I need the lib! It's name: %s\n", strtab + (int)ex->needed[i]);
+
     for (m = 0; m <= DT_BINDNOW; m++)
 	{
 		printf("%i = %X\n", m, dyn[m]);
@@ -222,7 +237,6 @@ int calculateBinarySize(Elf32_Exec *ex)
 	unsigned long maxadr=0;
 	unsigned int adr;
 	Elf32_Phdr *ph = ( Elf32_Phdr *)(ex->bin + ex->ehdr->e_phoff);
-	ex->virtAdr = 0xFFFFFFFF;
 
 	while (scnt--)
 	{
