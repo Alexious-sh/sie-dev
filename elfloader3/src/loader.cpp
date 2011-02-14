@@ -1,5 +1,4 @@
 #include "loader.h"
-#define _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES 1
 #define _CRT_SECURE_NO_DEPRECATE
 
 static const unsigned char elf_magic_header[] =
@@ -173,9 +172,25 @@ int relocDynamicSection(Elf32_Exec *ex, Elf32_Phdr *EPH)
 	
 	// Выводим список DT_NEEDED либ(пример получения)
 	char *strtab = ex->bin + dyn[DT_STRTAB] - ex->virtAdr;
-	int i = ex->libs_count;
+	Elf32_Sym *symtab = (Elf32_Sym*)(ex->bin + dyn[DT_SYMTAB] - ex->virtAdr);
+	Elf32_Rel *jmprel = (Elf32_Rel*)(ex->bin + dyn[DT_JMPREL] - ex->virtAdr);
+
+	unsigned int i = ex->libs_count;
 	while(i--)
-		printf(" --> I need the lib! It's name: %s\n", strtab + (int)ex->needed[i]);
+	{
+		// Запишем в ex->needed полноценные указатели, для удобства
+		ex->needed[i] += (int)strtab;
+		printf(" --> I need the lib! It's name: %s\n", ex->needed[i]);
+	}
+	
+	i=0;
+	while(i < dyn[DT_PLTRELSZ]/sizeof(Elf32_Rel))
+	{
+		Elf32_Word sym_idx = ELF32_R_SYM( jmprel[i].r_info );
+		printf(" --> Fuction needed! It's name: %s, link offset: 0x%X\n", strtab + symtab[sym_idx].st_name, jmprel[i].r_offset - ex->virtAdr);
+		//*(long*)(ex->physAdr + jmprel[i].r_offset) = указатель на найденную функцию
+		i++;
+	}
 
     for (m = 0; m <= DT_BINDNOW; m++)
 	{
@@ -203,19 +218,19 @@ int relocDynamicSection(Elf32_Exec *ex, Elf32_Phdr *EPH)
  			  	case R_ARM_NONE: break;
 			 	case R_ARM_RABS32:
 					 printf("R_ARM_RABS32: ");
-					 addr = (long*)(ex->physAdr + ((Elf32_Rel*)((char*)dyn_sect+dyn[DT_REL] - EPH->p_vaddr))[m].r_offset);
+					 addr = (long*)(ex->physAdr + relTable[m].r_offset);
 					 printf("from %X to %X\n", *addr, *addr + (long)(ex->physAdr - ex->virtAdr));
 					 *addr+=(long)(ex->physAdr - ex->virtAdr);
 					 break;
 				case R_ARM_ABS32:
 					 printf("R_ARM_ABS32: ");
-					 addr = (long*)(ex->physAdr + ((Elf32_Rel *)((char*)dyn_sect+dyn[DT_REL] - EPH->p_vaddr))[m].r_offset - ex->virtAdr);
+					 addr = (long*)(ex->physAdr + relTable[m].r_offset - ex->virtAdr);
 					 printf("from %X to %X\n", *addr, *addr + (long)ex->physAdr);
 					 *addr+=(long)ex->physAdr;
 					 break;
 				case R_ARM_RELATIVE:
 					 printf("R_ARM_RELATIVE: ");
-					 addr = (long*)(ex->physAdr + ((Elf32_Rel *)((char*)dyn_sect+dyn[DT_REL] - EPH->p_vaddr))[m].r_offset-ex->virtAdr);
+					 addr = (long*)(ex->physAdr + relTable[m].r_offset - ex->virtAdr);
 					 printf("from %X to %X\n", *addr, *addr + (long)(ex->physAdr - ex->virtAdr));
 					 *addr+=(long)(ex->physAdr - ex->virtAdr);
 					 break;
