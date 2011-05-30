@@ -3,7 +3,7 @@
 #define _QEMU_ELF_H
 
 typedef unsigned long long uint64_t;
-typedef long long int64_t;
+//typedef long long int64_t;
 typedef unsigned int uint32_t;
 typedef int int32_t;
 typedef unsigned short uint16_t;
@@ -217,6 +217,7 @@ typedef int64_t  Elf64_Sxword;
 #define STT_FUNC    2
 #define STT_SECTION 3
 #define STT_FILE    4
+#define STT_COMMON  5
 
 #define ELF_ST_BIND(x)          ((x) >> 4)
 #define ELF_ST_TYPE(x)          (((unsigned int) x) & 0xf)
@@ -1199,6 +1200,8 @@ typedef struct elf64_note {
   Elf64_Word n_descsz;  /* Content size */
   Elf64_Word n_type;    /* Content type */
 } Elf64_Nhdr;
+
+#define STN_UNDEF 0
 
 #ifdef ELF_CLASS
 #if ELF_CLASS == ELFCLASS32
