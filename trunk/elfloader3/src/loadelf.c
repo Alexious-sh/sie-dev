@@ -1,6 +1,6 @@
 
 /*
- * Ýòîò ôàéë ÿâëÿåòñÿ ÷àñòüþ ïðîãðàììû ElfLoader
+ * Ð­Ñ‚Ð¾Ñ‚ Ñ„Ð°Ð¹Ð» ÑÐ²Ð»ÑÐµÑ‚ÑÑ Ñ‡Ð°ÑÑ‚ÑŒÑŽ Ð¿Ñ€Ð¾Ð³Ñ€Ð°Ð¼Ð¼Ñ‹ ElfLoader
  * Copyright (C) 2011 by Z.Vova, Ganster
  * Licence: GPLv3
  */
@@ -8,7 +8,7 @@
 
 #include "loader.h"
 
-// Çàãðóçêà ýëüôà
+// Ð—Ð°Ð³Ñ€ÑƒÐ·ÐºÐ° ÑÐ»ÑŒÑ„Ð°
 __arch Elf32_Exec* elfopen(const char* filename)
 {
   int fp;
@@ -59,7 +59,7 @@ __arch int elfclose(Elf32_Exec* ex)
   if(!ex) return E_EMPTY;
 
   run_FINI_Array(ex);
-  // Çàêðûâàåì ëèáû
+  // Ð—Ð°ÐºÑ€Ñ‹Ð²Ð°ÐµÐ¼ Ð»Ð¸Ð±Ñ‹
   while(ex->libs)
   {
     Libs_Queue* lib = ex->libs;
