@@ -158,7 +158,7 @@ __arch Elf32_Lib* dlopen(const char *name)
     char* soname = ex->dyn[DT_SONAME] ? ex->strtab + ex->dyn[DT_SONAME] : (char*)name;
     strcpy(lib->soname, soname);
 
-    /*  Память все нужна)) */
+    /*  Ведь капуста^W память всем нужна)) */
     Global_Queue* global_ptr = malloc(sizeof(Global_Queue));
     if(!global_ptr)    // Ïî÷òè...íî íåò :'(
     {
