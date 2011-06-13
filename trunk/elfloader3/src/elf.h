@@ -1,9 +1,16 @@
 
+/*
+ * Этот файл является частью программы ElfLoader
+ * Copyright (C) 2011 by Z.Vova, Ganster
+ * Licence: GPLv3
+ */
+
+
 #ifndef _QEMU_ELF_H
 #define _QEMU_ELF_H
 
 typedef unsigned long long uint64_t;
-//typedef long long int64_t;
+typedef long long int64_t;
 typedef unsigned int uint32_t;
 typedef int int32_t;
 typedef unsigned short uint16_t;
