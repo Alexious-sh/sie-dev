@@ -1,6 +1,6 @@
 
 /*
- * Этот файл является частью программы ElfLoader
+ * Р­С‚РѕС‚ С„Р°Р№Р» СЏРІР»СЏРµС‚СЃСЏ С‡Р°СЃС‚СЊСЋ РїСЂРѕРіСЂР°РјРјС‹ ElfLoader
  * Copyright (C) 2011 by Z.Vova, Ganster
  * Licence: GPLv3
  */
@@ -110,8 +110,8 @@ STATUS  (*NU_Create_Task) (NU_TASK *task, CHAR *name,
  A00A4308 = NU_Reset_Timer
  A00A436C = NU_Control_Timer
  ??? = NU_Established_Timers
- A00A4D0C = NU_Set_Clock     // хз, она ли
- гдето в том же месте, я ничего не понял там = NU_Retrieve_Clock
+ A00A4D0C = NU_Set_Clock     // С…Р·, РѕРЅР° Р»Рё
+ РіРґРµС‚Рѕ РІ С‚РѕРј Р¶Рµ РјРµСЃС‚Рµ, СЏ РЅРёС‡РµРіРѕ РЅРµ РїРѕРЅСЏР» С‚Р°Рј = NU_Retrieve_Clock
 
  */
 

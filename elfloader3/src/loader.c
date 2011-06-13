@@ -1,6 +1,6 @@
 
 /*
- * Этот файл является частью программы ElfLoader
+ * Р­С‚РѕС‚ С„Р°Р№Р» СЏРІР»СЏРµС‚СЃСЏ С‡Р°СЃС‚СЊСЋ РїСЂРѕРіСЂР°РјРјС‹ ElfLoader
  * Copyright (C) 2011 by Z.Vova, Ganster
  * Licence: GPLv3
  */
@@ -9,14 +9,14 @@
 
 unsigned int ferr;
 
-// Проверка валидности эльфа
+// РџСЂРѕРІРµСЂРєР° РІР°Р»РёРґРЅРѕСЃС‚Рё СЌР»СЊС„Р°
 __arch int CheckElf(Elf32_Ehdr *ehdr)
 {
     if(!memcmp(ehdr, elf_magic_header, sizeof(elf_magic_header))) return E_NO_ERROR;
     return E_HEADER;
 }
 
-// Получение нужного размера в раме
+// РџРѕР»СѓС‡РµРЅРёРµ РЅСѓР¶РЅРѕРіРѕ СЂР°Р·РјРµСЂР° РІ СЂР°РјРµ
 __arch unsigned int GetBinSize(Elf32_Exec *ex, Elf32_Phdr* phdrs)
 {
     unsigned int i = 0;
@@ -57,7 +57,7 @@ void test()
     ShowMSG(1, (int)"Hello");
 }
 
-// Релокация
+// Р РµР»РѕРєР°С†РёСЏ
 __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
 {
     zeromem(ex->dyn, sizeof(ex->dyn));
@@ -66,7 +66,7 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
     unsigned int libs_cnt = 0;
     char dbg[128];
 
-    // Вытаскиваем теги
+    // Р’С‹С‚Р°СЃРєРёРІР°РµРј С‚РµРіРё
     while (dyn_sect[i].d_tag != DT_NULL)
     {
         if (dyn_sect[i].d_tag <= DT_FLAGS)
@@ -74,11 +74,11 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
             switch(dyn_sect[i].d_tag)
             {
             case DT_SYMBOLIC:
-                // Флаг SYMBOLIC-библиотек. В d_val 0, даже при наличии :(
+                // Р¤Р»Р°Рі SYMBOLIC-Р±РёР±Р»РёРѕС‚РµРє. Р’ d_val 0, РґР°Р¶Рµ РїСЂРё РЅР°Р»РёС‡РёРё :(
                 ex->dyn[dyn_sect[i].d_tag] = 1;
                 break;
             case DT_NEEDED:
-                // Получаем смещения в .symtab на имена либ
+                // РџРѕР»СѓС‡Р°РµРј СЃРјРµС‰РµРЅРёСЏ РІ .symtab РЅР° РёРјРµРЅР° Р»РёР±
                 libs_needed[libs_cnt++] = dyn_sect[i].d_un.d_val;
                 break;
             default:
@@ -88,7 +88,7 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
         i++;
     }
 
-    // Таблички. Нужны только либам, и их юзающим)
+    // РўР°Р±Р»РёС‡РєРё. РќСѓР¶РЅС‹ С‚РѕР»СЊРєРѕ Р»РёР±Р°Рј, Рё РёС… СЋР·Р°СЋС‰РёРј)
     //if(ex->type == EXEC_LIB || libs_cnt)
     {
         ex->symtab = (Elf32_Sym*)(ex->body + ex->dyn[DT_SYMTAB] - ex->v_addr);//LoadData(ex, ex->dyn[DT_SYMTAB], ex->dyn[DT_SYMENT]);
@@ -106,7 +106,7 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
         }
     }
 
-    // Загрузка библиотек
+    // Р—Р°РіСЂСѓР·РєР° Р±РёР±Р»РёРѕС‚РµРє
     for(i=0; i < libs_cnt; i++)
     {
         char *lib_name = ex->strtab + libs_needed[i];
@@ -123,13 +123,13 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
         }
         else
         {
-            sprintf(dbg, "Библиотека %s не найдена!", lib_name);
+            sprintf(dbg, "Р‘РёР±Р»РёРѕС‚РµРєР° %s РЅРµ РЅР°Р№РґРµРЅР°!", lib_name);
             ShowMSG(1, (int)dbg);
             return E_SHARED;
         }
     }
 
-    // Релокация
+    // Р РµР»РѕРєР°С†РёСЏ
     if (ex->dyn[DT_RELSZ])
     {
         i=0;
@@ -140,7 +140,7 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
         Elf32_Word func = 0;
         Libs_Queue* lib;
 
-        // Таблица релокаций
+        // РўР°Р±Р»РёС†Р° СЂРµР»РѕРєР°С†РёР№
         reltab = (Elf32_Rel*)LoadData(ex, phdr->p_offset + ex->dyn[DT_REL] - phdr->p_vaddr, ex->dyn[DT_RELSZ]);
         //reltab = (Elf32_Rel*)((char*)dyn_sect + ex->dyn[DT_REL] -  phdr->p_vaddr);
         if(!reltab)
@@ -170,7 +170,7 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
                 int sk = ELF32_R_SYM(reltab[i].r_info);
 
                 printf("'%s' %X\n", name, *addr);
-                // Если нужен указатель на эльф
+                // Р•СЃР»Рё РЅСѓР¶РµРЅ СѓРєР°Р·Р°С‚РµР»СЊ РЅР° СЌР»СЊС„
 
 
                 if(!strcmp("__sys_switab_addres", name))
@@ -240,7 +240,7 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
         mfree(reltab);
     }
 
-    // Биндим функции
+    // Р‘РёРЅРґРёРј С„СѓРЅРєС†РёРё
     if(ex->dyn[DT_PLTRELSZ])
     {
         i=0;
@@ -262,7 +262,7 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
             }
             else
             {
-                // Если библиотека не SYMBOLIC - сначала ищем в ней самой
+                // Р•СЃР»Рё Р±РёР±Р»РёРѕС‚РµРєР° РЅРµ SYMBOLIC - СЃРЅР°С‡Р°Р»Р° РёС‰РµРј РІ РЅРµР№ СЃР°РјРѕР№
                 if(ex->type == EXEC_LIB && !ex->dyn[DT_SYMBOLIC])
                 {
                     func = findExport(ex, name);
@@ -290,7 +290,7 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
     return E_NO_ERROR;
 }
 
-// Чтение сегментов из файла
+// Р§С‚РµРЅРёРµ СЃРµРіРјРµРЅС‚РѕРІ РёР· С„Р°Р№Р»Р°
 __arch int LoadSections(Elf32_Exec* ex)
 {
     Elf32_Phdr* phdrs = malloc(sizeof(Elf32_Phdr) * ex->ehdr.e_phnum);
@@ -299,7 +299,7 @@ __arch int LoadSections(Elf32_Exec* ex)
     unsigned int hdr_offset = ex->ehdr.e_phoff;
     int i = 0;
 
-    // Читаем заголовки
+    // Р§РёС‚Р°РµРј Р·Р°РіРѕР»РѕРІРєРё
     while(i < ex->ehdr.e_phnum)
     {
         if(lseek(ex->fp, hdr_offset, S_SET, &ferr, &ferr) == -1) break;
@@ -310,11 +310,11 @@ __arch int LoadSections(Elf32_Exec* ex)
         ++i;
     }
 
-    if(i == ex->ehdr.e_phnum) // Если прочитались все заголовки
+    if(i == ex->ehdr.e_phnum) // Р•СЃР»Рё РїСЂРѕС‡РёС‚Р°Р»РёСЃСЊ РІСЃРµ Р·Р°РіРѕР»РѕРІРєРё
     {
         ex->bin_size = GetBinSize(ex, phdrs);
 
-        if(ex->body = malloc(ex->bin_size+1)) // Если хватило рамы
+        if(ex->body = malloc(ex->bin_size+1)) // Р•СЃР»Рё С…РІР°С‚РёР»Рѕ СЂР°РјС‹
         {
             zeromem(ex->body, ex->bin_size);
 
@@ -326,7 +326,7 @@ __arch int LoadSections(Elf32_Exec* ex)
                 switch (phdr.p_type)
                 {
                 case PT_LOAD:
-                    if(phdr.p_filesz == 0) break; // Пропускаем пустые сегменты
+                    if(phdr.p_filesz == 0) break; // РџСЂРѕРїСѓСЃРєР°РµРј РїСѓСЃС‚С‹Рµ СЃРµРіРјРµРЅС‚С‹
 
                     if(lseek(ex->fp, phdr.p_offset, S_SET, &ferr, &ferr) != -1)
                     {
@@ -334,14 +334,14 @@ __arch int LoadSections(Elf32_Exec* ex)
                             break;
                     }
 
-                    // Не прочитали сколько нужно
+                    // РќРµ РїСЂРѕС‡РёС‚Р°Р»Рё СЃРєРѕР»СЊРєРѕ РЅСѓР¶РЅРѕ
                     mfree(ex->body);
                     ex->body = 0;
                     mfree(phdrs);
                     return E_SECTION;
 
                 case PT_DYNAMIC:
-                    if(phdr.p_filesz == 0) break; // Пропускаем пустые сегменты
+                    if(phdr.p_filesz == 0) break; // РџСЂРѕРїСѓСЃРєР°РµРј РїСѓСЃС‚С‹Рµ СЃРµРіРјРµРЅС‚С‹
 
                     if(dyn_sect = (Elf32_Dyn*)LoadData(ex, phdr.p_offset, phdr.p_filesz))
                     {
@@ -352,7 +352,7 @@ __arch int LoadSections(Elf32_Exec* ex)
                         }
                     }
 
-                    // Если что-то пошло не так...
+                    // Р•СЃР»Рё С‡С‚Рѕ-С‚Рѕ РїРѕС€Р»Рѕ РЅРµ С‚Р°Рє...
                     mfree(ex->body);
                     ex->body = 0;
                     mfree(phdrs);
