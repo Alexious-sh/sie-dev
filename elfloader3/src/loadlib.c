@@ -46,9 +46,9 @@ __arch Elf32_Word findExport (Elf32_Exec* ex, const char* name)
     {
         Elf32_Sym sym = ex->symtab[symidx];
 
-        /** îíî ïî÷åìó-òî íå äàâàëî íàéòè __cxa_begin_cleanup êîòîðûé ëèíêîâàëñÿ ê ñîøêå â âèäå
-	      * ñòàòè÷íîé ëèáû
-	      */
+        /** оно почему-то не давало найти __cxa_begin_cleanup который линковался к сошке в виде
+	  * статичной либы
+	  */
         //if (sym.st_value == 0 || sym.st_shndx == SHN_UNDEF)
         //    continue;
 
