@@ -91,7 +91,7 @@ __arch Elf32_Word dlsym(Elf32_Lib* lib, const char *name)
 }
 
 
-// Çàãðóçêà áèáëèîòåêè
+// Открыть библиотеку
 __arch Elf32_Lib* dlopen(const char *name)
 {
 
@@ -101,7 +101,7 @@ __arch Elf32_Lib* dlopen(const char *name)
     Elf32_Exec* ex;
     char fname[256];
 
-    // Ñíà÷àëà èùåì â ãëîáàëüíîì ïóëëå
+    // Поищем среди уже загруженых
     Global_Queue* ready_libs = lib_top;
     while(ready_libs)
     {
@@ -115,19 +115,19 @@ __arch Elf32_Lib* dlopen(const char *name)
         ready_libs = ready_libs->prev;
     }
 
-    // È åñëè óæ íå íàøëè - ïûòàåìñÿ ãðóçèòü
+    // Не нашли, грузим
     sprintf(fname, "%s%s", libpath, name);
 
-    /* îòêðûâàåì */
+    /* Открываем */
     if((fp = open(fname,A_ReadOnly+A_BIN,P_READ,&ferr)) == -1) return 0;
 
-    /* ÷èòàåì */
+    /* Читаем хедер */
     if(read(fp, &ehdr, sizeof(Elf32_Ehdr), &ferr) != sizeof(Elf32_Ehdr)) return 0;
 
-    /* ïðîâåðÿåì */
+    /* Проверяем шо это вообще такое */
     if(CheckElf(&ehdr)) return 0;
 
-    /* àëëî÷èì */
+    /* Выделим память под структуру эльфа */
     if( !(ex = malloc(sizeof(Elf32_Exec))) ) return 0;
     memcpy(&ex->ehdr, &ehdr, sizeof(Elf32_Ehdr));
     ex->v_addr = (unsigned int)-1;
@@ -135,17 +135,17 @@ __arch Elf32_Lib* dlopen(const char *name)
     ex->type = EXEC_LIB;
     ex->libs = 0;
 
-    /* çàãðóæàåì ñåêöèè, âûïîëíÿåì ðåëîêàöèè, ïîäãðóæàåì ëèáû è ò.ï. */
+    /* Начинаем копать структуру либы */
     if( LoadSections(ex) ){
         close(fp, &ferr);
         elfclose(ex);
         return 0;
     }
 
-    /* îí íàì óæå íå íóæåí */
+    /* Он уже не нужен */
     close(fp, &ferr);
 
-    /* ñîçäàåì ëèáó */
+    /* Глобальная база либ */
     Elf32_Lib* lib;
     if( !(lib = malloc(sizeof(Elf32_Lib))) ){
         elfclose(ex);
@@ -155,11 +155,10 @@ __arch Elf32_Lib* dlopen(const char *name)
     lib->ex = ex;
     lib->users_cnt = 1;
 
-#warning ïåðåäåëàòü íà ïóòü
     char* soname = ex->dyn[DT_SONAME] ? ex->strtab + ex->dyn[DT_SONAME] : (char*)name;
     strcpy(lib->soname, soname);
 
-    /*  äëÿ ðåçèíîâîé áàçû)) */
+    /*  Память все нужна)) */
     Global_Queue* global_ptr = malloc(sizeof(Global_Queue));
     if(!global_ptr)    // Ïî÷òè...íî íåò :'(
     {
@@ -167,7 +166,7 @@ __arch Elf32_Lib* dlopen(const char *name)
         return 0;
     }
 
-    /* èíèöèàëèçàöèÿ */
+    /* Ну тут заполняем */
     global_ptr->lib = lib;
     global_ptr->next = 0;
     lib->glob_queue = global_ptr;
@@ -181,9 +180,10 @@ __arch Elf32_Lib* dlopen(const char *name)
 
     lib_top = global_ptr;
 
+    /* запустим контсрукторы */
     run_INIT_Array(ex);
 
-    /* îïöèîíàëüíûé âûçîâ ÷òî òî òèïà òî÷êè âõîäà â ëèáó */
+    /* запустим функциюю инициализации либы, если таковая имеется */
     if(ex->dyn[DT_INIT])
     {
         printf("init function found\n");
@@ -201,14 +201,15 @@ __arch int dlclose(Elf32_Lib* lib)
     if(!lib) return E_EMPTY;
     lib->users_cnt--;
 
-    // Åñëè áîëüøå íå íóæíà - çàêðûâàåì
+    // Чето вообще юзает оно
     if(!lib->users_cnt)
     {
         Elf32_Exec* ex = lib->ex;
 
-        // Åñëè óæå èíèöèàëèçèðîâàíà ïîëíîñòüþ
+        // Ага юзает
         if(lib->glob_queue)
         {
+	    // Функция финализации
             if(ex->dyn[DT_FINI]) ((LIB_FUNC*)(ex->body + ex->dyn[DT_FINI] - ex->v_addr))();
 
             Global_Queue* glob_queue = lib->glob_queue;
