@@ -1,6 +1,6 @@
 
 
-#include <inc\swilib.h>
+#include <swilib.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include "conf_loader.h"
@@ -27,11 +27,10 @@ __arm int _printf(const char *fmt)
 typedef long TElfEntry(char *, void *);
 
 
-__arm zeromem_a(void *d, int l){zeromem(d,l);}
-
-__arm void l_msg(int a, int b) {
-  ShowMSG(a, b);
-}
+#ifndef ARM
+__arm void zeromem_a(void *d, int l){zeromem(d,l);}
+__arm void l_msg(int a, int b) {ShowMSG(a, b);}
+#endif
 
 
 __arm int elf_load(char *filename, void *param1){
@@ -476,18 +475,18 @@ __arm void LoadLibrary(void)
     ShowMSG(1,(int)"Illegal library size!");
     return;
   }
-  f=open(fn,A_ReadOnly+A_BIN, P_READ, &ul);
+  f=fopen(fn,A_ReadOnly+A_BIN, P_READ, &ul);
   if (f==-1) return;
   lt=malloc(16384);
-  if (read(f,lt,sz,&ul)!=sz)
+  if (fread(f,lt,sz,&ul)!=sz)
   {
-    close(f,&ul);
+    fclose(f,&ul);
     ShowMSG(1,(int)"Can't read library!");
   LERR:
     mfree(lt);
     return;
   }
-  close(f,&ul);
+  fclose(f,&ul);
   f=0;
   do
   {

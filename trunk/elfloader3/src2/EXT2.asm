@@ -181,7 +181,7 @@ J_REG_FILE
         
 #endif
 
-
+        RSEG	CODE:CODE:NOROOT(2)
         PUBLIC	__e_div //int __e_div(int delitelb, int delimoe);
 __e_div:
 

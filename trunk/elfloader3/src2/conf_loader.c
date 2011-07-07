@@ -1,5 +1,5 @@
-#include <inc\swilib.h>
-#include <inc\cfg_items.h>
+#include <swilib.h>
+#include <cfg_items.h>
 #include "conf_loader.h"
 
 
@@ -27,21 +27,21 @@ __arm int LoadConfigData(const char *fname)
   cfg_init=(void *)__segment_begin("CONFIG_DATA_ID");
   
   unsigned int len=(char *)__segment_end("CONFIG_DATA_ID")-(char *)__segment_begin("CONFIG_DATA_ID");
-  if ((f=open(fname,A_ReadOnly+A_BIN,P_READ,&ul))!=-1)
+  if ((f=fopen(fname,A_ReadOnly+A_BIN,P_READ,&ul))!=-1)
   {
-    rlen=read(f,cfg,len,&ul);
+    rlen=fread(f,cfg,len,&ul);
     end=lseek(f,0,S_END,&ul,&ul);
-    close(f,&ul);
+    fclose(f,&ul);
     if (rlen!=end || rlen!=len)  goto L_SAVENEWCFG;
   }
   else
   {
   L_SAVENEWCFG:
     memcpy(cfg,cfg_init,len);
-    if ((f=open(fname,A_ReadWrite+A_Create+A_Truncate,P_READ+P_WRITE,&ul))!=-1)
+    if ((f=fopen(fname,A_ReadWrite+A_Create+A_Truncate,P_READ+P_WRITE,&ul))!=-1)
     {
-      if (write(f,cfg,len,&ul)!=len) result=-1;
-      close(f,&ul);
+      if (fwrite(f,cfg,len,&ul)!=len) result=-1;
+      fclose(f,&ul);
     }
     else
       result=-1;

@@ -15,9 +15,9 @@ __arch Elf32_Exec* elfopen(const char* filename)
   Elf32_Ehdr ehdr;
   Elf32_Exec* ex;
 
-  if((fp = open(filename,A_ReadOnly+A_BIN,P_READ,&ferr)) == -1) return 0;
+  if((fp = fopen(filename,A_ReadOnly+A_BIN,P_READ,&ferr)) == -1) return 0;
 
-  if(read(fp, &ehdr, sizeof(Elf32_Ehdr), &ferr) == sizeof(Elf32_Ehdr))
+  if(fread(fp, &ehdr, sizeof(Elf32_Ehdr), &ferr) == sizeof(Elf32_Ehdr))
   {
     if( !CheckElf(&ehdr) )
     {
@@ -38,7 +38,7 @@ __arch Elf32_Exec* elfopen(const char* filename)
         if(!LoadSections(ex))
         {
           ex->complete = 1;
-          close(fp, &ferr);
+          fclose(fp, &ferr);
           return ex;
         }
         else
@@ -47,7 +47,7 @@ __arch Elf32_Exec* elfopen(const char* filename)
     }
   }
 
-  close(fp, &ferr);
+  fclose(fp, &ferr);
   return 0;
 }
 
@@ -69,7 +69,7 @@ __arch int elfclose(Elf32_Exec* ex)
   while(ex->libs)
   {
     Libs_Queue* lib = ex->libs;
-    dlclose(lib->lib);
+    CloseLib(lib->lib);
     ex->libs = lib->next;
     mfree(lib);
   }

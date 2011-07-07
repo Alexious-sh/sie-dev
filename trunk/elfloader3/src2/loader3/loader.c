@@ -45,8 +45,8 @@ __arch char* LoadData(Elf32_Exec* ex, int offset, int size)
     if(size && lseek(ex->fp, offset - ex->v_addr, S_SET, &ferr, &ferr))
     {
         char* data = malloc(size);
-        zeromem(data, size);
-        if(read(ex->fp, data, size, &ferr) == size) return data;
+        zeromem_a(data, size);
+        if(fread(ex->fp, data, size, &ferr) == size) return data;
         else mfree(data);
     }
 
@@ -61,22 +61,25 @@ __arch static inline unsigned int _look_sym(Elf32_Exec *ex, const char *name)
     unsigned int func = 0;
     while(lib && !func)
     {
-        func = (unsigned int)dlsym(lib->lib, name);
+        func = (unsigned int)FindFunction(lib->lib, name);
         lib = lib->next;
     }
     return func;
 }
 
 // Релокация
-__arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
+int DoRelocation(Elf32_Exec* ex, Elf32_Phdr* phdr)
 {
-    zeromem(ex->dyn, sizeof(ex->dyn));
     unsigned int i = 0;
     Elf32_Word libs_needed[64];
     unsigned int libs_cnt = 0;
     char dbg[128];
 
+    Elf32_Dyn* dyn_sect = (Elf32_Dyn*)LoadData(ex, phdr->p_offset, phdr->p_filesz);
+    if(!dyn_sect) return 0;
+  
     // Вытаскиваем теги
+    zeromem_a(ex->dyn, sizeof(ex->dyn));
     while (dyn_sect[i].d_tag != DT_NULL)
     {
         if (dyn_sect[i].d_tag <= DT_FLAGS)
@@ -99,12 +102,9 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
     }
 
     // Таблички. Нужны только либам, и их юзающим)
-    //if(ex->type == EXEC_LIB || libs_cnt)
-    {
-        ex->symtab = (Elf32_Sym*)(ex->body + ex->dyn[DT_SYMTAB] - ex->v_addr);//LoadData(ex, ex->dyn[DT_SYMTAB], ex->dyn[DT_SYMENT]);
-        ex->jmprel = (Elf32_Rel*)(ex->body + ex->dyn[DT_JMPREL] - ex->v_addr);//LoadData(ex, ex->dyn[DT_JMPREL], ex->dyn[DT_PLTRELSZ]);
-        ex->strtab = ex->body + ex->dyn[DT_STRTAB] - ex->v_addr;//LoadData(ex, ex->dyn[DT_STRTAB], ex->dyn[DT_STRSZ]);
-    }
+    ex->symtab = (Elf32_Sym*)(ex->body + ex->dyn[DT_SYMTAB] - ex->v_addr);
+    ex->jmprel = (Elf32_Rel*)(ex->body + ex->dyn[DT_JMPREL] - ex->v_addr);
+    ex->strtab = ex->body + ex->dyn[DT_STRTAB] - ex->v_addr;
 
     if(ex->type == EXEC_LIB)
     {
@@ -121,7 +121,7 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
     {
         char *lib_name = ex->strtab + libs_needed[i];
         Elf32_Lib* lib;
-        if(lib = dlopen(lib_name))
+    if(lib = OpenLib(lib_name))
         {
             Libs_Queue* libq = malloc(sizeof(Libs_Queue));
             libq->lib = lib;
@@ -134,7 +134,7 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
         else
         {
             sprintf(dbg, "Не могу загрузить %s!", lib_name);
-            ShowMSG(1, (int)dbg);
+            l_msg(1, (int)dbg);
             return E_SHARED;
         }
     }
@@ -143,16 +143,16 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
     if (ex->dyn[DT_RELSZ])
     {
         i=0;
-        unsigned int* addr;
+        unsigned long* addr;
         Elf32_Word r_type;
-        Elf32_Rel* reltab;
+    
         char* name;
         Elf32_Word func = 0;
-        Libs_Queue* lib;
+        //Libs_Queue* lib;
 
         // Таблица релокаций
-        reltab = (Elf32_Rel*)LoadData(ex, phdr->p_offset + ex->dyn[DT_REL] - phdr->p_vaddr, ex->dyn[DT_RELSZ]);
-        //reltab = (Elf32_Rel*)((char*)dyn_sect + ex->dyn[DT_REL] -  phdr->p_vaddr);
+        Elf32_Rel* reltab = (Elf32_Rel*)LoadData(ex, phdr->p_offset + ex->dyn[DT_REL] - phdr->p_vaddr, ex->dyn[DT_RELSZ]);
+    
         if(!reltab)
         {
             elfclose(ex);
@@ -170,15 +170,15 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
                 break;
             case R_ARM_RABS32:
                 printf("R_ARM_RABS32\n");
-                addr = (unsigned int*)(ex->body + reltab[i].r_offset - ex->v_addr);
-                *addr += (unsigned int)(ex->body - ex->v_addr);
+                addr = (unsigned long*)(ex->body + reltab[i].r_offset - ex->v_addr);
+                *addr += (unsigned long)(ex->body - ex->v_addr);
                 break;
             case R_ARM_ABS32:
                 printf("R_ARM_ABS32\n");
                 name = ex->strtab + sym->st_name;
-                addr = (unsigned int*)(ex->body + reltab[i].r_offset - ex->v_addr);
+                addr = (unsigned long*)(ex->body + reltab[i].r_offset - ex->v_addr);
 
-                int sk = ELF32_R_SYM(reltab[i].r_info);
+                //int sk = ELF32_R_SYM(reltab[i].r_info);
 
                 printf("'%s' %X\n", name, *addr);
                 // Если нужен указатель на эльф
@@ -187,12 +187,12 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
                 {
                     ex->__is_ex_import = 1;
                     printf("__ex: 0x%X\n", (int)ex);
-                    *addr = (unsigned int)ex;
+                    *addr = (unsigned long)ex;
                     break;
                 }
                 else if(!strcmp("elfclose", name))
                 {
-                    *addr = (unsigned int)elfclose;
+                    *addr = (unsigned long)elfclose;
                     printf(" [+] elfclose: 0x%X\n", *addr);
                     break;
                 }
@@ -214,23 +214,23 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
                 if(!func && ELF_ST_BIND(sym->st_info) != STB_WEAK)
                 {
                     sprintf(dbg, "Undefined reference to `%s'\n", name);
-                    ShowMSG(1, (int)dbg);
+                    l_msg(1, (int)dbg);
                     mfree(reltab);
                     return E_UNDEF;
                 }
 
-                addr = (unsigned int*)(ex->body + reltab[i].r_offset - ex->v_addr);
+                addr = (unsigned long*)(ex->body + reltab[i].r_offset - ex->v_addr);
                 *addr = func;
                 printf("addres: %X\n", name, *addr);
                 break;
             case R_ARM_RELATIVE:
                 printf("R_ARM_RELATIVE\n");
-                addr = (unsigned int*)(ex->body + reltab[i].r_offset - ex->v_addr);
-                *addr += (unsigned int)(ex->body - ex->v_addr);
+                addr = (unsigned long*)(ex->body + reltab[i].r_offset - ex->v_addr);
+                *addr += (unsigned long)(ex->body - ex->v_addr);
                 break;
             case R_ARM_GLOB_DAT:
                 printf("R_ARM_GLOB_DAT\n");
-                addr = (unsigned int*)(ex->body + reltab[i].r_offset - ex->v_addr);
+                addr = (unsigned long*)(ex->body + reltab[i].r_offset - ex->v_addr);
                 name = ex->strtab + sym->st_name;
                 printf(" strtab: '%s' \n", name);
                 *addr = (unsigned long)(ex->body + sym->st_value);
@@ -238,11 +238,11 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
                 if( !sym->st_value )
                 {
                     printf("Searching in libs...\n");
-                    *addr = (unsigned int)_look_sym(ex, name);
+                    *addr = (unsigned long)_look_sym(ex, name);
                     if( !*addr && ELF_ST_BIND(sym->st_info) != STB_WEAK)
                     {
                         sprintf(dbg, "Undefined reference to `%s'\n", name);
-                        ShowMSG(1, (int)dbg);
+                        l_msg(1, (int)dbg);
                         mfree(reltab);
                         return E_UNDEF;
                     }
@@ -256,7 +256,7 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
             default:
                 printf("unknow relocation type '%d'\n", r_type);
                 sprintf(dbg, "Fatal error! Unknown type relocation '%d'!\n", r_type);
-                ShowMSG(1, (int)dbg);
+                l_msg(1, (int)dbg);
                 mfree(reltab);
                 return E_RELOCATION;
                 //break;
@@ -277,7 +277,7 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
             char* name = ex->strtab + ex->symtab[sym_idx].st_name;
             Elf32_Sym *sym = &ex->symtab[sym_idx];
             Elf32_Word func = 0;
-            Libs_Queue* lib = ex->libs;
+            //Libs_Queue* lib = ex->libs;
 
 
             if(!strcmp("elfclose", name))
@@ -301,7 +301,7 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
                 if(!func && ELF_ST_BIND(sym->st_info) != STB_WEAK)
                 {
                     sprintf(dbg, "Undefined reference to `%s'\n", name);
-                    ShowMSG(1, (int)dbg);
+                    l_msg(1, (int)dbg);
                     return E_UNDEF;
                 }
             }
@@ -327,7 +327,7 @@ __arch int LoadSections(Elf32_Exec* ex)
     while(i < ex->ehdr.e_phnum)
     {
         if(lseek(ex->fp, hdr_offset, S_SET, &ferr, &ferr) == -1) break;
-        if(read(ex->fp, &phdrs[i], sizeof(Elf32_Phdr), &ferr) < sizeof(Elf32_Phdr))
+        if(fread(ex->fp, &phdrs[i], sizeof(Elf32_Phdr), &ferr) < sizeof(Elf32_Phdr))
             break;
 
         // не наше выравнивание
@@ -335,7 +335,7 @@ __arch int LoadSections(Elf32_Exec* ex)
         {
             printf("Bad align\n");
             mfree(phdrs);
-            ShowMSG(1, (int)"Bad page size!");
+            l_msg(1, (int)"Bad page size!");
             return E_ALIGN;
         }*/
 
@@ -349,12 +349,11 @@ __arch int LoadSections(Elf32_Exec* ex)
 
         if(ex->body = malloc(ex->bin_size+1)) // Если хватило рамы
         {
-            zeromem(ex->body, ex->bin_size);
+            zeromem_a(ex->body, ex->bin_size);
 
             for(i=0; i < ex->ehdr.e_phnum; i++)
             {
                 Elf32_Phdr phdr = phdrs[i];
-                Elf32_Dyn* dyn_sect;
 
                 switch (phdr.p_type)
                 {
@@ -363,7 +362,7 @@ __arch int LoadSections(Elf32_Exec* ex)
 
                     if(lseek(ex->fp, phdr.p_offset, S_SET, &ferr, &ferr) != -1)
                     {
-                        if(read(ex->fp, ex->body + phdr.p_vaddr - ex->v_addr, phdr.p_filesz, &ferr) == phdr.p_filesz)
+                        if(fread(ex->fp, ex->body + phdr.p_vaddr - ex->v_addr, phdr.p_filesz, &ferr) == phdr.p_filesz)
                             break;
                     }
 
@@ -376,14 +375,15 @@ __arch int LoadSections(Elf32_Exec* ex)
                 case PT_DYNAMIC:
                     if(phdr.p_filesz == 0) break; // Пропускаем пустые сегменты
 
-                    if(dyn_sect = (Elf32_Dyn*)LoadData(ex, phdr.p_offset, phdr.p_filesz))
+                    if(DoRelocation(ex, &phdr) == E_NO_ERROR) break;
+                    /*if(dyn_sect = (Elf32_Dyn*)LoadData(ex, phdr.p_offset, phdr.p_filesz))
                     {
-                        if(!DoRelocation(ex, dyn_sect, &phdr))
-                        {
-                            mfree(dyn_sect);
-                            break;
-                        }
-                    }
+                      if(DoRelocation(ex, dyn_sect, &phdr))
+                      {
+                        mfree(dyn_sect);
+                        break;
+                      }
+                    }*/
 
                     // Если что-то пошло не так...
                     mfree(ex->body);

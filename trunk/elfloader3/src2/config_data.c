@@ -1,5 +1,5 @@
-#include <inc\cfg_items.h>
-#include <inc\swilib.h>
+#include <cfg_items.h>
+#include <swilib.h>
 //Конфигурация
 
 __root CFG_HDR cfghdr1={CFG_UINT,"Alpha-chan threshold",0,255};

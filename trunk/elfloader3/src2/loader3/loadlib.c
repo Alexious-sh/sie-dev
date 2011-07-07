@@ -10,14 +10,15 @@
 const char LD_PATH[][128] = {"0:\\Misc\\elf3\\", "0:\\ZBin\\lib\\", "4:\\ZBin\\lib\\"};
 extern int __e_div(int delitelb, int delimoe);
 Global_Queue* lib_top;
-
+Elf32_Lib** handles;
+int handles_cnt = 0;
 
 __arch char __is_file_exist(const char *fl)
 {
     int f;
-    if( (f=open(fl, A_ReadOnly | A_BIN, P_READ,0)) != -1)
+    if( (f=fopen(fl, A_ReadOnly | A_BIN, P_READ,0)) != -1)
     {
-        close(f,0);
+        fclose(f,0);
         return 1;
     }
     return 0;
@@ -78,8 +79,9 @@ __arch Elf32_Word findExport (Elf32_Exec* ex, const char* name)
 
         switch (ELF_ST_BIND(sym.st_info))
         {
-            case STB_LOCAL:
             case STB_GLOBAL:
+                /* Global definition.  Just what we need. */
+                return (Elf32_Word)ex->body + sym.st_value;
             case STB_WEAK:
                 /* Weak definition.  Use this value if we don't find another. */
                 func = (Elf32_Word)ex->body + sym.st_value;
@@ -90,11 +92,11 @@ __arch Elf32_Word findExport (Elf32_Exec* ex, const char* name)
         }
     }
 
-    return func;
+    return func ? func : 0;
 }
 
 
-__arch Elf32_Word dlsym(Elf32_Lib* lib, const char *name)
+__arch Elf32_Word FindFunction(Elf32_Lib* lib, const char *name)
 {
     if(!lib) return 0;
     return findExport(lib->ex, name);
@@ -119,7 +121,7 @@ __arch const char * findShared(const char *name)
 
 
 // Открыть библиотеку
-__arch Elf32_Lib* dlopen(const char *name)
+__arch Elf32_Lib* OpenLib(const char *name)
 {
     printf("Starting loading shared library '%s'...\n", name);
     int fp;
@@ -150,10 +152,10 @@ __arch Elf32_Lib* dlopen(const char *name)
     sprintf(fname, "%s%s", ld_path, name);
 
     /* Открываем */
-    if((fp = open(fname,A_ReadOnly+A_BIN,P_READ,&ferr)) == -1) return 0;
+    if((fp = fopen(fname,A_ReadOnly+A_BIN,P_READ,&ferr)) == -1) return 0;
 
     /* Читаем хедер */
-    if(read(fp, &ehdr, sizeof(Elf32_Ehdr), &ferr) != sizeof(Elf32_Ehdr)) return 0;
+    if(fread(fp, &ehdr, sizeof(Elf32_Ehdr), &ferr) != sizeof(Elf32_Ehdr)) return 0;
 
     /* Проверяем шо это вообще такое */
     if(CheckElf(&ehdr)) return 0;
@@ -169,13 +171,13 @@ __arch Elf32_Lib* dlopen(const char *name)
 
     /* Начинаем копать структуру либы */
     if( LoadSections(ex) ){
-        close(fp, &ferr);
+        fclose(fp, &ferr);
         elfclose(ex);
         return 0;
     }
 
     /* Он уже не нужен */
-    close(fp, &ferr);
+    fclose(fp, &ferr);
 
     /* Глобальная база либ */
     Elf32_Lib* lib;
@@ -194,7 +196,7 @@ __arch Elf32_Lib* dlopen(const char *name)
     Global_Queue* global_ptr = malloc(sizeof(Global_Queue));
     if(!global_ptr)    // Ïî÷òè...íî íåò :'(
     {
-        dlclose(lib);
+        CloseLib(lib);
         return 0;
     }
 
@@ -229,7 +231,7 @@ __arch Elf32_Lib* dlopen(const char *name)
 
 
 
-__arch int dlclose(Elf32_Lib* lib)
+__arch int CloseLib(Elf32_Lib* lib)
 {
     if(!lib) return E_EMPTY;
     lib->users_cnt--;
@@ -260,4 +262,75 @@ __arch int dlclose(Elf32_Lib* lib)
     return E_NO_ERROR;
 }
 
+int dlopen(const char *name)
+{
+  int handle = -1;
+  
+  if(!name) return -1;
+  
+  // Первый клиент! :)
+  if(!handles_cnt)
+  {
+    handles_cnt = 256;
+    handles = malloc(sizeof(Elf32_Lib*) * handles_cnt);
+    
+    if(!handles) return -1;
+    
+    zeromem_a(handles, sizeof(Elf32_Lib*) * handles_cnt);
+  }
+  
+  // Ищем свободный слот
+  for(int i=0; i<handles_cnt; i++)
+  {
+    if(handles[i] == 0)
+    {
+      handle = i;
+      break;
+    }
+  }
+  
+  // Не нашли O_o
+  if(!handle)
+  {
+    Elf32_Lib** new_handles = realloc(handles, sizeof(Elf32_Lib*) * (handles_cnt + 64));
+    
+    // Места нет, и рама кончилась :'(
+    if(!new_handles) return -1;
+    
+    handle = handles_cnt;
+    zeromem_a(&new_handles[handles_cnt], sizeof(Elf32_Lib*) * 64);
+    handles_cnt += 64;
+    handles = new_handles;
+  }
+  
+  Elf32_Lib* lib = OpenLib(name);
+  if(!lib) return -1;
+  
+  handles[handle] = lib;
+  return handle;
+}
 
+int dlclose(int handle)
+{
+  if(0 > handle > handles_cnt - 1) return 0;
+  
+  if(handles[handle])
+  {
+    Elf32_Lib* lib = handles[handle];
+    handles[handle] = 0;
+    
+    // Точто здесь стоит возвращать это? handle все равно же потерли...
+    return CloseLib(lib);
+  }
+  
+  return 0;
+}
+
+Elf32_Word dlsym(int handle, const char *name)
+{
+  if(0 > handle > handles_cnt - 1) return 0;
+  
+  if(handles[handle]) return FindFunction(handles[handle], name);
+  
+  return 0;
+}
