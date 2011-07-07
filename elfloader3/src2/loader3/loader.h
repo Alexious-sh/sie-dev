@@ -9,7 +9,7 @@
 #ifndef __LOADER_H__
 #define __LOADER_H__
 
-#include <inc/swilib.h>
+#include <swilib.h>
 #include "elf.h"
 #include <stdio.h>
 
@@ -90,17 +90,28 @@ typedef int LIB_FUNC();
 
 extern unsigned int ferr;
 
+#ifdef ARM
+#define zeromem_a(a,b) zeromem(a,b)
+#define l_msg(a,b) ShowMSG(a,b)
+#else
+void zeromem_a(void *d, int l);
+void l_msg(int a, int b);
+#endif
+
 int CheckElf(Elf32_Ehdr *ehdr);
 unsigned int GetBinSize(Elf32_Exec *ex, Elf32_Phdr* phdrs);
 int LoadSections(Elf32_Exec* ex);
-int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr);
+int DoRelocation(Elf32_Exec* ex, Elf32_Phdr* phdr);
 unsigned long elfhash(const char* name);
 Elf32_Word findExport(Elf32_Exec* ex, const char* name);
+Elf32_Word FindFunction(Elf32_Lib* lib, const char* name);
 
 /* shared support */
-Elf32_Lib* dlopen(const char *name);
-Elf32_Word dlsym(Elf32_Lib* lib, const char *name);
-int dlclose(Elf32_Lib* lib);
+Elf32_Lib* OpenLib(const char *name);
+int CloseLib(Elf32_Lib* lib);
+int dlopen(const char *name);
+int dlclose(int handle);
+Elf32_Word dlsym(int handle, const char *name);
 
 /* executable support */
 Elf32_Exec* elfopen(const char* filenam);

@@ -1,4 +1,4 @@
-#include <inc\swilib.h>
+#include <swilib.h>
 
 #ifndef NEWSGOLD
 extern TREGEXPLEXT *EXT2_REALLOC(void);

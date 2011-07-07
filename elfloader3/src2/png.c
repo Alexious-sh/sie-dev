@@ -1,5 +1,5 @@
-#include <inc\swilib.h>
-#include <inc\pnglist.h>
+#include <swilib.h>
+#include <pnglist.h>
 
 extern unsigned int DEFAULT_COLOR;
 extern unsigned int ALPHA_THRESHOLD;
@@ -28,7 +28,7 @@ __arm void read_data_fn(png_structp png_ptr, png_bytep data, png_size_t length)
   unsigned int err;
   int f;
   f=(int)png_get_io_ptr(png_ptr);
-  read(f, data, length, &err);
+  fread(f, data, length, &err);
 }
 
 __arm IMGHDR* create_imghdr(const char *fname, int type)
@@ -47,12 +47,12 @@ __arm IMGHDR* create_imghdr(const char *fname, int type)
   png_infop info_ptr=NULL;
   png_uint_32 rowbytes;
   
-  if ((f=open(fname, A_ReadOnly+A_BIN, P_READ, &err))==-1) return 0;
+  if ((f=fopen(fname, A_ReadOnly+A_BIN, P_READ, &err))==-1) return 0;
   pp.row=NULL;
   pp.img=NULL;
   pp.img_h=NULL;
   
-  if (read(f, &buf, number, &err)!=number) goto L_CLOSE_FILE;
+  if (fread(f, &buf, number, &err)!=number) goto L_CLOSE_FILE;
   if  (!png_check_sig((png_bytep)buf,number)) goto  L_CLOSE_FILE;
   
   png_ptr = png_create_read_struct_2("1.2.5", (png_voidp)0, 0, 0, (png_voidp)0,(png_malloc_ptr)xmalloc,(png_free_ptr)xmfree);
@@ -216,11 +216,11 @@ __arm IMGHDR* create_imghdr(const char *fname, int type)
     mfree(pp.row);
     mfree(pp.img);
     mfree(pp.img_h);
-    close(f, &err);
+    fclose(f, &err);
     return NULL;
   }
   mfree(pp.row);
-  close(f, &err);
+  fclose(f, &err);
   return (img_hc);
 }
 
@@ -248,8 +248,9 @@ __arm void print10(char *s, unsigned int v)
   unsigned int buf=0xF;
   while(v>=10)
   {
-    buf=(buf<<4)|(v%10);
-    v/=10;
+    extern int __e_div(int delitelb, int delimoe);
+    buf=(buf<<4)|(__e_div(10, v)/*v%10*/);
+    v = udiv(10, v); //v/=10;
   }
   *s++=v+'0';
   while((v=buf&0x0F)<10) {*s++=v+'0'; buf>>=4;}
