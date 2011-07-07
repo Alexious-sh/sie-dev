@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<Workspace>
+  <ConfigDictionary>
+    
+  <CurrentConfigs><Project>ELFLoader/S75sw52</Project></CurrentConfigs></ConfigDictionary>
+  <Desktop>
+    <Static>
+      <Workspace>
+        <ColumnWidths>
+          
+          
+          
+          
+        <Column0>204</Column0><Column1>27</Column1><Column2>27</Column2><Column3>27</Column3></ColumnWidths>
+      </Workspace>
+      <Build>
+        
+        
+        
+        
+      <ColumnWidth0>18</ColumnWidth0><ColumnWidth1>897</ColumnWidth1><ColumnWidth2>239</ColumnWidth2><ColumnWidth3>59</ColumnWidth3></Build>
+    <Debug-Log/></Static>
+    <Windows>
+      
+      
+    <Wnd2>
+        <Tabs>
+          <Tab>
+            <Identity>TabID-15639-12460</Identity>
+            <TabName>Workspace</TabName>
+            <Factory>Workspace</Factory>
+            <Session>
+              
+            <NodeDict><ExpandedNode>ELFLoader</ExpandedNode><ExpandedNode>ELFLoader/loader3</ExpandedNode></NodeDict></Session>
+          </Tab>
+        </Tabs>
+        
+      <SelectedTab>0</SelectedTab></Wnd2><Wnd3>
+        <Tabs>
+          <Tab>
+            <Identity>TabID-32430-12554</Identity>
+            <TabName>Build</TabName>
+            <Factory>Build</Factory>
+            <Session/>
+          </Tab>
+        <Tab><Identity>TabID-18331-16991</Identity><TabName>Debug Log</TabName><Factory>Debug-Log</Factory><Session/></Tab></Tabs>
+        
+      <SelectedTab>0</SelectedTab></Wnd3></Windows>
+    <Editor>
+      
+      
+      
+      
+    <Pane><Tab><Factory>TextEditor</Factory><Filename>E:\&#x41e;&#x431;&#x449;&#x435;&#x435;\__svn\trunk\elfloader3\src2\elfloader_helper.c</Filename><XPos>0</XPos><YPos>27</YPos><SelStart>440</SelStart><SelEnd>440</SelEnd></Tab><Tab><Factory>TextEditor</Factory><Filename>E:\&#x41e;&#x431;&#x449;&#x435;&#x435;\__svn\trunk\elfloader3\src2\loader3\loader.c</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd></Tab><ActiveTab>1</ActiveTab></Pane><ActivePane>0</ActivePane><Sizes><Pane><X>1000000</X><Y>1000000</Y></Pane></Sizes><SplitMode>1</SplitMode></Editor>
+    <Positions>
+      
+      
+      
+      
+      
+    <Top><Row0><Sizes><Toolbar-0045add8><key>iaridepm.enu1</key></Toolbar-0045add8></Sizes></Row0></Top><Left><Row0><Sizes><Wnd2><Rect><Top>-2</Top><Left>-2</Left><Bottom>581</Bottom><Right>294</Right><x>-2</x><y>-2</y><xscreen>183</xscreen><yscreen>139</yscreen><sizeHorzCX>146166</sizeHorzCX><sizeHorzCY>160694</sizeHorzCY><sizeVertCX>236422</sizeVertCX><sizeVertCY>673988</sizeVertCY></Rect></Wnd2></Sizes></Row0></Left><Right><Row0><Sizes/></Row0></Right><Bottom><Row0><Sizes><Wnd3><Rect><Top>-2</Top><Left>-2</Left><Bottom>240</Bottom><Right>1254</Right><x>-2</x><y>-2</y><xscreen>1256</xscreen><yscreen>242</yscreen><sizeHorzCX>1003195</sizeHorzCX><sizeHorzCY>279769</sizeHorzCY><sizeVertCX>146166</sizeVertCX><sizeVertCY>160694</sizeVertCY></Rect></Wnd3></Sizes></Row0></Bottom><Float><Sizes/></Float></Positions>
+  </Desktop>
+</Workspace>
+
+
