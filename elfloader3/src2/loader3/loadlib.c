@@ -9,8 +9,8 @@
 
 const char LD_PATH[][128] = {"0:\\Misc\\elf3\\", "0:\\ZBin\\lib\\", "4:\\ZBin\\lib\\"};
 extern int __e_div(int delitelb, int delimoe);
-Global_Queue* lib_top;
-Elf32_Lib** handles;
+Global_Queue* lib_top = 0;
+Elf32_Lib** handles = 0;
 int handles_cnt = 0;
 
 __arch char __is_file_exist(const char *fl)
@@ -290,7 +290,7 @@ int dlopen(const char *name)
   }
   
   // Не нашли O_o
-  if(!handle)
+  if(handle == -1)
   {
     Elf32_Lib** new_handles = realloc(handles, sizeof(Elf32_Lib*) * (handles_cnt + 64));
     
