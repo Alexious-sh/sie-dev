@@ -143,7 +143,7 @@ int DoRelocation(Elf32_Exec* ex, Elf32_Phdr* phdr)
     if (ex->dyn[DT_RELSZ])
     {
         i=0;
-        unsigned long* addr;
+        unsigned int* addr;
         Elf32_Word r_type;
     
         char* name;
@@ -170,13 +170,13 @@ int DoRelocation(Elf32_Exec* ex, Elf32_Phdr* phdr)
                 break;
             case R_ARM_RABS32:
                 printf("R_ARM_RABS32\n");
-                addr = (unsigned long*)(ex->body + reltab[i].r_offset - ex->v_addr);
-                *addr += (unsigned long)(ex->body - ex->v_addr);
+                addr = (unsigned int*)(ex->body + reltab[i].r_offset - ex->v_addr);
+                *addr += (unsigned int)(ex->body - ex->v_addr);
                 break;
             case R_ARM_ABS32:
                 printf("R_ARM_ABS32\n");
                 name = ex->strtab + sym->st_name;
-                addr = (unsigned long*)(ex->body + reltab[i].r_offset - ex->v_addr);
+                addr = (unsigned int*)(ex->body + reltab[i].r_offset - ex->v_addr);
 
                 //int sk = ELF32_R_SYM(reltab[i].r_info);
 
@@ -187,12 +187,12 @@ int DoRelocation(Elf32_Exec* ex, Elf32_Phdr* phdr)
                 {
                     ex->__is_ex_import = 1;
                     printf("__ex: 0x%X\n", (int)ex);
-                    *addr = (unsigned long)ex;
+                    *addr = (unsigned int)ex;
                     break;
                 }
                 else if(!strcmp("elfclose", name))
                 {
-                    *addr = (unsigned long)elfclose;
+                    *addr = (unsigned int)elfclose;
                     printf(" [+] elfclose: 0x%X\n", *addr);
                     break;
                 }
@@ -219,26 +219,26 @@ int DoRelocation(Elf32_Exec* ex, Elf32_Phdr* phdr)
                     return E_UNDEF;
                 }
 
-                addr = (unsigned long*)(ex->body + reltab[i].r_offset - ex->v_addr);
+                addr = (unsigned int*)(ex->body + reltab[i].r_offset - ex->v_addr);
                 *addr = func;
                 printf("addres: %X\n", name, *addr);
                 break;
             case R_ARM_RELATIVE:
                 printf("R_ARM_RELATIVE\n");
-                addr = (unsigned long*)(ex->body + reltab[i].r_offset - ex->v_addr);
-                *addr += (unsigned long)(ex->body - ex->v_addr);
+                addr = (unsigned int*)(ex->body + reltab[i].r_offset - ex->v_addr);
+                *addr += (unsigned int)(ex->body - ex->v_addr);
                 break;
             case R_ARM_GLOB_DAT:
                 printf("R_ARM_GLOB_DAT\n");
-                addr = (unsigned long*)(ex->body + reltab[i].r_offset - ex->v_addr);
+                addr = (unsigned int*)(ex->body + reltab[i].r_offset - ex->v_addr);
                 name = ex->strtab + sym->st_name;
                 printf(" strtab: '%s' \n", name);
-                *addr = (unsigned long)(ex->body + sym->st_value);
+                *addr = (unsigned int)(ex->body + sym->st_value);
 
                 if( !sym->st_value )
                 {
                     printf("Searching in libs...\n");
-                    *addr = (unsigned long)_look_sym(ex, name);
+                    *addr = (unsigned int)_look_sym(ex, name);
                     if( !*addr && ELF_ST_BIND(sym->st_info) != STB_WEAK)
                     {
                         sprintf(dbg, "Undefined reference to `%s'\n", name);
