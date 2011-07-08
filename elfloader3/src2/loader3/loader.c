@@ -68,15 +68,15 @@ __arch static inline unsigned int _look_sym(Elf32_Exec *ex, const char *name)
 }
 
 // Релокация
-int DoRelocation(Elf32_Exec* ex, Elf32_Phdr* phdr)
+__arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
 {
     unsigned int i = 0;
     Elf32_Word libs_needed[64];
     unsigned int libs_cnt = 0;
     char dbg[128];
 
-    Elf32_Dyn* dyn_sect = (Elf32_Dyn*)LoadData(ex, phdr->p_offset, phdr->p_filesz);
-    if(!dyn_sect) return 0;
+    //Elf32_Dyn* dyn_sect = (Elf32_Dyn*)LoadData(ex, phdr->p_offset, phdr->p_filesz);
+    //if(!dyn_sect) return 0;
   
     // Вытаскиваем теги
     zeromem_a(ex->dyn, sizeof(ex->dyn));
@@ -311,7 +311,7 @@ __arch int LoadSections(Elf32_Exec* ex)
     while(i < ex->ehdr.e_phnum)
     {
         if(lseek(ex->fp, hdr_offset, S_SET, &ferr, &ferr) == -1) break;
-        if(fread(ex->fp, &phdrs[i], sizeof(Elf32_Phdr), &ferr) < sizeof(Elf32_Phdr))
+        if(read(ex->fp, &phdrs[i], sizeof(Elf32_Phdr), &ferr) < sizeof(Elf32_Phdr))
             break;
 
         // не наше выравнивание
@@ -319,7 +319,7 @@ __arch int LoadSections(Elf32_Exec* ex)
         {
             printf("Bad align\n");
             mfree(phdrs);
-            l_msg(1, (int)"Bad page size!");
+            ShowMSG(1, (int)"Bad page size!");
             return E_ALIGN;
         }*/
 
@@ -333,11 +333,12 @@ __arch int LoadSections(Elf32_Exec* ex)
 
         if(ex->body = malloc(ex->bin_size+1)) // Если хватило рамы
         {
-            zeromem_a(ex->body, ex->bin_size);
+            zeromem(ex->body, ex->bin_size);
 
             for(i=0; i < ex->ehdr.e_phnum; i++)
             {
                 Elf32_Phdr phdr = phdrs[i];
+                Elf32_Dyn* dyn_sect;
 
                 switch (phdr.p_type)
                 {
@@ -346,7 +347,7 @@ __arch int LoadSections(Elf32_Exec* ex)
 
                     if(lseek(ex->fp, phdr.p_offset, S_SET, &ferr, &ferr) != -1)
                     {
-                        if(fread(ex->fp, ex->body + phdr.p_vaddr - ex->v_addr, phdr.p_filesz, &ferr) == phdr.p_filesz)
+                        if(read(ex->fp, ex->body + phdr.p_vaddr - ex->v_addr, phdr.p_filesz, &ferr) == phdr.p_filesz)
                             break;
                     }
 
@@ -359,17 +360,17 @@ __arch int LoadSections(Elf32_Exec* ex)
                 case PT_DYNAMIC:
                     if(phdr.p_filesz == 0) break; // Пропускаем пустые сегменты
 
-                    if(DoRelocation(ex, &phdr) == E_NO_ERROR) break;
-                    /*if(dyn_sect = (Elf32_Dyn*)LoadData(ex, phdr.p_offset, phdr.p_filesz))
+                    if(dyn_sect = (Elf32_Dyn*)LoadData(ex, phdr.p_offset, phdr.p_filesz))
                     {
-                      if(DoRelocation(ex, dyn_sect, &phdr))
-                      {
-                        mfree(dyn_sect);
-                        break;
-                      }
-                    }*/
+                        if(!DoRelocation(ex, dyn_sect, &phdr))
+                        {
+                            mfree(dyn_sect);
+                            break;
+                        }
+                    }
 
                     // Если что-то пошло не так...
+                    mfree(dyn_sect);
                     mfree(ex->body);
                     ex->body = 0;
                     mfree(phdrs);

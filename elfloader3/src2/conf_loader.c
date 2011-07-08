@@ -1,5 +1,5 @@
-#include <swilib.h>
-#include <cfg_items.h>
+#include "loader3/loader.h"
+#include <inc/cfg_items.h>
 #include "conf_loader.h"
 
 

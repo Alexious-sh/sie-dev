@@ -22,7 +22,7 @@
 @REM but they are listed at the end of this file for reference.
 
 
-"Z:\media\disk-1\ELF\IAR\EmbeddedWorkbenchEvaluation\common\bin\cspybat" "Z:\media\disk-1\ELF\IAR\EmbeddedWorkbenchEvaluation\ARM\bin\armproc.dll" "Z:\media\disk-1\ELF\IAR\EmbeddedWorkbenchEvaluation\ARM\bin\armsim.dll"  %1 --plugin "Z:\media\disk-1\ELF\IAR\EmbeddedWorkbenchEvaluation\ARM\bin\<libsupport_plugin>" --backend -B "--endian" "little" "--cpu" "ARM926EJ-S" "--fpu" "None" "--proc_driver" "sim" 
+"E:\media\disk-1\ELF\IAR\EmbeddedWorkbenchEvaluation\common\bin\cspybat" "E:\media\disk-1\ELF\IAR\EmbeddedWorkbenchEvaluation\ARM\bin\armproc.dll" "E:\media\disk-1\ELF\IAR\EmbeddedWorkbenchEvaluation\ARM\bin\armsim.dll"  %1 --plugin "E:\media\disk-1\ELF\IAR\EmbeddedWorkbenchEvaluation\ARM\bin\<libsupport_plugin>" --backend -B "--endian" "little" "--cpu" "ARM926EJ-S" "--fpu" "None" "--proc_driver" "sim" 
 
 
 @REM Loaded plugins:

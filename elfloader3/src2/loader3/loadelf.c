@@ -15,7 +15,7 @@ __arch Elf32_Exec* elfopen(const char* filename)
   Elf32_Ehdr ehdr;
   Elf32_Exec* ex;
 
-  if((fp = fopen(filename,A_ReadOnly+A_BIN,P_READ,&ferr)) == -1) return 0;
+  if((fp = fopen(filename,A_ReadOnly | A_BIN,P_READ,&ferr)) == -1) return 0;
 
   if(fread(fp, &ehdr, sizeof(Elf32_Ehdr), &ferr) == sizeof(Elf32_Ehdr))
   {

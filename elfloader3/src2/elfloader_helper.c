@@ -1,8 +1,5 @@
 
 
-#include <swilib.h>
-#include <stdarg.h>
-#include <stdio.h>
 #include "conf_loader.h"
 #include "loader3\loader.h"
 #include "loader3\env.h"

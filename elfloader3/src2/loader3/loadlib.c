@@ -92,7 +92,7 @@ __arch Elf32_Word findExport (Elf32_Exec* ex, const char* name)
         }
     }
 
-    return func ? func : 0;
+    return func;
 }
 
 
@@ -280,7 +280,7 @@ int dlopen(const char *name)
   }
   
   // Ищем свободный слот
-  for(int i=0; i<handles_cnt; i++)
+  for(int i=0; i<handles_cnt; ++i)
   {
     if(handles[i] == 0)
     {

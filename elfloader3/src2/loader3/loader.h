@@ -9,9 +9,22 @@
 #ifndef __LOADER_H__
 #define __LOADER_H__
 
+#define __ZVOVA
+//#define __GANSTER
+
+#ifdef __GANSTER
 #include <swilib.h>
+#endif
+
+#ifdef __ZVOVA
+#include <inc/swilib.h>
+#define fopen open
+#define fread read
+#define fwrite write
+#define fclose close
+#endif
+
 #include "elf.h"
-#include <stdio.h>
 
 static const unsigned char elf_magic_header[] =
 {
@@ -101,7 +114,7 @@ void l_msg(int a, int b);
 int CheckElf(Elf32_Ehdr *ehdr);
 unsigned int GetBinSize(Elf32_Exec *ex, Elf32_Phdr* phdrs);
 int LoadSections(Elf32_Exec* ex);
-int DoRelocation(Elf32_Exec* ex, Elf32_Phdr* phdr);
+int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr);
 unsigned long elfhash(const char* name);
 Elf32_Word findExport(Elf32_Exec* ex, const char* name);
 Elf32_Word FindFunction(Elf32_Lib* lib, const char* name);
