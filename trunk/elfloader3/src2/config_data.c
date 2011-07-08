@@ -1,5 +1,5 @@
-#include <cfg_items.h>
-#include <swilib.h>
+#include <inc/cfg_items.h>
+#include "loader3\loader.h"
 //Конфигурация
 
 __root CFG_HDR cfghdr1={CFG_UINT,"Alpha-chan threshold",0,255};

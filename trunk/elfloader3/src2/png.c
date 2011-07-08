@@ -1,5 +1,5 @@
-#include <swilib.h>
-#include <pnglist.h>
+#include "loader3\loader.h"
+#include <inc/pnglist.h>
 
 extern unsigned int DEFAULT_COLOR;
 extern unsigned int ALPHA_THRESHOLD;
