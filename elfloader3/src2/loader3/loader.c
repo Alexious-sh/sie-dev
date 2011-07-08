@@ -190,12 +190,6 @@ int DoRelocation(Elf32_Exec* ex, Elf32_Phdr* phdr)
                     *addr = (unsigned int)ex;
                     break;
                 }
-                else if(!strcmp("elfclose", name))
-                {
-                    *addr = (unsigned int)elfclose;
-                    printf(" [+] elfclose: 0x%X\n", *addr);
-                    break;
-                }
 
                 /* !!! O_o !!! */
                 /*if( ex->symtab[sk].st_info != 17  &&  18)
@@ -280,30 +274,20 @@ int DoRelocation(Elf32_Exec* ex, Elf32_Phdr* phdr)
             //Libs_Queue* lib = ex->libs;
 
 
-            if(!strcmp("elfclose", name))
+            // ≈сли библиотека не SYMBOLIC - сначала ищем в ней самой
+            if(ex->type == EXEC_LIB && !ex->dyn[DT_SYMBOLIC])
+                func = findExport(ex, name);
+
+            if(!func)
+                func = _look_sym(ex, name);
+
+            printf("function addres: %x name: '%s'\n", func, name);
+
+            if(!func && ELF_ST_BIND(sym->st_info) != STB_WEAK)
             {
-                printf("elfclose rel\n");
-                func = (long)elfclose;
-            }
-            else
-            {
-                // ≈сли библиотека не SYMBOLIC - сначала ищем в ней самой
-                if(ex->type == EXEC_LIB && !ex->dyn[DT_SYMBOLIC])
-                {
-                    func = findExport(ex, name);
-                }
-
-                if(!func)
-                    func = _look_sym(ex, name);
-
-                printf("function addres: %x name: '%s'\n", func, name);
-
-                if(!func && ELF_ST_BIND(sym->st_info) != STB_WEAK)
-                {
-                    sprintf(dbg, "Undefined reference to `%s'\n", name);
-                    l_msg(1, (int)dbg);
-                    return E_UNDEF;
-                }
+                sprintf(dbg, "Undefined reference to `%s'\n", name);
+                l_msg(1, (int)dbg);
+                return E_UNDEF;
             }
 
             *((Elf32_Word*)(ex->body + ex->jmprel[i].r_offset)) = func;
