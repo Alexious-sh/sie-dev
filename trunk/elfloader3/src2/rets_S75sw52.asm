@@ -7,6 +7,17 @@
 	DCD	pngtop
 	DCD	pLIB_TOP
 	DCD	SFE(DATA_N)
+        
+        
+        RSEG	SWILIB_FUNC2EE_2F2:CODE
+	EXTERN	elfclose
+	EXTERN	dlopen
+	EXTERN	dlsym
+        EXTERN	dlclose
+	DCD	elfclose
+	DCD	dlopen
+	DCD	dlsym
+        DCD     dlclose
 
 defadr	MACRO	a,b
 	PUBLIC	a
