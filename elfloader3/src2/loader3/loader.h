@@ -1,6 +1,6 @@
 
 /*
- * Р­С‚РѕС‚ С„Р°Р№Р» СЏРІР»СЏРµС‚СЃСЏ С‡Р°СЃС‚СЊСЋ РїСЂРѕРіСЂР°РјРјС‹ ElfLoader
+ * Этот файл является частью программы ElfLoader
  * Copyright (C) 2011 by Z.Vova, Ganster
  * Licence: GPLv3
  */
@@ -9,6 +9,7 @@
 #ifndef __LOADER_H__
 #define __LOADER_H__
 
+//#define _test_linux
 #define __ZVOVA
 //#define __GANSTER
 
@@ -24,6 +25,34 @@
 #define fclose close
 #endif
 
+#ifdef _test_linux
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <fcntl.h>
+
+#define A_ReadOnly O_RDONLY
+#define A_BIN 0
+#define A_TXT O_TXT
+
+#define mfree free
+
+#define fopen open
+#define fread read
+#define fwrite write
+#define fclose close
+
+#define S_SET SEEK_SET
+#define S_END SEEK_END
+#define P_READ 0
+
+#define zeromem_a(d, s) memset(d, 0, s)
+#define zeromem(d, s) memset(d, 0, s)
+
+#define l_msg(x, y) printf("MESSAGE: %s\n", (char*)y);
+#define __e_div(a, b) (b % a)
+#endif
+
 #include "elf.h"
 
 static const unsigned char elf_magic_header[] =
@@ -34,8 +63,12 @@ static const unsigned char elf_magic_header[] =
   0x01,                    /* Only ELF version 1. */
 };
 
-#define printf
-#define __arch __arm
+#ifndef _test_linux
+  #define printf
+  #define __arch __arm
+#else
+  #define __arch __arm
+#endif
 
 enum ERROR{
 
@@ -50,7 +83,9 @@ enum ERROR{
     E_FILE,
     E_MACHINE,
     E_ALIGN,
-    E_UNDEF
+    E_UNDEF,
+    E_SYMTAB,
+    E_STRTAB
 };
 
 typedef struct
@@ -103,12 +138,14 @@ typedef int LIB_FUNC();
 
 extern unsigned int ferr;
 
-#ifdef ARM
-#define zeromem_a(a,b) zeromem(a,b)
-#define l_msg(a,b) ShowMSG(a,b)
-#else
-void zeromem_a(void *d, int l);
-void l_msg(int a, int b);
+#ifndef _test_linux
+ #ifdef ARM
+ #define zeromem_a(a,b) zeromem(a,b)
+ #define l_msg(a,b) ShowMSG(a,b)
+ #else
+ void zeromem_a(void *d, int l);
+ void l_msg(int a, int b);
+ #endif
 #endif
 
 int CheckElf(Elf32_Ehdr *ehdr);

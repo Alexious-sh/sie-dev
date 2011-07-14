@@ -1,5 +1,6 @@
 #include <string.h>
 
+#if 0
 __arm char *
 strchrnul (s, c_in)
      const char *s;
@@ -137,5 +138,13 @@ strchrnul (s, c_in)
   /* This should never happen.  */
   return NULL;
 }
+#endif
+
+
+
+
+
+
+
 
 

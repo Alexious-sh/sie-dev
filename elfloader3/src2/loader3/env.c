@@ -2,11 +2,18 @@
 #include "loader.h"
 
 
-extern char *strchrnul (const char *__s, int __c);
 char **l__environ = 0;
-
 static char **l_last_environ = 0;
 
+
+
+__arm char *
+strchrnul (const char *s, int c_in)
+{
+  while( *++s != c_in && *s);
+  
+  return (char*)s;
+}
 
 /* This function is used by `setenv' and `putenv'.  The difference between
    the two functions is that for the former must create a new string which
@@ -86,14 +93,14 @@ __arm static int __add_to_environ(const char *name, const char *value,
 }
 
 
-__arm int l_setenv(const char *name, const char *value, int replace)
+__arm int setenv(const char *name, const char *value, int replace)
 {
 	/* NB: setenv("VAR", NULL, 1) inserts "VAR=" string */
 	return __add_to_environ(name, value ? value : "", replace);
 }
 
 
-__arm int l_unsetenv(const char *name)
+__arm int unsetenv(const char *name)
 {
 	const char *eq;
 	size_t len;
@@ -126,7 +133,7 @@ __arm int l_unsetenv(const char *name)
 }
 
 
-__arm char *l_getenv(const char *var)
+__arm char *getenv(const char *var)
 {
     int len;
     char **ep;
@@ -146,7 +153,7 @@ __arm char *l_getenv(const char *var)
 /* The `clearenv' was planned to be added to POSIX.1 but probably
    never made it.  Nevertheless the POSIX.9 standard (POSIX bindings
    for Fortran 77) requires this function.  */
-__arm int l_clearenv(void)
+__arm int clearenv(void)
 {
 
 	/* If we allocated this environment we can free it.

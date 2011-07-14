@@ -1,4 +1,3 @@
-
 /*
  * Этот файл является частью программы ElfLoader
  * Copyright (C) 2011 by Z.Vova, Ganster
@@ -67,7 +66,7 @@ __arch static inline unsigned int _look_sym(Elf32_Exec *ex, const char *name)
     return func;
 }
 
-// Релокация
+// ? елокация
 __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
 {
     unsigned int i = 0;
@@ -102,9 +101,12 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
     }
 
     // Таблички. Нужны только либам, и их юзающим)
-    ex->symtab = (Elf32_Sym*)(ex->body + ex->dyn[DT_SYMTAB] - ex->v_addr);
+    ex->symtab = ex->dyn[DT_SYMTAB]? (Elf32_Sym*)(ex->body + ex->dyn[DT_SYMTAB] - ex->v_addr) : 0;
     ex->jmprel = (Elf32_Rel*)(ex->body + ex->dyn[DT_JMPREL] - ex->v_addr);
-    ex->strtab = ex->body + ex->dyn[DT_STRTAB] - ex->v_addr;
+    ex->strtab = ex->dyn[DT_STRTAB]? ex->body + ex->dyn[DT_STRTAB] - ex->v_addr : 0;
+    
+    printf("STRTAB: %X\n", ex->dyn[DT_STRTAB]);
+    printf("SYMTAB: %X\n", ex->dyn[DT_SYMTAB]);
 
     if(ex->type == EXEC_LIB)
     {
@@ -139,7 +141,7 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
         }
     }
 
-    // Релокация
+    // ? елокация
     if (ex->dyn[DT_RELSZ])
     {
         i=0;
@@ -162,7 +164,7 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
         while(i * sizeof(Elf32_Rel) < ex->dyn[DT_RELSZ])
         {
             r_type = ELF32_R_TYPE(reltab[i].r_info);
-            Elf32_Sym *sym = &ex->symtab[ELF32_R_SYM(reltab[i].r_info)];
+            Elf32_Sym *sym = ex->symtab? &ex->symtab[ELF32_R_SYM(reltab[i].r_info)] : 0;
 
             switch(r_type)
             {
@@ -175,6 +177,29 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
                 break;
             case R_ARM_ABS32:
                 printf("R_ARM_ABS32\n");
+		
+		if( !ex->symtab )
+		{
+		   sprintf(dbg, "Relocation R_ARM_ABS32 cannot run without symtab\n");
+                   printf(1, (int)dbg);
+		   printf("warning: symtab not found, but relocation R_ARM_ABS32 is exist\n");
+		   *addr = (unsigned int)ex->body;
+		   break;
+                   //mfree(reltab);
+                   //return E_SYMTAB;
+		}
+		
+		if( !ex->strtab )
+		{
+		   sprintf(dbg, "Relocation R_ARM_ABS32 cannot run without strtab\n");
+                   printf(1, (int)dbg);
+		   printf("warning: strtab not found, but relocation R_ARM_ABS32 is exist\n");
+		   *addr = (unsigned int)ex->body;
+		   break;
+                   //mfree(reltab);
+                   //return E_STRTAB;
+		}
+		
                 name = ex->strtab + sym->st_name;
                 addr = (unsigned int*)(ex->body + reltab[i].r_offset - ex->v_addr);
 
@@ -183,7 +208,12 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
                 printf("'%s' %X\n", name, *addr);
                 // Если нужен указатель на эльф
 
-                if(!strcmp("__ex", name))
+                //if( *(int*)name == *(int*)"__ex" ) // ?????? ??? ???????!
+                //if( !strcmp(name, "__ex") )
+                if( name[0] == '_' &&
+                    name[1] == '_' &&
+                    name[2] == 'e' &&
+                    name[3] == 'x'  )
                 {
                     ex->__is_ex_import = 1;
                     printf("__ex: 0x%X\n", (int)ex);
@@ -191,19 +221,13 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
                     break;
                 }
 
-                /* !!! O_o !!! */
-                /*if( ex->symtab[sk].st_info != 17  &&  18)
-                {
-                    printf("st_info != 17 0x%X %d '%s'\n", elfclose, ex->symtab[sk].st_info, name);
-                    *addr = (unsigned int)ex->body;
-                    break;
-                }*/
-
                 func = findExport(ex, name);
-                printf("%x - %s\n", func, name);
+                
 
                 if(!func)
                     func = _look_sym(ex, name);
+		
+		printf("%x - %s\n", func, name);
 
                 if(!func && ELF_ST_BIND(sym->st_info) != STB_WEAK)
                 {
@@ -224,6 +248,23 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
                 break;
             case R_ARM_GLOB_DAT:
                 printf("R_ARM_GLOB_DAT\n");
+		
+		if( !ex->symtab )
+		{
+		   sprintf(dbg, "Relocation R_ARM_GLOB_DAT cannot run without symtab\n");
+                   l_msg(1, (int)dbg);
+                   mfree(reltab);
+                   return E_SYMTAB;
+		}
+		
+		if( !ex->strtab )
+		{
+		   sprintf(dbg, "Relocation R_ARM_GLOB_DAT cannot run without strtab\n");
+                   l_msg(1, (int)dbg);
+                   mfree(reltab);
+                   return E_STRTAB;
+		}
+		
                 addr = (unsigned int*)(ex->body + reltab[i].r_offset - ex->v_addr);
                 name = ex->strtab + sym->st_name;
                 printf(" strtab: '%s' \n", name);
@@ -403,7 +444,9 @@ __arch void run_INIT_Array(Elf32_Exec *ex)
   for(int i=0; i<sz; ++i)
   {
      printf("init %d: 0x%X\n", i, arr[i]);
+#ifndef _test_linux
      ( (void (*)())arr[i])();
+#endif
   }
 }
 
@@ -421,6 +464,8 @@ __arch void run_FINI_Array(Elf32_Exec *ex)
   for(int i=0; i<cnt; ++i)
   {
      printf("fini %d: 0x%X\n", i, arr[i]);
+#ifndef _test_linux
      ( (void (*)())arr[i])();
+#endif
   }
 }
