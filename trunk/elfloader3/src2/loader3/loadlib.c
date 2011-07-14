@@ -1,14 +1,20 @@
 
 /*
- * Р­С‚РѕС‚ С„Р°Р№Р» СЏРІР»СЏРµС‚СЃСЏ С‡Р°СЃС‚СЊСЋ РїСЂРѕРіСЂР°РјРјС‹ ElfLoader
+ * Этот файл является частью программы ElfLoader
  * Copyright (C) 2011 by Z.Vova, Ganster
  * Licence: GPLv3
  */
 
 #include "loader.h"
+#include "env.h"
 
-const char LD_PATH[][128] = {"0:\\Misc\\elf3\\", "0:\\ZBin\\lib\\", "4:\\ZBin\\lib\\"};
+
+#ifndef _test_linux
 extern int __e_div(int delitelb, int delimoe);
+#endif
+
+char tmp[256];
+
 Global_Queue* lib_top = 0;
 Elf32_Lib** handles = 0;
 int handles_cnt = 0;
@@ -103,33 +109,64 @@ __arch Elf32_Word FindFunction(Elf32_Lib* lib, const char *name)
 }
 
 
+__arch char * envparse(const char *str, char *buf, int num)
+{
+  if( !str || !buf || num < 0) return 0;
+  const char *start = str;
+  const char *s = strchr(str, ';');
+  
+  while(num-- && start)
+  {
+    start = s? s+1:0;
+    if(start)
+      s = strchr(start, ';');
+    else s = 0;
+  }
+  
+  if(!s){
+    switch( start ? 1:0 )
+    {
+      case 0:
+	return 0;
+      case 1:
+	s = str + strlen(str);
+    }
+  }
+
+  memcpy(buf, start, s-start);
+  buf[s-start] = 0;
+  return buf;
+}
+
+
 __arch const char * findShared(const char *name)
 {
-    char *tmp = (char*)malloc(256);
-    for(int i=0; i<3; ++i)
+    const char *env = getenv("LD_LIBRARY_PATH");
+   
+    for(int i=0;; ++i)
     {
-        sprintf(tmp, "%s%s\0", LD_PATH[i], name);
+        if( !envparse(env, tmp, i) ) return 0;
+        strcat(tmp, name);
         if( __is_file_exist(tmp) )
         {
-            mfree(tmp);
-            return LD_PATH[i];
+            const char *tt = tmp;
+            return tt;
         }
     }
-    mfree(tmp);
+    
     return 0;
 }
 
 
-// РћС‚РєСЂС‹С‚СЊ Р±РёР±Р»РёРѕС‚РµРєСѓ
+// Открыть библиотеку
 __arch Elf32_Lib* OpenLib(const char *name)
 {
     printf("Starting loading shared library '%s'...\n", name);
     int fp;
     Elf32_Ehdr ehdr;
     Elf32_Exec* ex;
-    char fname[256];
 
-    // РџРѕРёС‰РµРј СЃСЂРµРґРё СѓР¶Рµ Р·Р°РіСЂСѓР¶РµРЅС‹С…
+    // Поищем среди уже загруженых
     Global_Queue* ready_libs = lib_top;
     while(ready_libs)
     {
@@ -147,20 +184,17 @@ __arch Elf32_Lib* OpenLib(const char *name)
     const char  *ld_path = findShared(name);
 
     if(!ld_path) return 0;
+    
+    /* Открываем */
+    if((fp = fopen(ld_path,A_ReadOnly+A_BIN,P_READ,&ferr)) == -1) return 0;
 
-    // РќРµ РЅР°С€Р»Рё, РіСЂСѓР·РёРј
-    sprintf(fname, "%s%s", ld_path, name);
-
-    /* РћС‚РєСЂС‹РІР°РµРј */
-    if((fp = fopen(fname,A_ReadOnly+A_BIN,P_READ,&ferr)) == -1) return 0;
-
-    /* Р§РёС‚Р°РµРј С…РµРґРµСЂ */
+    /* Читаем хедер */
     if(fread(fp, &ehdr, sizeof(Elf32_Ehdr), &ferr) != sizeof(Elf32_Ehdr)) return 0;
 
-    /* РџСЂРѕРІРµСЂСЏРµРј С€Рѕ СЌС‚Рѕ РІРѕРѕР±С‰Рµ С‚Р°РєРѕРµ */
+    /* Проверяем шо это вообще такое */
     if(CheckElf(&ehdr)) return 0;
 
-    /* Р’С‹РґРµР»РёРј РїР°РјСЏС‚СЊ РїРѕРґ СЃС‚СЂСѓРєС‚СѓСЂСѓ СЌР»СЊС„Р° */
+    /* Выделим память под структуру эльфа */
     if( !(ex = malloc(sizeof(Elf32_Exec))) ) return 0;
     memcpy(&ex->ehdr, &ehdr, sizeof(Elf32_Ehdr));
     ex->v_addr = (unsigned int)-1;
@@ -169,17 +203,17 @@ __arch Elf32_Lib* OpenLib(const char *name)
     ex->libs = 0;
     ex->complete = 0;
 
-    /* РќР°С‡РёРЅР°РµРј РєРѕРїР°С‚СЊ СЃС‚СЂСѓРєС‚СѓСЂСѓ Р»РёР±С‹ */
+    /* Начинаем копать структуру либы */
     if( LoadSections(ex) ){
         fclose(fp, &ferr);
         elfclose(ex);
         return 0;
     }
 
-    /* РћРЅ СѓР¶Рµ РЅРµ РЅСѓР¶РµРЅ */
+    /* Он уже не нужен */
     fclose(fp, &ferr);
 
-    /* Р“Р»РѕР±Р°Р»СЊРЅР°СЏ Р±Р°Р·Р° Р»РёР± */
+    /* Глобальная база либ */
     Elf32_Lib* lib;
     if( !(lib = malloc(sizeof(Elf32_Lib))) ){
         elfclose(ex);
@@ -192,15 +226,15 @@ __arch Elf32_Lib* OpenLib(const char *name)
     char* soname = ex->dyn[DT_SONAME] ? ex->strtab + ex->dyn[DT_SONAME] : (char*)name;
     strcpy(lib->soname, soname);
 
-    /*  Р’РµРґСЊ РєР°РїСѓСЃС‚Р°^W РїР°РјСЏС‚СЊ РІСЃРµРј РЅСѓР¶РЅР°)) */
+    /*  Ведь капуста^W память всем нужна)) */
     Global_Queue* global_ptr = malloc(sizeof(Global_Queue));
-    if(!global_ptr)    // ГЏГ®Г·ГІГЁ...Г­Г® Г­ГҐГІ :'(
+    if(!global_ptr)    // ?????...?? ??? :'(
     {
         CloseLib(lib);
         return 0;
     }
 
-    /* РќСѓ С‚СѓС‚ Р·Р°РїРѕР»РЅСЏРµРј */
+    /* Ну тут заполняем */
     global_ptr->lib = lib;
     global_ptr->next = 0;
     lib->glob_queue = global_ptr;
@@ -214,15 +248,17 @@ __arch Elf32_Lib* OpenLib(const char *name)
 
     lib_top = global_ptr;
 
-    /* Р·Р°РїСѓСЃС‚РёРј РєРѕРЅС‚СЃСЂСѓРєС‚РѕСЂС‹ */
+    /* запустим контсрукторы */
     run_INIT_Array(ex);
     ex->complete = 1;
 
-    /* Р·Р°РїСѓСЃС‚РёРј С„СѓРЅРєС†РёСЋСЋ РёРЅРёС†РёР°Р»РёР·Р°С†РёРё Р»РёР±С‹, РµСЃР»Рё С‚Р°РєРѕРІР°СЏ РёРјРµРµС‚СЃСЏ */
+    /* запустим функциюю инициализации либы, если таковая имеется */
     if(ex->dyn[DT_INIT])
     {
         printf("init function found\n");
+#ifndef _test_linux
         (( void (*)(const char*) )(ex->body + ex->dyn[DT_INIT] - ex->v_addr))(name);
+#endif
     }
 
     printf(" '%s' Loade complete\n", name);
@@ -243,7 +279,7 @@ __arch int CloseLib(Elf32_Lib* lib)
 
         if(lib->glob_queue)
         {
-	    // Р¤СѓРЅРєС†РёСЏ С„РёРЅР°Р»РёР·Р°С†РёРё
+	    // Функция финализации
             if(ex->dyn[DT_FINI]) ((LIB_FUNC*)(ex->body + ex->dyn[DT_FINI] - ex->v_addr))();
 
             Global_Queue* glob_queue = lib->glob_queue;
@@ -268,7 +304,7 @@ int dlopen(const char *name)
   
   if(!name) return -1;
   
-  // РџРµСЂРІС‹Р№ РєР»РёРµРЅС‚! :)
+  // Первый клиент! :)
   if(!handles_cnt)
   {
     handles_cnt = 256;
@@ -279,7 +315,7 @@ int dlopen(const char *name)
     zeromem_a(handles, sizeof(Elf32_Lib*) * handles_cnt);
   }
   
-  // РС‰РµРј СЃРІРѕР±РѕРґРЅС‹Р№ СЃР»РѕС‚
+  // Ищем свободный слот
   for(int i=0; i<handles_cnt; ++i)
   {
     if(handles[i] == 0)
@@ -289,12 +325,12 @@ int dlopen(const char *name)
     }
   }
   
-  // РќРµ РЅР°С€Р»Рё O_o
+  // Не нашли O_o
   if(handle == -1)
   {
     Elf32_Lib** new_handles = realloc(handles, sizeof(Elf32_Lib*) * (handles_cnt + 64));
     
-    // РњРµСЃС‚Р° РЅРµС‚, Рё СЂР°РјР° РєРѕРЅС‡РёР»Р°СЃСЊ :'(
+    // Места нет, и рама кончилась :'(
     if(!new_handles) return -1;
     
     handle = handles_cnt;
@@ -319,7 +355,7 @@ int dlclose(int handle)
     Elf32_Lib* lib = handles[handle];
     handles[handle] = 0;
     
-    // РўРѕС‡С‚Рѕ Р·РґРµСЃСЊ СЃС‚РѕРёС‚ РІРѕР·РІСЂР°С‰Р°С‚СЊ СЌС‚Рѕ? handle РІСЃРµ СЂР°РІРЅРѕ Р¶Рµ РїРѕС‚РµСЂР»Рё...
+    // Точто здесь стоит возвращать это? handle все равно же потерли...
     return CloseLib(lib);
   }
   
