@@ -18139,6 +18139,12 @@
       <name>$PROJ_DIR$\loader3\elf.h</name>
     </file>
     <file>
+      <name>$PROJ_DIR$\loader3\env.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\loader3\env.h</name>
+    </file>
+    <file>
       <name>$PROJ_DIR$\loader3\loadelf.c</name>
     </file>
     <file>
@@ -18149,6 +18155,15 @@
     </file>
     <file>
       <name>$PROJ_DIR$\loader3\loadlib.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\loader3\Mutex.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\loader3\Mutex.h</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\loader3\strchrnul.c</name>
     </file>
   </group>
   <file>
@@ -22750,7 +22765,7 @@
           <option>
             <name>CCAllowList</name>
             <version>1</version>
-            <state>1011111</state>
+            <state>1111111</state>
           </option>
           <option>
             <name>CCObjUseModuleName</name>

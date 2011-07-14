@@ -1,5 +1,6 @@
 #include "loader3\loader.h"
 #include <inc/pnglist.h>
+#include <inc/png.h>
 
 extern unsigned int DEFAULT_COLOR;
 extern unsigned int ALPHA_THRESHOLD;
@@ -58,7 +59,7 @@ __arm IMGHDR* create_imghdr(const char *fname, int type)
   png_ptr = png_create_read_struct_2("1.2.5", (png_voidp)0, 0, 0, (png_voidp)0,(png_malloc_ptr)xmalloc,(png_free_ptr)xmfree);
   if (!png_ptr) goto L_CLOSE_FILE;
   
-  info_ptr = png_create_info_struct(png_ptr);
+  info_ptr = (png_infop)png_create_info_struct(png_ptr);
   if (!info_ptr)
   {
     png_destroy_read_struct(&png_ptr, (png_infopp)NULL, (png_infopp)NULL);

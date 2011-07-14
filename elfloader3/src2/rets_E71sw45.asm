@@ -14,10 +14,19 @@
 	EXTERN	dlopen
 	EXTERN	dlsym
         EXTERN	dlclose
+        EXTERN	setenv
+        EXTERN	unsetenv
+        EXTERN	getenv
+        EXTERN	clearenv
+        
 	DCD	elfclose
 	DCD	dlopen
 	DCD	dlsym
         DCD     dlclose
+        DCD	setenv
+	DCD	unsetenv
+        DCD     getenv
+        DCD     clearenv
 
 defadr	MACRO	a,b
 	PUBLIC	a

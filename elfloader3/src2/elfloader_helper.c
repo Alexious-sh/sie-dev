@@ -3,34 +3,36 @@
 #include "conf_loader.h"
 #include "loader3\loader.h"
 #include "loader3\env.h"
+#include "loader3\Mutex.h"
 
-#define MAX_PHNUM 10
-/*
-extern int vsprintf(char *, const char *, va_list);
-
-int _f = -1;
-char _tmp[128]={0};
-__arm int _printf(const char *fmt)
-{
-  if(_f==-1) return 0;
-  va_list va;
-  va_start(va, fmt);
-  int sz = vsprintf(_tmp, fmt, va);
-  va_end(va);
-  write(_f, _tmp, sz, 0);
-  return 0;
-}*/
-
-typedef long TElfEntry(char *, void *);
+//#define __ELFTHREAD
+#define ELF_PROC_RUNER_ID 0x4409
+const int elf_run_prio = 0x2;
+int lock_thread = 0;
+extern unsigned int load_in_suproc;
+extern unsigned int run_elf_in_thread;
+//Mutex mutex;
 
 
+__arm void __run_proc(void *entry, char *filename, void *param1, void *param2, void *param3);
 #ifndef ARM
 __arm void zeromem_a(void *d, int l){zeromem(d,l);}
 __arm void l_msg(int a, int b) {ShowMSG(a, b);}
 #endif
 
 
-__arm int elf_load(char *filename, void *param1){
+#ifdef __ELFTHREAD
+struct __param
+{
+  void *p1, *p2, *p3, *p4;
+};
+#endif
+
+
+
+/* �������� ����� */
+
+__arm int elf_load(char *filename, void *param1, void *param2, void *param3){
 
   //_f = open("0:\\Misc\\elfloader.log", A_WriteOnly | A_Append | A_Create | A_BIN, P_WRITE, 0);
   
@@ -40,7 +42,7 @@ __arm int elf_load(char *filename, void *param1){
     return -1;
   }
   
-  int (*entry)(char *, void *) = (int (*)(char *, void *))elf_entry(ex);
+  int (*entry)(char *, void *, void*, void*) = (int (*)(char *, void *, void*, void*))elf_entry(ex);
   if(!entry){
    l_msg(1, (int)"Cant found entry");
    return -2;
@@ -48,10 +50,16 @@ __arm int elf_load(char *filename, void *param1){
   
   
   extern __arm void ExecuteIMB(void);
-  ExecuteIMB();
+  
   
   run_INIT_Array(ex);
-  entry(filename, param1);
+
+#ifdef __ELFTHREAD
+  __run_proc((void*)entry, filename, param1, param2, param3);
+#else
+  ExecuteIMB();
+  entry(filename, param1, param2, param3);
+#endif
   
   if(!ex->__is_ex_import && !ex->libs)
   {
@@ -64,260 +72,63 @@ __arm int elf_load(char *filename, void *param1){
 }
 
 
-long elfload(char *filename, void *param1){
+long elfload(char *filename, void *param1, void *p2, void *p3){
 
-  return elf_load(filename, param1);
+  return elf_load(filename, param1, p2, p3);
 }
 
-
-/*
-long elfload(char *filename, void *param1)
+#ifdef __ELFTHREAD
+__arm void elf_proc_func()
 {
-  Elf32_Ehdr ehdr;				                        //çàãîëîâîê åëüôà
-  Elf32_Phdr phdrs[MAX_PHNUM];	                                        //çàãîëîâêè ïðîãðàì
-  Elf32_Word dyn[DT_BINDNOW+1];	                                        //òýãè äèíàìè÷åñêîé ñåêöèè
-  char *reloc, *base;
-  unsigned long minadr=(unsigned long)-1, maxadr=0;//, maxadrsize;
-  int n,m;
-  
-  
-  zeromem_a(dyn, sizeof(dyn));
-  
-  /////////////////////////////////////////
-  //WINTEL
-#ifdef wintel
-  FILE *fin=NULL;
-  if ((fin=open(filename,"rb"))==NULL) return -1;			//íå îòêðûâàåòñÿ åëüô
-  if (read(&ehdr,sizeof(Elf32_Ehdr),1,fin)!=1) return -2;	        //íå ÷èòàåòñÿ åëüô
-#endif
-  
-  //ARM
-#ifndef wintel
-  int fin;
-  unsigned int iError, iError2;
-  if ((fin=open(filename, A_ReadOnly+A_BIN, P_READ, &iError))<0) return -1;	//íå îòêðûâàåòñÿ åëüô
-  if (read(fin, &ehdr, sizeof(Elf32_Ehdr), &iError)!=sizeof(Elf32_Ehdr))	//íå ÷èòàåòñÿ åëüô
-  {close(fin, &iError); return -2;}
-#endif
-  /////////////////////////////////////////
-  
-  if (*((long *)ehdr.e_ident)!=0x464C457F){                               //äà è íå åëüô ýòî âîâñå
-#ifndef wintel
-    close(fin, &iError);
-#endif
-    return -3;
-  }
-  
-#ifdef wintel
-  cout << "Elf header"<<endl;
-  cout << "ehdr.e_entry:"<<ehdr.e_entry<<endl;
-  cout << "ehdr.e_phoff:"<<ehdr.e_phoff<<endl;
-#endif
-  
-  //ïðî÷èòàåì âñå ïðîãðàìíûå ñåãìåíòû è âû÷èñëèì íåîáõîäèìóþ îáëàñòü â ðàìå
-  if (ehdr.e_phnum>MAX_PHNUM) return -9;					//ñëèøêîì ìíîãî ïðîãðàìíûõ ñåãìåíòîâ
-  for(n=0;n<ehdr.e_phnum;n++){
-    ////////////////////////////////////////////////////
-    //WINTEL
-#ifdef wintel
-    if (fseek(fin,ehdr.e_phoff+n*ehdr.e_phentsize,SEEK_SET)!=0) return -4;	//íå ñèêàåòñÿ ïðîãðàìíûé çàãîëîâîê
-    if (read(&(phdrs[n]),sizeof(Elf32_Phdr),1,fin)!=1) return -5;		//íå ÷èòàåòñÿ ïðîãðàìíûé çàãîëîâîê
-#endif
-    
-    //ARM
-#ifndef wintel
-    if (lseek(fin, ehdr.e_phoff+n*ehdr.e_phentsize, S_SET, &iError, &iError2)!=ehdr.e_phoff+n*ehdr.e_phentsize)
-    {close(fin, &iError); return -4;}				//íå ñèêàåòñÿ ïðîãðàìíûé çàãîëîâîê
-    if (read(fin, &phdrs[n], sizeof(Elf32_Phdr), &iError)!=sizeof(Elf32_Phdr))
-    {close(fin, &iError); return -5;}				//íå ÷èòàåòñÿ ïðîãðàìíûé çàãîëîâîê
-#endif
-    /////////////////////////////////////////////////////
-    if (phdrs[n].p_type==PT_LOAD) {
-      if (minadr>phdrs[n].p_vaddr) minadr=phdrs[n].p_vaddr;
-      if (maxadr<(phdrs[n].p_vaddr+phdrs[n].p_memsz))
-      {
-	maxadr=phdrs[n].p_vaddr+phdrs[n].p_memsz;
-      }
-    }
-#ifdef wintel
-    cout << "minadr:"<<hex<<minadr<<endl;
-    cout << "maxadr:"<<hex<<maxadr<<endl;
-    cout << "Program header"<<endl;
-    cout << "phdr.p_type:"<<phdrs[n].p_type<<endl;
-    cout << "phdr.p_offset:"<<phdrs[n].p_offset<<endl;
-    cout << "phdr.p_vaddr:"<<phdrs[n].p_vaddr<<endl;
-    cout << "phdr.p_paddr:"<<phdrs[n].p_paddr<<endl;
-    cout << "phdr.p_filesz:"<<phdrs[n].p_filesz<<endl;
-    cout << "phdr.p_memsz:"<<phdrs[n].p_memsz<<endl;
-#endif
-  }
-  
-  //âûäåëèì ýòó îáëàñòü è î÷èñòèì åå
-  if ((base=(char *)malloc(maxadr-minadr))==0){		//íå âûäåëÿåòüñÿ ïàìÿòü ïîä åëüô
-#ifndef wintel
-    close(fin, &iError);
-#endif
-    return -14;
-  }
-  //  t_zeromem(base,maxadr-minadr);
-  zeromem_a(base,maxadr-minadr);
-  for(n=0;n<ehdr.e_phnum;n++){ //  îáõîä âñåõ ñåãìåíòîâ
-    ////////////////////////////////////////////////////////////////////
-    //WINTEL
-#ifdef wintel
-    if (fseek(fin,phdrs[n].p_offset,SEEK_SET)!=0) return -6;	//íå ñèêàåòñÿ äèíàìè÷åñêèé ñåãìåíò
-#endif
-    
-    //ARM
-#ifndef wintel
-    if (lseek(fin, phdrs[n].p_offset, S_SET, &iError, &iError)!=phdrs[n].p_offset)
-    {close(fin, &iError); mfree(base); return -6;}		//íå ñèêàåòñÿ äèíàìè÷åñêèé ñåãìåíò
-#endif
-    /////////////////////////////////////////////////////////////////////
-    switch (phdrs[n].p_type){
-    case PT_LOAD:
-      //çàãðóçèì ïðîãðàìíûå ñåãìåíòû ñ ðàçìåðîì áîëüøå 0
-      if (phdrs[n].p_filesz!=0) {
-	/////////////////////////////////////////////////////////////////////
-	//WINTEL
-#ifdef wintel
-	if (read((void *)&base[phdrs[n].p_vaddr-minadr],phdrs[n].p_filesz,1,fin)!=1) return -11;	//íå ÷èòàåòñÿ ïðîãðàìíûé ñåãìåíò
-#endif
-	
-	//ARM
-#ifndef wintel
-	if (read(fin, &base[phdrs[n].p_vaddr-minadr], phdrs[n].p_filesz, &iError)!= phdrs[n].p_filesz)
-	{close(fin, &iError); mfree(base); return -11;}//íå ÷èòàåòñÿ ïðîãðàìíûé ñåãìåíò
-#endif
-	///////////////////////////////////////////////////////////////////////
-      }
-      break;
-    case PT_DYNAMIC:
-      //ïðî÷òåì äèíàìè÷åñêóþ ñåêöèþ
-      if ((reloc=(char *)malloc(phdrs[n].p_filesz))==0) {//íå âûäåëÿåòñÿ ðàìà ïîä äèíàìè÷åñêèé ñåãìåíò
-#ifndef wintel
-	close(fin, &iError);
-#endif
-	mfree(base);
-	return -7;
-      }
-      ///////////////////////////////////////////////////////////////////////
-      //WINTEL
-#ifdef wintel
-      cout << "dyn seg: off="<<hex<<phdrs[n].p_offset<<", sz="<<phdrs[n].p_filesz<<endl;
-      if (read(reloc,phdrs[n].p_filesz,1,fin)!=1) {mfree(reloc); return -8;} //íå ÷èòàåòñÿ äèíàìè÷åñêèé ñåãìåíò
-#endif
-      
-      //ARM
-#ifndef wintel
-      if (read(fin, reloc, phdrs[n].p_filesz, &iError)!=phdrs[n].p_filesz)
-      {close(fin, &iError); mfree(reloc); mfree (base); return -8;}	//íå ÷èòàåòñÿ äèíàìè÷åñêèé ñåãìåíò
-#endif
-      ////////////////////////////////////////////////////////////////////////
-      //				memset(dyn,0, sizeof(dyn));
-      //âûòàùèì âñå òýãè èç äèíàìè÷åñêîé ñåêöèè
-      m=0;
-      while (((Elf32_Dyn *)reloc)[m].d_tag!=DT_NULL){
-	if (((Elf32_Dyn *)reloc)[m].d_tag<=DT_BINDNOW) {
-#ifdef wintel
-          cout<<"d_tag="<<((Elf32_Dyn *)reloc)[m].d_tag;
-          cout<<" d_val="<<((Elf32_Dyn *)reloc)[m].d_val<<endl;
-#endif
-	  dyn[((Elf32_Dyn *)reloc)[m].d_tag]=((Elf32_Dyn *)reloc)[m].d_un.d_val;
-	}
-	m++;
-      }
-#ifdef wintel
-      cout << "Dynamic section" << endl;
-      for (m = 0; m <= DT_BIND_NOW; m++) {
-	cout << dec << m <<" = "<< hex << dyn[m]<<endl;
-      }
-      cout<<"dyn[DT_REL]="<<dyn[DT_REL]<<", dyn[DT_RELA]="<<dyn[DT_RELA]<<endl;
-      cout<<"dyn[DT_RELSZ]="<<dyn[DT_RELSZ]<<", dyn[DT_RELASZ]="<<dyn[DT_RELASZ]<<endl;
-#endif
-      
-      m=0;
-      //âûïîëíèì ðåëîêàöèþ REL
-      if (dyn[DT_RELSZ]!=0) {
-	while (m*sizeof(Elf32_Rel)<dyn[DT_RELSZ]){
-#ifdef wintel
-	  cout<<"rel: of="<<hex<<((Elf32_Rel *)(reloc+dyn[DT_REL]-phdrs[n].p_vaddr))[m].r_offset
-	    <<" , sym_idx="<<ELF32_R_SYM(((Elf32_Rel *)(reloc+dyn[DT_REL]-phdrs[n].p_vaddr))[m].r_info)
-              <<" , rel_type="<<dec<<(int) ELF32_R_TYPE(((Elf32_Rel *)(reloc+dyn[DT_REL]-phdrs[n].p_vaddr))[m].r_info)<<endl;
-#endif
-          Elf32_Word ri=ELF32_R_TYPE(((Elf32_Rel *)(reloc+dyn[DT_REL]-phdrs[n].p_vaddr))[m].r_info);
-          if (ri!=R_ARM_RBASE)
-          {
-            if (ri==R_ARM_RABS32)
+    GBS_MSG msg;
+    if (GBS_RecActDstMessage(&msg))
+    {
+        if (msg.msg==1)
+        {
+            if (msg.data0)
             {
-              *((long*)(base+((Elf32_Rel *)(reloc+dyn[DT_REL]-phdrs[n].p_vaddr))[m].r_offset))+=(long)base-minadr;
+                ExecuteIMB();
+                struct __param * p = (struct __param*)msg.data1;
+                ((void (*)(void *, void*, void*, void*))(msg.data0))(p->p1, p->p2, p->p3, p->p4);
+                mfree(p);
+                //mutex_unlock(&mutex);
+                //mutex_destroy(&mutex);
+                lock_thread = 0;
             }
-            else
-              switch(ri){
-                
-              case R_ARM_NONE: break; // ïóñòîé ðåëîêåéøåí
-              
-              case R_ARM_ABS32:
-#ifdef wintel
-                cout << "base="<<hex<<(long)base<< endl;
-                cout << "of="<<hex<<((Elf32_Rel *)(reloc+dyn[DT_REL]-phdrs[n].p_vaddr))[m].r_offset-minadr<<endl;
-#endif
-                *((long*)(base+((Elf32_Rel *)(reloc+dyn[DT_REL]-phdrs[n].p_vaddr))[m].r_offset-minadr))+=(long)base;
-                break;
-                
-              case R_ARM_RELATIVE: // âîîáùå ãîâîðÿ íå minadr à íà÷àëî ñåãìåíòà ñîäåðæàùåãî ñèìâîë
-                *((long*)(base+((Elf32_Rel *)(reloc+dyn[DT_REL]-phdrs[n].p_vaddr))[m].r_offset-minadr))+=(long)base-minadr;
-                break; // ignore
-                
-                //	  case R_ARM_RABS32:
-                //	    *((long*)(base+((Elf32_Rel *)(reloc+dyn[DT_REL]-phdrs[n].p_vaddr))[m].r_offset))+=(long)base-minadr;
-                //            break;
-                
-                //              case R_ARM_RBASE: break;
-              default: 	//íåèçâåñòíûé òèï ðåëîêàöèè
-#ifdef wintel
-                cout << "Invalid reloc type: " <<dec<<(unsigned)ELF32_R_TYPE(((Elf32_Rel *)(reloc+dyn[DT_REL]-phdrs[n].p_vaddr))[m].r_info) << endl;
-#else
-                close(fin, &iError);
-#endif
-                mfree(base);
-                mfree(reloc);
-                return -13;
-              }
-          }
-	  m++;
-	}
-      }
-#ifdef wintel
-      else
-      {
-        cout << "No relocation information dyn[DT_RELSZ]=0" << endl;
-      }
-#endif
-      mfree(reloc);
-      break;
-    default:	//íåèçâåñòíûé òèï ïðîãðàìíîãî ñåãìåíòà
-#ifndef wintel
-      close(fin, &iError);
-#endif
-      mfree(base);
-      return -12;
+        }
     }
-  }
-
-  close(fin, &iError);
-  {
-    extern __arm void ExecuteIMB(void);
-    ExecuteIMB();	
-  }
-  ((TElfEntry *)(base+ehdr.e_entry-minadr))(filename,param1);
-  //	mfree(base);
-  return 0;
 }
-*/
+
+
+__arm void __run_proc(void *entry, char *filename, void *param1, void *param2, void *param3)
+{
+  lock_thread = 1;
+  //mutex_init(&mutex);
+  struct __param *p = malloc(sizeof(struct __param));
+  p->p1 = filename;
+  p->p2 = param1;
+  p->p3 = param2;
+  p->p4 = param3;
+  GBS_SendMessage(ELF_PROC_RUNER_ID, 1, 0, entry, (void*)p);
+  //mutex_lock(&mutex);
+  while(lock_thread)
+  {
+    if(!lock_thread) break;
+    NU_Sleep(5);
+  }
+}
+#endif
 
 __arm void InitLoaderSystem()
 {
+  setenv("LD_LIBRARY_PATH", "0:\\Misc\\elf3\\;0:\\ZBin\\lib\\;4:\\ZBin\\lib\\;", 1);
+  
+#ifdef __ELFTHREAD
+  static const char elf_p_name[]="ELF_PROC";
+  extern const int elf_run_prio;
+  CreateGBSproc(ELF_PROC_RUNER_ID, elf_p_name, elf_proc_func, elf_run_prio, 0);
+#endif
+  
 }
 
 
@@ -330,7 +141,7 @@ int main()
 int elfloader_onload(WSHDR *filename, WSHDR *ext, void *param){
   char fn[128];
   ws_2str(filename,fn,126);
-  if (elfload(fn,param)) return 0; else return 1;
+  if (elfload(fn, param, 0, 0)) return 0; else return 1;
 }
 
 //=======================================================================
@@ -410,6 +221,10 @@ __arm void MyIDLECSMonClose(void *data)
 {
   extern BXR1(void *, void (*)(void *));
   KillGBSproc(HELPER_CEPID);
+#ifdef __ELFTHREAD
+  KillGBSproc(ELF_PROC_RUNER_ID);
+#endif
+  clearenv();
   BXR1(data,OldOnClose);
   //  OldOnClose(data);
   //  asm("NOP\n");
@@ -432,7 +247,7 @@ __arm void LoadDaemons(void)
       //strcpy(name,path);
       name[pathlen]=0;
       strcat(name,de.file_name);
-      elfload(name,0);
+      elfload(name,0,0,0);
     }
     while(FindNextFile(&de,&err));
   }
@@ -512,6 +327,7 @@ extern void InitPngBitMap(void);
 __no_init char smallicons_str[32];
 __no_init char bigicons_str[32];
 
+
 __arm void MyIDLECSMonCreate(void *data)
 {
   static const int smallicons[2]={(int)smallicons_str,0};
@@ -556,9 +372,17 @@ __arm void MyIDLECSMonCreate(void *data)
   strcpy(bigicons_str+1,":\\ZBin\\img\\elf_big.png");
   smallicons_str[0]=bigicons_str[0]=DEFAULT_DISK_N+'0';
   RegExplorerExt(&elf_reg);
-  LoadDaemons();
+
+#ifndef __ELFTHREAD
+ // if(load_in_suproc)
+ //   SUBPROC((void*)LoadDaemons);
+ // else
+#endif
+    LoadDaemons();
+  
   extern BXR1(void *, void (*)(void *));
   BXR1(data,OldOnCreate);
+
   //  OldOnCreate(data);
   //  asm("NOP\n");
 }
