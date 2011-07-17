@@ -1,0 +1,12 @@
+#!/bin/sh
+
+phone="CX75sw13"
+outname="ElfPack_"$phone".vkp"
+
+wine ../../elf2vkp.exe ELFLoader.elf ElfLoader3.vkp ff.bin &> /dev/null
+
+echo ";"$phone > $outname
+cat ../../copyright.txt >> $outname
+cat ElfLoader3.vkp >> $outname
+
+exit 0

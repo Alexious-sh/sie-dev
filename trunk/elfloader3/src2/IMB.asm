@@ -29,7 +29,11 @@ clean_loop:
 	NOP
 	NOP
 	NOP
+        NOP
+	NOP
 	MCR	p15, 0, r0, c7, c5, 0 ; invalidate icache
+	NOP
+        NOP
 	NOP
 	NOP
 	NOP

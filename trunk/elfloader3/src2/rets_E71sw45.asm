@@ -9,7 +9,7 @@
 	DCD	SFE(DATA_N)
         
         
-	RSEG	SWILIB_FUNC2EE_2F2:CODE
+	RSEG	SWILIB_FUNC2EE_2F5:CODE
 	EXTERN	elfclose
 	EXTERN	dlopen
 	EXTERN	dlsym
