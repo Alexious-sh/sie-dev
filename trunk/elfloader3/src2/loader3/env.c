@@ -165,12 +165,12 @@ __arm int clearenv(void)
 	int i = 0;
 	while(l_last_environ[i])
 	{
-	  free(l_last_environ[i]);
+	  mfree(l_last_environ[i]);
           l_last_environ[i] = 0;
 	  ++i;
 	}
 
-    free(l_last_environ);
+    mfree(l_last_environ);
 	l_last_environ = NULL;
 	l__environ = NULL;
 	return 0;

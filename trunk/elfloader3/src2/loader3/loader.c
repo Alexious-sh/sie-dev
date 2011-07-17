@@ -347,9 +347,7 @@ __arch int LoadSections(Elf32_Exec* ex)
 {
     Elf32_Phdr* phdrs = malloc(sizeof(Elf32_Phdr) * ex->ehdr.e_phnum);
     if(!phdrs) return E_SECTION;
-    
-    zeromem_a(ex->dyn, sizeof(ex->dyn));
-    
+
     unsigned int hdr_offset = ex->ehdr.e_phoff;
     int i = 0;
 
@@ -357,7 +355,7 @@ __arch int LoadSections(Elf32_Exec* ex)
     while(i < ex->ehdr.e_phnum)
     {
         if(lseek(ex->fp, hdr_offset, S_SET, &ferr, &ferr) == -1) break;
-        if(read(ex->fp, &phdrs[i], sizeof(Elf32_Phdr), &ferr) < sizeof(Elf32_Phdr))
+        if(fread(ex->fp, &phdrs[i], sizeof(Elf32_Phdr), &ferr) < sizeof(Elf32_Phdr))
             break;
 
         // не наше выравнивание
@@ -379,7 +377,8 @@ __arch int LoadSections(Elf32_Exec* ex)
 
         if(ex->body = malloc(ex->bin_size+1)) // ≈сли хватило рамы
         {
-            zeromem(ex->body, ex->bin_size+1);
+            zeromem_a(ex->body, ex->bin_size+1);
+            zeromem_a(ex->dyn, sizeof(ex->dyn));
 
             for(i=0; i < ex->ehdr.e_phnum; i++)
             {
@@ -393,7 +392,7 @@ __arch int LoadSections(Elf32_Exec* ex)
 
                     if(lseek(ex->fp, phdr.p_offset, S_SET, &ferr, &ferr) != -1)
                     {
-                        if(read(ex->fp, ex->body + phdr.p_vaddr - ex->v_addr, phdr.p_filesz, &ferr) == phdr.p_filesz)
+                        if(fread(ex->fp, ex->body + phdr.p_vaddr - ex->v_addr, phdr.p_filesz, &ferr) == phdr.p_filesz)
                             break;
                     }
 
@@ -445,9 +444,7 @@ __arch void run_INIT_Array(Elf32_Exec *ex)
 
   printf("init_array sz: %d\n", sz);
 
-  sz /= sizeof(void*);
-
-  for(int i=0; i<sz; ++i)
+  for(int i=0; i*sizeof(void*) < sz; ++i)
   {
      printf("init %d: 0x%X\n", i, arr[i]);
 #ifndef _test_linux
@@ -466,9 +463,7 @@ __arch void run_FINI_Array(Elf32_Exec *ex)
 
   printf("fini_array sz: %d\n", sz);
 
-  sz /= sizeof(void*);
-
-  for(int i=0; i<sz; ++i)
+  for(int i=0; i*sizeof(void*) < sz; ++i)
   {
      printf("fini %d: 0x%X\n", i, arr[i]);
 #ifndef _test_linux

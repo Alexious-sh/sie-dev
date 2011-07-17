@@ -154,7 +154,7 @@ __arch const char * findShared(const char *name)
         }
     }
     
-    return 0;
+    //return 0;
 }
 
 
