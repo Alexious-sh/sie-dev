@@ -51,13 +51,12 @@ __arm int elf_load(char *filename, void *param1, void *param2, void *param3){
   
   extern __arm void ExecuteIMB(void);
   
+  ExecuteIMB();
   
   run_INIT_Array(ex);
-
 #ifdef __ELFTHREAD
   __run_proc((void*)entry, filename, param1, param2, param3);
 #else
-  ExecuteIMB();
   entry(filename, param1, param2, param3);
 #endif
   
@@ -119,9 +118,11 @@ __arm void __run_proc(void *entry, char *filename, void *param1, void *param2, v
 }
 #endif
 
+
 __arm void InitLoaderSystem()
 {
-  setenv("LD_LIBRARY_PATH", "0:\\Misc\\elf3\\;0:\\ZBin\\lib\\;4:\\ZBin\\lib\\;", 1);
+  //0:\\Misc\\elf3\\;
+  setenv("LD_LIBRARY_PATH", "0:\\ZBin\\lib\\;4:\\ZBin\\lib\\;", 1);
   
 #ifdef __ELFTHREAD
   static const char elf_p_name[]="ELF_PROC";
@@ -374,9 +375,9 @@ __arm void MyIDLECSMonCreate(void *data)
   RegExplorerExt(&elf_reg);
 
 #ifndef __ELFTHREAD
- // if(load_in_suproc)
- //   SUBPROC((void*)LoadDaemons);
- // else
+  if(load_in_suproc)
+    SUBPROC((void*)LoadDaemons);
+  else
 #endif
     LoadDaemons();
   
