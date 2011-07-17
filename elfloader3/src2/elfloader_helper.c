@@ -121,7 +121,6 @@ __arm void __run_proc(void *entry, char *filename, void *param1, void *param2, v
 
 __arm void InitLoaderSystem()
 {
-  //0:\\Misc\\elf3\\;
   setenv("LD_LIBRARY_PATH", "0:\\ZBin\\lib\\;4:\\ZBin\\lib\\;", 1);
   
 #ifdef __ELFTHREAD
