@@ -43,9 +43,12 @@ __arch char* LoadData(Elf32_Exec* ex, int offset, int size)
 {
     if(size && lseek(ex->fp, offset - ex->v_addr, S_SET, &ferr, &ferr))
     {
-        char* data = malloc(size);
-        zeromem_a(data, size);
-        if(fread(ex->fp, data, size, &ferr) == size) return data;
+        char* data = malloc(size+1);
+        //zeromem_a(data, size+1);
+        if(fread(ex->fp, data, size, &ferr) == size) {
+          data[size] = 0;
+          return data;
+        }
         else mfree(data);
     }
 
@@ -78,7 +81,7 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
     //if(!dyn_sect) return 0;
   
     // Вытаскиваем теги
-    zeromem_a(ex->dyn, sizeof(ex->dyn));
+    
     while (dyn_sect[i].d_tag != DT_NULL)
     {
         if (dyn_sect[i].d_tag <= DT_FLAGS)
@@ -344,7 +347,9 @@ __arch int LoadSections(Elf32_Exec* ex)
 {
     Elf32_Phdr* phdrs = malloc(sizeof(Elf32_Phdr) * ex->ehdr.e_phnum);
     if(!phdrs) return E_SECTION;
-
+    
+    zeromem_a(ex->dyn, sizeof(ex->dyn));
+    
     unsigned int hdr_offset = ex->ehdr.e_phoff;
     int i = 0;
 
@@ -374,7 +379,7 @@ __arch int LoadSections(Elf32_Exec* ex)
 
         if(ex->body = malloc(ex->bin_size+1)) // Если хватило рамы
         {
-            zeromem(ex->body, ex->bin_size);
+            zeromem(ex->body, ex->bin_size+1);
 
             for(i=0; i < ex->ehdr.e_phnum; i++)
             {
@@ -434,12 +439,13 @@ __arch int LoadSections(Elf32_Exec* ex)
 /* constructors */
 __arch void run_INIT_Array(Elf32_Exec *ex)
 {
+  if(!ex->dyn[DT_FINI_ARRAY]) return;
   size_t sz = ex->dyn[DT_INIT_ARRAYSZ];
   void ** arr = (void**)(ex->body + ex->dyn[DT_INIT_ARRAY] - ex->v_addr);
 
   printf("init_array sz: %d\n", sz);
 
-   sz /= sizeof(void*);
+  sz /= sizeof(void*);
 
   for(int i=0; i<sz; ++i)
   {
@@ -454,14 +460,15 @@ __arch void run_INIT_Array(Elf32_Exec *ex)
 /* destructors */
 __arch void run_FINI_Array(Elf32_Exec *ex)
 {
+  if(!ex->dyn[DT_FINI_ARRAY]) return;
   size_t sz = ex->dyn[DT_FINI_ARRAYSZ];
   void ** arr = (void**)(ex->body + ex->dyn[DT_FINI_ARRAY] - ex->v_addr);
 
   printf("fini_array sz: %d\n", sz);
 
-  size_t cnt = sz/sizeof(void*);
+  sz /= sizeof(void*);
 
-  for(int i=0; i<cnt; ++i)
+  for(int i=0; i<sz; ++i)
   {
      printf("fini %d: 0x%X\n", i, arr[i]);
 #ifndef _test_linux
