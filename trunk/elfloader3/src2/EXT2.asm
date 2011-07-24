@@ -185,10 +185,10 @@ J_REG_FILE
     PUBLIC	__e_div //int __e_div(int delitelb, int delimoe);
 __e_div:
 
-    STMFD   SP!, {LR}
-    SWI     0xB8
+    PUSH    {LR}
+    SVC     0xB8
     MOV     R0, R1
-    LDMFD   SP!, {PC}
+    POP     {PC}
 
     END
 	

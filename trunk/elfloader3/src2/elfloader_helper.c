@@ -5,12 +5,16 @@
 #include "loader3\env.h"
 #include "loader3\Mutex.h"
 
+
 //#define __ELFTHREAD
 #define ELF_PROC_RUNER_ID 0x4409
 const int elf_run_prio = 0x2;
 int lock_thread = 0;
 extern unsigned int load_in_suproc;
 extern unsigned int run_elf_in_thread;
+extern char IMAGE_FOLDER[];
+extern char DAEMONS_FOLDER[];
+extern char SWIBLIB_WAY[];
 //Mutex mutex;
 
 
@@ -45,12 +49,12 @@ __arm int elf_load(char *filename, void *param1, void *param2, void *param3){
   int (*entry)(char *, void *, void*, void*) = (int (*)(char *, void *, void*, void*))elf_entry(ex);
   if(!entry){
    l_msg(1, (int)"Cant found entry");
+   elfclose(ex);
    return -2;
   }
   
   
   extern __arm void ExecuteIMB(void);
-  
   ExecuteIMB();
   
   run_INIT_Array(ex);
@@ -71,7 +75,7 @@ __arm int elf_load(char *filename, void *param1, void *param2, void *param3){
 }
 
 
-long elfload(char *filename, void *param1, void *p2, void *p3){
+__arm long elfload(char *filename, void *param1, void *p2, void *p3){
 
   return elf_load(filename, param1, p2, p3);
 }
@@ -122,7 +126,7 @@ __arm void __run_proc(void *entry, char *filename, void *param1, void *param2, v
 __arm void InitLoaderSystem()
 {
   setenv("LD_LIBRARY_PATH", "0:\\ZBin\\lib\\;4:\\ZBin\\lib\\;", 1);
-  
+
 #ifdef __ELFTHREAD
   static const char elf_p_name[]="ELF_PROC";
   extern const int elf_run_prio;
@@ -232,12 +236,13 @@ __arm void MyIDLECSMonClose(void *data)
 
 __arm void LoadDaemons(void)
 {
+
   DIR_ENTRY de;
   unsigned int err;
   unsigned int pathlen;
   char name[256];
-  strcpy(name+1,":\\ZBin\\Daemons\\");
-  name[0]=DEFAULT_DISK_N+'0';
+  strcpy(name, DAEMONS_FOLDER);
+  //name[0]=DEFAULT_DISK_N+'0';
   pathlen=strlen(name);
   strcat(name,"*.elf");
   if (FindFirstFile(&de,name,&err))
@@ -273,8 +278,8 @@ __arm void LoadLibrary(void)
   int sz;
   int f;
   char fn[64];
-  strcpy(fn+1,":\\Zbin\\swi.blib");
-  fn[0]=DEFAULT_DISK_N+'0';
+  strcpy(fn, SWIBLIB_WAY);
+  //fn[0]=DEFAULT_DISK_N+'0';
   if (lt)
   {
     pLIB_TOP=NULL;
@@ -368,11 +373,15 @@ __arm void MyIDLECSMonCreate(void *data)
   LoadLibrary();
   InitPngBitMap();
   InitLoaderSystem();
-  strcpy(smallicons_str+1,":\\ZBin\\img\\elf_small.png");
-  strcpy(bigicons_str+1,":\\ZBin\\img\\elf_big.png");
-  smallicons_str[0]=bigicons_str[0]=DEFAULT_DISK_N+'0';
+  //strcpy(smallicons_str+1,":\\ZBin\\img\\elf_small.png");
+  //strcpy(bigicons_str+1,":\\ZBin\\img\\elf_big.png");
+  //smallicons_str[0]=bigicons_str[0]=DEFAULT_DISK_N+'0';
+  sprintf(smallicons_str, "%self_small.png", IMAGE_FOLDER);
+  sprintf(bigicons_str, "%self_big.png", IMAGE_FOLDER);
   RegExplorerExt(&elf_reg);
 
+  /* ну а хуле, плюшки для блондинок */
+  if( *RamPressedKey() != '#')
 #ifndef __ELFTHREAD
   if(load_in_suproc)
     SUBPROC((void*)LoadDaemons);

@@ -80,3 +80,9 @@ __arch int elfclose(Elf32_Exec* ex)
   return E_NO_ERROR;
 }
 
+
+__arch int sub_elfclose(Elf32_Exec* ex)
+{
+  SUBPROC((void*)elfclose, ex);
+  return 0;
+}

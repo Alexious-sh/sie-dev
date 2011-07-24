@@ -1,6 +1,6 @@
 #!/bin/sh
 
-phone="C75sw22"
+phone="SL75sw47"
 outname="ElfPack_"$phone".vkp"
 
 wine ../../elf2vkp.exe ELFLoader.elf ElfLoader3.vkp &> /dev/null
@@ -11,8 +11,8 @@ echo "#pragma enable old_equal_ff" >> $outname
 cat ElfLoader3.vkp >> $outname
 echo "" >> $outname
 echo " ; Needed function" >> $outname
-echo "+10E4000" >> $outname
-echo "03FC: 0xA10E4000   ;  FF: unsigned int AddrLibrary()" >> $outname
+echo "+0074000" >> $outname
+echo "03FC: 0xA0074000   ;  FF: unsigned int AddrLibrary()" >> $outname
 echo "+0" >> $outname
 echo "#pragma disable old_equal_ff" >> $outname
 

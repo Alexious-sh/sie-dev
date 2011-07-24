@@ -64,7 +64,7 @@ static const unsigned char elf_magic_header[] =
 };
 
 #ifndef _test_linux
-  #define printf
+  #define printf(...) 
   #define __arch __arm
 #else
   #define __arch __arm
@@ -85,7 +85,9 @@ enum ERROR{
     E_ALIGN,
     E_UNDEF,
     E_SYMTAB,
-    E_STRTAB
+    E_STRTAB,
+    E_PHDR,
+    E_HASTAB
 };
 
 typedef struct

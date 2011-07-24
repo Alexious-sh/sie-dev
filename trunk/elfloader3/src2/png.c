@@ -6,8 +6,8 @@ extern unsigned int DEFAULT_COLOR;
 extern unsigned int ALPHA_THRESHOLD;
 extern unsigned int CACHE_PNG;
 extern unsigned int DEFAULT_DISK_N;
+extern char IMAGE_FOLDER[];
 
-const char DEFAULT_FOLDER[]=":\\ZBin\\img\\";
 
 #define number 8
 
@@ -109,16 +109,16 @@ __arm IMGHDR* create_imghdr(const char *fname, int type)
   
   rowbytes = png_get_rowbytes(png_ptr, info_ptr);
   
-  pp.row=malloc(rowbytes);
-  pp.img_h=img_hc=malloc(sizeof(IMGHDR));
+  pp.row = malloc(rowbytes);
+  pp.img_h = img_hc = malloc(sizeof(IMGHDR));
   
-  if (type==PNG_1)
+  if (type == PNG_1)
   {
     int rowc_w=(width+7)>>3;
     int size=height*rowc_w;
     unsigned char *iimg=(unsigned char *)(pp.img=malloc(size));
     zeromem(iimg,size);
-    for (unsigned int y = 0; y<height; y++)
+    for (unsigned int y = 0; y<height; ++y)
     {
       png_read_row(png_ptr, (png_bytep)pp.row, NULL);
       for (unsigned int x = 0; x<width; x++)
@@ -137,10 +137,10 @@ __arm IMGHDR* create_imghdr(const char *fname, int type)
     case PNG_8:
       {
         unsigned char *iimg=(unsigned char *)(pp.img=malloc(width*height));
-        for (unsigned int y = 0; y<height; y++)
+        for (unsigned int y = 0; y<height; ++y)
         {
           png_read_row(png_ptr, (png_bytep)pp.row, NULL);
-          for (unsigned int x = 0; x<width; x++)
+          for (unsigned int x = 0; x<width; ++x)
           {
             if (pp.row[x*4+3]<ALPHA_THRESHOLD)
               *iimg++=0xC0;
@@ -159,10 +159,10 @@ __arm IMGHDR* create_imghdr(const char *fname, int type)
     case PNG_16:
       {
         unsigned short *iimg=(unsigned short *)(pp.img=malloc(width*height*2));
-        for (unsigned int y = 0; y<height; y++)
+        for (unsigned int y = 0; y<height; ++y)
         {
           png_read_row(png_ptr, (png_bytep)pp.row, NULL);
-          for (unsigned int x = 0; x<width; x++)
+          for (unsigned int x = 0; x<width; ++x)
           {
             if (pp.row[x*4+3]<ALPHA_THRESHOLD)
               *iimg++=0xE000;
@@ -178,14 +178,14 @@ __arm IMGHDR* create_imghdr(const char *fname, int type)
         pp.img_h->bpnum=8;
         break;
       }
-#if NEWSGOLD || X75
+//#if NEWSGOLD || X75
     case PNG_24:
       {
         unsigned char *iimg=(unsigned char *)(pp.img=malloc((width*height)<<2));
-        for (unsigned int y = 0; y<height; y++)
+        for (unsigned int y = 0; y<height; ++y)
         {
           png_read_row(png_ptr, (png_bytep)pp.row, NULL);
-          for (unsigned int x = 0; x<width; x++)
+          for (unsigned int x = 0; x<width; ++x)
           {
 	    unsigned int c;
             *iimg++=pp.row[x*4+2];
@@ -201,7 +201,7 @@ __arm IMGHDR* create_imghdr(const char *fname, int type)
         pp.img_h->bpnum=0xA;
         break;
       }
-#endif
+//#endif
     }
   }
   pp.img_h->w=width;
@@ -271,6 +271,7 @@ __arm IMGHDR *find_png_in_cache(char *png_name)
   pl_prev=NULL;  
   while((pl=pl->next))
   {
+    // Вызов сви слишком тормозный для таких циклов :D
     if (!strcmp(pl->pngname,png_name))
     {
       //Найден, переносим в начало и выходим
@@ -340,8 +341,8 @@ __arm IMGHDR* PatchGetPIT(unsigned int pic)
       {
         if (i&mask40)  
         {
-          char *next=strcpy_tolow(fname+1,DEFAULT_FOLDER); // Картинка вроде как есть на диске
-	  *fname=DEFAULT_DISK_N+'0';
+          char *next=strcpy_tolow(fname,IMAGE_FOLDER); // Картинка вроде как есть на диске
+	  //*fname=DEFAULT_DISK_N+'0';
           print10(next,pic);
           img=find_png_in_cache(fname);
           if (img) return (img);
@@ -354,8 +355,8 @@ __arm IMGHDR* PatchGetPIT(unsigned int pic)
 	LockSched();
 	*bp|=mask80; // Записи нет, ставим флаг что есть
 	UnlockSched();
-        char *next=strcpy_tolow(fname+1,DEFAULT_FOLDER);
-	*fname=DEFAULT_DISK_N+'0';
+        char *next=strcpy_tolow(fname,IMAGE_FOLDER);
+	//*fname=DEFAULT_DISK_N+'0';
         print10(next,pic);
         img=find_png_in_cache(fname);
         if (img)
@@ -425,6 +426,8 @@ __arm IMGHDR* PatchGetPIT(unsigned int pic)
 
 __arm void InitPngBitMap(void)
 {
+
+  
   if (!pngtop.bitmap)
   {
     pngtop.bitmap=malloc(20000/8*2);

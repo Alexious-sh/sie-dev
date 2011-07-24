@@ -1,6 +1,6 @@
 
 	RSEG	SWILIB_FUNC2EE_2F5:CODE
-	EXTERN	elfclose
+	EXTERN	sub_elfclose
 	EXTERN	dlopen
 	EXTERN	dlsym
         EXTERN	dlclose
@@ -9,7 +9,7 @@
         EXTERN	getenv
         EXTERN	clearenv
         
-	DCD	elfclose
+	DCD	sub_elfclose
 	DCD	dlopen
 	DCD	dlsym
         DCD     dlclose
@@ -17,6 +17,7 @@
 	DCD	unsetenv
         DCD     getenv
         DCD     clearenv
+	
 
 
 	RSEG	DATA_N
@@ -36,30 +37,44 @@ a	EQU	b
 
         RSEG	CODE:CODE
         
-
+	
 	PUBLIC	OldOnClose
 OldOnClose:
-	DCD	0xA02FCD7A+1
+	DCD	0xA02A7586+1
 	
 	PUBLIC	OldOnCreate
 OldOnCreate:
-	DCD	0xA02FCB52+1
-	
-	PUBLIC	OldShowMsg
-OldShowMsg:
-	DCD	0xA097789E+1
-	
-	PUBLIC	PITgetN
+	DCD	0xA02A732E+1
+        
+	PUBLIC	ESIOld
+ESIOld:
+	DCD	0xA0A14BA0+1
+        
+        PUBLIC	PITgetN
 PITgetN:
-	DCD	0xA0A27720
+	DCD	0xA07B111A+1
 	
 	PUBLIC	PITret
 PITret:
-	DCD	0xA0975D3E+1
-
-
-	defadr	StoreErrInfoAndAbort,0xA01CD2E8
-	defadr	StoreErrString,0xA01CD1B4
-
+	DCD	0xA07B1130+1
+        
+        PUBLIC	KEYBret
+KEYBret:
+	DCD	0xA07A6046+1  
+        
+        PUBLIC	KEYBfunc
+KEYBfunc:
+	DCD	0xA07B305C+1          
+        
+	PUBLIC	FReadOld
+FReadOld:
+	DCD	0xA078074C
+        
+        PUBLIC	FWriteOld
+FWriteOld:
+	DCD	0xA0780834       
+        
+        defadr	StoreErrInfoAndAbort,0xA0781274
+	defadr	StoreErrString,0xA0781098
 
 	END
