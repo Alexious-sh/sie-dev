@@ -365,7 +365,6 @@ __arch int LoadSections(Elf32_Exec* ex)
     while(i < ex->ehdr.e_phnum)
     {
         if(lseek(ex->fp, hdr_offset, S_SET, &ferr, &ferr) == -1) break;
-<<<<<<< .mine
         if(read(ex->fp, &phdrs[i], sizeof(Elf32_Phdr), &ferr) != sizeof(Elf32_Phdr))
 	{
 //#warning This is good?
@@ -378,13 +377,6 @@ __arch int LoadSections(Elf32_Exec* ex)
         
         /* тут же и размер бинарника посчитаем */
         if (phdrs[i].p_type == PT_LOAD)
-=======
-        if(fread(ex->fp, &phdrs[i], sizeof(Elf32_Phdr), &ferr) < sizeof(Elf32_Phdr))
-            break;
-
-        // не наше выравнивание
-        /*if( phdrs[i].p_offset != phdrs[i].p_vaddr )
->>>>>>> .r42
         {
             if (ex->v_addr > phdrs[i].p_vaddr) ex->v_addr = phdrs[i].p_vaddr;
             end_adr = phdrs[i].p_vaddr + phdrs[i].p_memsz;

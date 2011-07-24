@@ -154,12 +154,8 @@ __arch const char * findShared(const char *name)
         }
     }
     
-<<<<<<< .mine
     /* этого никогда не будет */
     //return 0;
-=======
-    //return 0;
->>>>>>> .r42
 }
 
 
