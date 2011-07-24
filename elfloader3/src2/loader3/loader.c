@@ -69,7 +69,7 @@ __arch static inline unsigned int _look_sym(Elf32_Exec *ex, const char *name)
     return func;
 }
 
-// ? елокация
+// Релокация
 __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
 {
     unsigned int i = 0;
@@ -77,11 +77,7 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
     unsigned int libs_cnt = 0;
     char dbg[128];
 
-    //Elf32_Dyn* dyn_sect = (Elf32_Dyn*)LoadData(ex, phdr->p_offset, phdr->p_filesz);
-    //if(!dyn_sect) return 0;
-  
     // Вытаскиваем теги
-    
     while (dyn_sect[i].d_tag != DT_NULL)
     {
         if (dyn_sect[i].d_tag <= DT_FLAGS)
@@ -118,7 +114,14 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
         {
             int hash_size = hash_hdr[0] * sizeof(Elf32_Word) + hash_hdr[1] * sizeof(Elf32_Word) + 8;
             ex->hashtab = (Elf32_Word*)LoadData(ex, ex->dyn[DT_HASH], hash_size);
+	    if(!ex->hashtab) goto __hash_err;
         }
+        else
+	{
+	  __hash_err:
+	  ShowMSG(1, (int)"Error loading hashtab");
+	  return E_HASTAB;
+	}
     }
 
     // Загрузка библиотек
@@ -126,7 +129,7 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
     {
         char *lib_name = ex->strtab + libs_needed[i];
         Elf32_Lib* lib;
-    if(lib = OpenLib(lib_name))
+        if( (lib = OpenLib(lib_name)) )
         {
             Libs_Queue* libq = malloc(sizeof(Libs_Queue));
             libq->lib = lib;
@@ -144,7 +147,7 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
         }
     }
 
-    // ? елокация
+    // Релокация
     if (ex->dyn[DT_RELSZ])
     {
         i=0;
@@ -168,6 +171,7 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
         {
             r_type = ELF32_R_TYPE(reltab[i].r_info);
             Elf32_Sym *sym = ex->symtab? &ex->symtab[ELF32_R_SYM(reltab[i].r_info)] : 0;
+            int bind_type = sym ? ELF_ST_BIND(sym->st_info) : 0;
 
             switch(r_type)
             {
@@ -211,12 +215,14 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
                 printf("'%s' %X\n", name, *addr);
                 // Если нужен указатель на эльф
 
-                //if( *(int*)name == *(int*)"__ex" ) // ?????? ??? ???????!
+                //if( *(int*)name == *(int*)"__ex" ) // че оно пикает?!
                 //if( !strcmp(name, "__ex") )
-                if( name[0] == '_' &&
+                if( name[4] == 0   && 
+                    name[0] == '_' &&
                     name[1] == '_' &&
                     name[2] == 'e' &&
-                    name[3] == 'x'  )
+                    name[3] == 'x'
+                    )
                 {
                     ex->__is_ex_import = 1;
                     printf("__ex: 0x%X\n", (int)ex);
@@ -232,7 +238,7 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
 		
 		printf("%x - %s\n", func, name);
 
-                if(!func && ELF_ST_BIND(sym->st_info) != STB_WEAK)
+                if(!func && bind_type != STB_WEAK)
                 {
                     sprintf(dbg, "Undefined reference to `%s'\n", name);
                     l_msg(1, (int)dbg);
@@ -277,7 +283,7 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
                 {
                     printf("Searching in libs...\n");
                     *addr = (unsigned int)_look_sym(ex, name);
-                    if( !*addr && ELF_ST_BIND(sym->st_info) != STB_WEAK)
+                    if( !*addr && bind_type != STB_WEAK)
                     {
                         sprintf(dbg, "Undefined reference to `%s'\n", name);
                         l_msg(1, (int)dbg);
@@ -342,6 +348,7 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
     return E_NO_ERROR;
 }
 
+
 // Чтение сегментов из файла
 __arch int LoadSections(Elf32_Exec* ex)
 {
@@ -351,29 +358,48 @@ __arch int LoadSections(Elf32_Exec* ex)
     unsigned int hdr_offset = ex->ehdr.e_phoff;
     int i = 0;
 
+    unsigned long maxadr=0;
+    unsigned int end_adr;
+
     // Читаем заголовки
     while(i < ex->ehdr.e_phnum)
     {
         if(lseek(ex->fp, hdr_offset, S_SET, &ferr, &ferr) == -1) break;
+<<<<<<< .mine
+        if(read(ex->fp, &phdrs[i], sizeof(Elf32_Phdr), &ferr) != sizeof(Elf32_Phdr))
+	{
+//#warning This is good?
+           /* кривой заголовок, шлём нафиг этот эльф */
+	   mfree(ex->body);
+           ex->body = 0;
+           mfree(phdrs);
+           return E_PHDR;
+	}
+        
+        /* тут же и размер бинарника посчитаем */
+        if (phdrs[i].p_type == PT_LOAD)
+=======
         if(fread(ex->fp, &phdrs[i], sizeof(Elf32_Phdr), &ferr) < sizeof(Elf32_Phdr))
             break;
 
         // не наше выравнивание
         /*if( phdrs[i].p_offset != phdrs[i].p_vaddr )
+>>>>>>> .r42
         {
-            printf("Bad align\n");
-            mfree(phdrs);
-            ShowMSG(1, (int)"Bad page size!");
-            return E_ALIGN;
-        }*/
-
+            if (ex->v_addr > phdrs[i].p_vaddr) ex->v_addr = phdrs[i].p_vaddr;
+            end_adr = phdrs[i].p_vaddr + phdrs[i].p_memsz;
+            if (maxadr < end_adr) maxadr = end_adr;
+        }
+	
         hdr_offset += ex->ehdr.e_phentsize;
         ++i;
     }
+    
+    ex->bin_size = maxadr - ex->v_addr;
 
     if(i == ex->ehdr.e_phnum) // Если прочитались все заголовки
     {
-        ex->bin_size = GetBinSize(ex, phdrs);
+        //ex->bin_size = GetBinSize(ex, phdrs);
 
         if(ex->body = malloc(ex->bin_size+1)) // Если хватило рамы
         {

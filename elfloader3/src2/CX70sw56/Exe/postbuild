@@ -3,10 +3,17 @@
 phone="CX70sw56"
 outname="ElfPack_"$phone".vkp"
 
-wine ../../elf2vkp.exe ELFLoader.elf ElfLoader3.vkp ff.bin &> /dev/null
+wine ../../elf2vkp.exe ELFLoader.elf ElfLoader3.vkp &> /dev/null
 
 echo ";"$phone > $outname
 cat ../../copyright.txt >> $outname
+echo "#pragma enable old_equal_ff" >> $outname
 cat ElfLoader3.vkp >> $outname
+echo "" >> $outname
+echo " ; Needed function" >> $outname
+echo "+0FC0000" >> $outname
+echo "03FC: 0xA0FC0000   ;  FF: unsigned int AddrLibrary()" >> $outname
+echo "+0" >> $outname
+echo "#pragma disable old_equal_ff" >> $outname
 
 exit 0

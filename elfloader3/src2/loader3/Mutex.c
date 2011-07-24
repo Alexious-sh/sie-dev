@@ -3,10 +3,11 @@
   (c) Z.Vova
 */
 
-
+#if 0
 #include "loader.h"
 #include "Mutex.h"
 
+/* Для работы нужны функции нуклеуса, да и врядли оно работает */
 
 __arm int mutex_init(Mutex *mtx)
 {
@@ -78,3 +79,4 @@ __arm int mutex_destroy(Mutex *mtx)
   return 0;
 }
 
+#endif

@@ -10,22 +10,37 @@ __root CFG_HDR cfghdr2={CFG_UINT,"PNG cache size",20,200};
 __root unsigned int CACHE_PNG=50;
 
 
-//#if NEWSGOLD || X75
 __root CFG_HDR cfghdr3={CFG_CBOX,"Default bit-depth",0,3};
+#if NEWSGOLD || X75
 __root unsigned int DEFAULT_COLOR = 2;
+#else
+__root unsigned int DEFAULT_COLOR = 1;
+#endif
 __root CFG_CBOX_ITEM cfgcbox3_1[3]={"8 bits","16 bits","24 bits+alpha"};
-//#else
-//__root CFG_HDR cfghdr3={CFG_CBOX,"Default bit-depth",0,2};
-//__root unsigned int DEFAULT_COLOR = 1;
-//__root CFG_CBOX_ITEM cfgcbox3_1[2]={"8 bits","16 bits"};
-//#endif
+
 
 __root CFG_HDR cfghdr4={CFG_CBOX,"Load daemon in subproc",0,2};
 __root unsigned int load_in_suproc = 1;
 __root CFG_CBOX_ITEM cfgcbox4_1[2]={"No","Yes"};
-/*
-__root CFG_HDR cfghdr5={CFG_CBOX,"Run elfs on thread",0,2};
-__root unsigned int run_elf_in_thread = 1;
-__root CFG_CBOX_ITEM cfgcbox5_1[2]={"No","Yes"};
 
-*/
+
+__root CFG_HDR cfghdr5={CFG_STR_UTF8, "Image folder way", 0, 127};
+#if NEWSGOLD || X75
+__root char IMAGE_FOLDER[128]="4:\\ZBin\\img\\";
+#else
+__root char IMAGE_FOLDER[128]="0:\\ZBin\\img\\";
+#endif
+
+__root CFG_HDR cfghdr6={CFG_STR_UTF8, "Daemons folder way", 0, 127};
+#if NEWSGOLD || X75
+__root char DAEMONS_FOLDER[128]="4:\\ZBin\\Daemons\\";
+#else
+__root char DAEMONS_FOLDER[128]="0:\\ZBin\\Daemons\\";
+#endif
+
+__root CFG_HDR cfghdr7={CFG_STR_UTF8, "swi.blib way", 0, 127};
+#if NEWSGOLD || X75
+__root char SWIBLIB_WAY[128]="4:\\ZBin\\swi.blib";
+#else
+__root char SWIBLIB_WAY[128]="0:\\ZBin\\swi.blib";
+#endif

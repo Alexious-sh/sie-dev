@@ -12,8 +12,8 @@
 #ifndef _test_linux
 extern int __e_div(int delitelb, int delimoe);
 #endif
-
 char tmp[256];
+
 
 Global_Queue* lib_top = 0;
 Elf32_Lib** handles = 0;
@@ -48,6 +48,7 @@ __arch unsigned long elfhash(const char* name)
     return hash;
 }
 
+
 __arch Elf32_Word findExport (Elf32_Exec* ex, const char* name)
 {
     if(!ex || !ex->hashtab) return 0;
@@ -55,7 +56,7 @@ __arch Elf32_Word findExport (Elf32_Exec* ex, const char* name)
     long hash = elfhash(name);
 
     Elf32_Word nbucket = ex->hashtab[0];
-    Elf32_Word nchain = ex->hashtab[1];
+    //Elf32_Word nchain = ex->hashtab[1];
     Elf32_Word* bucket = &ex->hashtab[2];
     Elf32_Word* chain = &ex->hashtab[2 + nbucket];
     Elf32_Word func = 0;
@@ -149,12 +150,16 @@ __arch const char * findShared(const char *name)
         strcat(tmp, name);
         if( __is_file_exist(tmp) )
         {
-            const char *tt = tmp;
-            return tt;
+            return tmp;
         }
     }
     
+<<<<<<< .mine
+    /* этого никогда не будет */
     //return 0;
+=======
+    //return 0;
+>>>>>>> .r42
 }
 
 
@@ -346,6 +351,7 @@ int dlopen(const char *name)
   return handle;
 }
 
+
 int dlclose(int handle)
 {
   if(0 > handle > handles_cnt - 1) return 0;
@@ -361,6 +367,7 @@ int dlclose(int handle)
   
   return 0;
 }
+
 
 Elf32_Word dlsym(int handle, const char *name)
 {

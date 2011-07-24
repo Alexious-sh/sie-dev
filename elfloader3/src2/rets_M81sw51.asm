@@ -1,5 +1,27 @@
+
+	RSEG	SWILIB_FUNC2EE_2F5:CODE
+	EXTERN	elfclose
+	EXTERN	dlopen
+	EXTERN	dlsym
+        EXTERN	dlclose
+        EXTERN	setenv
+        EXTERN	unsetenv
+        EXTERN	getenv
+        EXTERN	clearenv
+        
+	DCD	elfclose
+	DCD	dlopen
+	DCD	dlsym
+        DCD     dlclose
+        DCD	setenv
+	DCD	unsetenv
+        DCD     getenv
+        DCD     clearenv
+
+
+
 //M81v51
-fnm 	RSEG	DATA_N
+	RSEG	DATA_N
 	RSEG	SWILIB_FUNC1B8_1BB:CODE
 	EXTERN	EXT2_AREA
 	EXTERN	pngtop
