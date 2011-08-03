@@ -160,7 +160,7 @@ __arch const char * findShared(const char *name)
 
 
 // Открыть библиотеку
-__arch Elf32_Lib* OpenLib(const char *name)
+__arch Elf32_Lib* OpenLib(const char *name, Elf32_Exec *_ex)
 {
     printf("Starting loading shared library '%s'...\n", name);
     int fp;
@@ -181,9 +181,16 @@ __arch Elf32_Lib* OpenLib(const char *name)
         }
         ready_libs = ready_libs->prev;
     }
-
-    const char  *ld_path = findShared(name);
-
+    
+    
+    const char  *ld_path;
+    
+    /* путь у нас реальный */
+    if(name[1] == ':')
+      ld_path = name;
+    else
+      ld_path = findShared(name);
+    
     if(!ld_path) return 0;
     
     /* Открываем */
@@ -203,6 +210,7 @@ __arch Elf32_Lib* OpenLib(const char *name)
     ex->type = EXEC_LIB;
     ex->libs = 0;
     ex->complete = 0;
+    ex->meloaded = (void*)_ex;
 
     /* Начинаем копать структуру либы */
     if( LoadSections(ex) ){
@@ -340,7 +348,7 @@ int dlopen(const char *name)
     handles = new_handles;
   }
   
-  Elf32_Lib* lib = OpenLib(name);
+  Elf32_Lib* lib = OpenLib(name, 0);
   if(!lib) return -1;
   
   handles[handle] = lib;

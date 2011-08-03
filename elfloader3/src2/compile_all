@@ -5,7 +5,7 @@ err="Break with errors"
 cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/
 
 echo "CCLD  C72sw22..."
-wine $iar ElfLoader.ewp -make C72sw22 -log warnings &> /dev/null
+wine $iar ElfLoader.ewp -make C72sw22 -log warnings &> /dev/null &
 if [[ ${?} != 0 ]] 
 then echo $err && exit 1
 fi
@@ -17,7 +17,7 @@ then echo $err && exit 1
 fi
 
 echo "CCLD  C75sw24..."
-wine $iar ElfLoader.ewp -make C75sw24 -log warnings &> /dev/null
+wine $iar ElfLoader.ewp -make C75sw24 -log warnings &> /dev/null &
 if [[ ${?} != 0 ]] 
 then echo $err && exit 1 
 fi
@@ -29,7 +29,7 @@ then echo $err && exit 1
 fi
 
 echo "CCLD  CX70sw56..."
-wine $iar ElfLoader.ewp -make CX70sw56 -log warnings &> /dev/null
+wine $iar ElfLoader.ewp -make CX70sw56 -log warnings &> /dev/null &
 if [[ ${?} != 0 ]] 
 then echo $err && exit 1 
 fi
@@ -41,7 +41,7 @@ then echo $err && exit 1
 fi
 
 echo "CCLD  E71sw45..."
-wine $iar ElfLoader.ewp -make E71sw45 -log warnings &> /dev/null
+wine $iar ElfLoader.ewp -make E71sw45 -log warnings &> /dev/null &
 if [[ ${?} != 0 ]] 
 then echo $err && exit 1 
 fi
@@ -53,7 +53,7 @@ then echo $err && exit 1
 fi
 
 echo "CCLD  S65v58..."
-wine $iar ElfLoader.ewp -make S65v58 -log warnings &> /dev/null
+wine $iar ElfLoader.ewp -make S65v58 -log warnings &> /dev/null &
 if [[ ${?} != 0 ]] 
 then echo $err && exit 1 
 fi
@@ -65,7 +65,7 @@ then echo $err && exit 1
 fi
 
 echo "CCLD  S75sw47..."
-wine $iar ElfLoader.ewp -make S75sw47 -log warnings &> /dev/null
+wine $iar ElfLoader.ewp -make S75sw47 -log warnings &> /dev/null &
 if [[ ${?} != 0 ]] 
 then echo $err && exit 1 
 fi
@@ -77,7 +77,7 @@ then echo $err && exit 1
 fi
 
 echo "CCLD  SK65sw50..."
-wine $iar ElfLoader.ewp -make SK65sw50 -log warnings &> /dev/null
+wine $iar ElfLoader.ewp -make SK65sw50 -log warnings &> /dev/null &
 if [[ ${?} != 0 ]] 
 then echo $err && exit 1 
 fi
@@ -89,7 +89,7 @@ then echo $err && exit 1
 fi
 
 echo "CCLD  SL75sw47..."
-wine $iar ElfLoader.ewp -make SL75sw47 -log warnings &> /dev/null
+wine $iar ElfLoader.ewp -make SL75sw47 -log warnings &> /dev/null &
 if [[ ${?} != 0 ]] 
 then echo $err && exit 1 
 fi
@@ -103,7 +103,7 @@ fi
 
 echo "HEX  C72sw22..."
 cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/C72sw22/Exe
-./postbuild
+./postbuild &
 
 echo "HEX  C75sw22..."
 cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/C75sw22/Exe
@@ -111,7 +111,7 @@ cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/C75sw22/Exe
 
 echo "HEX  C75sw24..."
 cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/C75sw24/Exe
-./postbuild
+./postbuild &
 
 echo "HEX  C81sw51..."
 cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/C81sw51/Exe
@@ -119,7 +119,7 @@ cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/C81sw51/Exe
 
 #echo "HEX  CF75sw23..."
 #cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/CF75sw23/Exe
-#./postbuild
+#./postbuild &
 
 echo "HEX  CX70sw56..."
 cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/CX70sw56/Exe
@@ -127,7 +127,7 @@ cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/CX70sw56/Exe
 
 echo "HEX  CX75sw25..."
 cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/CX75sw25/Exe
-./postbuild
+./postbuild &
 
 echo "HEX  E71sw45..."
 cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/E71sw45/Exe
@@ -135,7 +135,7 @@ cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/E71sw45/Exe
 
 echo "HEX  EL71sw45..."
 cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/EL71sw45/Exe
-./postbuild
+./postbuild &
 
 echo "HEX  S65v58..."
 cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/S65v58/Exe
@@ -143,7 +143,7 @@ cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/S65v58/Exe
 
 echo "HEX  S68sw47..."
 cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/S68sw47/Exe
-./postbuild
+./postbuild &
 
 echo "HEX  S75sw47..."
 cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/S75sw47/Exe
@@ -151,7 +151,7 @@ cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/S75sw47/Exe
 
 echo "HEX  S75sw52..."
 cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/S75sw52/Exe
-./postbuild
+./postbuild &
 
 echo "HEX  SK65sw50..."
 cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/SK65sw50/Exe
@@ -159,11 +159,11 @@ cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/SK65sw50/Exe
 
 echo "HEX  SL65v53..."
 cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/SL65v53/Exe
-./postbuild
+./postbuild &
 
 echo "HEX  SL75sw47..."
 cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/SL75sw47/Exe
-./postbuild
+./postbuild &
 
 echo "HEX  SL75sw52..."
 cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/SL75sw52/Exe
@@ -180,15 +180,12 @@ fi
 cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/C72sw22/Exe
 ../../parse.lua $(ompload -u ElfPack_C72sw22.vkp)
 
-sleep 2
 cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/C75sw22/Exe
 ../../parse.lua $(ompload -u ElfPack_C75sw22.vkp)
 
-sleep 2
 cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/C75sw24/Exe
 ../../parse.lua $(ompload -u ElfPack_C75sw24.vkp)
 
-sleep 2
 cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/C81sw51/Exe
 ../../parse.lua $(ompload -u ElfPack_C81sw51.vkp)
 
@@ -196,53 +193,49 @@ cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/C81sw51/Exe
 #cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/CF75sw23/Exe
 #../../parse.lua $(ompload -u ElfPack_CF75sw23.vkp)
 
-sleep 2
 cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/CX70sw56/Exe
 ../../parse.lua $(ompload -u ElfPack_CX70sw56.vkp)
 
-sleep 2
 cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/CX75sw25/Exe
 ../../parse.lua $(ompload -u ElfPack_CX75sw25.vkp)
 
-sleep 2
 cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/E71sw45/Exe
 ../../parse.lua $(ompload -u ElfPack_E71sw45.vkp)
 
-sleep 2
+echo "Please wait for 10 minutes"
+i=600; while [ $i != 0 ]; do i=`expr $i - 1`; echo -ne "\r$i"; sleep 1; done
+echo ""
+
 cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/EL71sw45/Exe
 ../../parse.lua $(ompload -u ElfPack_EL71sw45.vkp)
 
-sleep 2
 cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/S65v58/Exe
-../../parse.lua $(ompload -u ElfPack_S65v58.vkp)
+../../parse.lua $(ompload -u ElfPack_S65sw58.vkp)
 
-sleep 2
 cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/S68sw47/Exe
 ../../parse.lua $(ompload -u ElfPack_S68sw47.vkp)
 
-sleep 2
 cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/S75sw47/Exe
 ../../parse.lua $(ompload -u ElfPack_S75sw47.vkp)
 
-sleep 2
 cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/S75sw52/Exe
 ../../parse.lua $(ompload -u ElfPack_S75sw52.vkp)
 
-sleep 2
 cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/SK65sw50/Exe
 ../../parse.lua $(ompload -u ElfPack_SK65sw50.vkp)
 
-sleep 2
 cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/SL65v53/Exe
-../../parse.lua $(ompload -u ElfPack_SL65v53.vkp)
+../../parse.lua $(ompload -u ElfPack_SL65sw53.vkp)
 
-sleep 2
+echo "Please wait for 10 minutes"
+i=600; while [ $i != 0 ]; do i=`expr $i - 1`; echo -ne "\r$i"; sleep 1; done
+echo ""
+
 cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/SL75sw47/Exe
 ../../parse.lua $(ompload -u ElfPack_SL75sw47.vkp)
 
-sleep 2
 cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/SL75sw52/Exe
 ../../parse.lua $(ompload -u ElfPack_SL75sw52.vkp)
 
-
+exit 0
 

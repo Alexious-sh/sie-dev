@@ -4,7 +4,15 @@
  * Licence: GPLv3
  */
 
+#ifdef _test_linux
+#include <fcntl.h>
+#include <unistd.h>
+#endif
+
 #include "loader.h"
+#ifdef _test_linux
+#include "fix.h"
+#endif
 
 unsigned int ferr;
 
@@ -69,6 +77,20 @@ __arch static inline unsigned int _look_sym(Elf32_Exec *ex, const char *name)
     return func;
 }
 
+
+//#define __serach_in_prev_libs
+
+#define __serach_in_prev_libs if(!func && ex->meloaded) \
+    {\
+      Elf32_Exec *mex = (Elf32_Exec*)ex->meloaded;\
+      while(mex && !func && mex->type == EXEC_LIB)\
+      {\
+        func = findExport(mex, name);\
+        mex = (Elf32_Exec*)mex->meloaded;\
+      }\
+    }\
+
+
 // Релокация
 __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
 {
@@ -114,6 +136,7 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
         {
             int hash_size = hash_hdr[0] * sizeof(Elf32_Word) + hash_hdr[1] * sizeof(Elf32_Word) + 8;
             ex->hashtab = (Elf32_Word*)LoadData(ex, ex->dyn[DT_HASH], hash_size);
+            mfree(hash_hdr);
 	    if(!ex->hashtab) goto __hash_err;
         }
         else
@@ -129,7 +152,7 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
     {
         char *lib_name = ex->strtab + libs_needed[i];
         Elf32_Lib* lib;
-        if( (lib = OpenLib(lib_name)) )
+        if( (lib = OpenLib(lib_name, ex)) )
         {
             Libs_Queue* libq = malloc(sizeof(Libs_Queue));
             libq->lib = lib;
@@ -237,13 +260,19 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
                     func = _look_sym(ex, name);
 		
 		printf("%x - %s\n", func, name);
-
+                
                 if(!func && bind_type != STB_WEAK)
                 {
-                    sprintf(dbg, "Undefined reference to `%s'\n", name);
-                    l_msg(1, (int)dbg);
-                    mfree(reltab);
-                    return E_UNDEF;
+		    // поищем в либе которая загрузила эту либу, если конечно её загрузила либа %)
+		    __serach_in_prev_libs;
+		    
+		    if(!func)
+		    {
+		      sprintf(dbg, "[1] Undefined reference to `%s'\n", name);
+		      l_msg(1, (int)dbg);
+		      mfree(reltab);
+		      return E_UNDEF;
+		    }
                 }
 
                 addr = (unsigned int*)(ex->body + reltab[i].r_offset - ex->v_addr);
@@ -285,10 +314,15 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
                     *addr = (unsigned int)_look_sym(ex, name);
                     if( !*addr && bind_type != STB_WEAK)
                     {
-                        sprintf(dbg, "Undefined reference to `%s'\n", name);
-                        l_msg(1, (int)dbg);
-                        mfree(reltab);
-                        return E_UNDEF;
+                        __serach_in_prev_libs;
+                        
+                        if(!func)
+                        {
+                          sprintf(dbg, "[2] Undefined reference to `%s'\n", name);
+                          l_msg(1, (int)dbg);
+                          mfree(reltab);
+                          return E_UNDEF;
+                        }
                     }
 
                     if(*addr){
@@ -330,14 +364,19 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
 
             if(!func)
                 func = _look_sym(ex, name);
-
+                
             printf("function addres: %x name: '%s'\n", func, name);
 
             if(!func && ELF_ST_BIND(sym->st_info) != STB_WEAK)
             {
-                sprintf(dbg, "Undefined reference to `%s'\n", name);
-                l_msg(1, (int)dbg);
-                return E_UNDEF;
+		__serach_in_prev_libs;
+		
+		if(!func)
+		{
+		  sprintf(dbg, "[3] Undefined reference to `%s'\n", name);
+		  l_msg(1, (int)dbg);
+		  return E_UNDEF;
+		}
             }
 
             *((Elf32_Word*)(ex->body + ex->jmprel[i].r_offset)) = func;
@@ -365,7 +404,7 @@ __arch int LoadSections(Elf32_Exec* ex)
     while(i < ex->ehdr.e_phnum)
     {
         if(lseek(ex->fp, hdr_offset, S_SET, &ferr, &ferr) == -1) break;
-        if(read(ex->fp, &phdrs[i], sizeof(Elf32_Phdr), &ferr) != sizeof(Elf32_Phdr))
+        if(fread(ex->fp, &phdrs[i], sizeof(Elf32_Phdr), &ferr) != sizeof(Elf32_Phdr))
 	{
 //#warning This is good?
            /* кривой заголовок, шлём нафиг этот эльф */
