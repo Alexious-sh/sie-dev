@@ -1,6 +1,6 @@
 
 /*
- * Р­С‚РѕС‚ С„Р°Р№Р» СЏРІР»СЏРµС‚СЃСЏ С‡Р°СЃС‚СЊСЋ РїСЂРѕРіСЂР°РјРјС‹ ElfLoader
+ * Этот файл является частью программы ElfLoader
  * Copyright (C) 2011 by Z.Vova, Ganster
  * Licence: GPLv3
  */
@@ -9,9 +9,54 @@
 #ifndef __LOADER_H__
 #define __LOADER_H__
 
-#include <inc/swilib.h>
+//#define _test_linux
+//#define __ZVOVA
+//#define __GANSTER
+
+
 #include "elf.h"
+
+#ifdef __GANSTER
+#include <swilib.h>
+#endif
+
+#ifdef __ZVOVA
+#include <inc/swilib.h>
+#define fopen open
+#define fread read
+#define fwrite write
+#define fclose close
+#endif
+
+#ifdef _test_linux
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+
+#define A_ReadOnly O_RDONLY
+#define A_BIN 0
+#define A_TXT O_TXT
+
+#define mfree free
+
+#define fopen(p, t, m, er) open(p, t)
+#define fread(f, b, s, er) read(f, b, s)
+#define fwrite(f, b, s, er) write(f, b, s)
+#define fclose(f, er) close(f)
+#define lseek(f, s, s1, er, er1) lseek(f, s, s1)
+
+#define S_SET SEEK_SET
+#define S_END SEEK_END
+#define P_READ 0
+
+#define zeromem_a(d, s) memset(d, 0, s)
+#define zeromem(d, s) memset(d, 0, s)
+
+#define l_msg(x, y) printf("MESSAGE: %s\n", (char*)y);
+#define __e_div(a, b) (b % a)
+#endif
+
 
 static const unsigned char elf_magic_header[] =
 {
@@ -21,7 +66,12 @@ static const unsigned char elf_magic_header[] =
   0x01,                    /* Only ELF version 1. */
 };
 
-#define __arch
+#ifndef _test_linux
+  #define printf(...) 
+  #define __arch __arm
+#else
+  #define __arch 
+#endif
 
 enum ERROR{
 
@@ -32,7 +82,15 @@ enum ERROR{
     E_HEADER,
     E_SECTION,
     E_RAM,
-    E_EMPTY
+    E_EMPTY,
+    E_FILE,
+    E_MACHINE,
+    E_ALIGN,
+    E_UNDEF,
+    E_SYMTAB,
+    E_STRTAB,
+    E_PHDR,
+    E_HASTAB
 };
 
 typedef struct
@@ -69,6 +127,8 @@ typedef struct
   char* strtab;
   Libs_Queue* libs;
   int fp;
+  char complete, __is_ex_import;
+  void *meloaded;
 } Elf32_Exec;
 
 typedef struct
@@ -84,17 +144,30 @@ typedef int LIB_FUNC();
 
 extern unsigned int ferr;
 
+#ifndef _test_linux
+ #ifdef ARM
+ #define zeromem_a(a,b) zeromem(a,b)
+ #define l_msg(a,b) ShowMSG(a,b)
+ #else
+ void zeromem_a(void *d, int l);
+ void l_msg(int a, int b);
+ #endif
+#endif
+
 int CheckElf(Elf32_Ehdr *ehdr);
 unsigned int GetBinSize(Elf32_Exec *ex, Elf32_Phdr* phdrs);
 int LoadSections(Elf32_Exec* ex);
 int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr);
 unsigned long elfhash(const char* name);
 Elf32_Word findExport(Elf32_Exec* ex, const char* name);
+Elf32_Word FindFunction(Elf32_Lib* lib, const char* name);
 
 /* shared support */
-Elf32_Lib* dlopen(const char *name);
-Elf32_Word dlsym(Elf32_Lib* lib, const char *name);
-int dlclose(Elf32_Lib* lib);
+Elf32_Lib* OpenLib(const char *name, Elf32_Exec *ex);
+int CloseLib(Elf32_Lib* lib);
+int dlopen(const char *name);
+int dlclose(int handle);
+Elf32_Word dlsym(int handle, const char *name);
 
 /* executable support */
 Elf32_Exec* elfopen(const char* filenam);
