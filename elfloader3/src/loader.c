@@ -1,19 +1,28 @@
-
 /*
  * Этот файл является частью программы ElfLoader
  * Copyright (C) 2011 by Z.Vova, Ganster
  * Licence: GPLv3
  */
 
+#ifdef _test_linux
+#include <fcntl.h>
+#include <unistd.h>
+#endif
+
 #include "loader.h"
+#ifdef _test_linux
+#include "fix.h"
+#endif
 
 unsigned int ferr;
 
 // Проверка валидности эльфа
 __arch int CheckElf(Elf32_Ehdr *ehdr)
 {
-    if(!memcmp(ehdr, elf_magic_header, sizeof(elf_magic_header))) return E_NO_ERROR;
-    return E_HEADER;
+    if(memcmp(ehdr, elf_magic_header, sizeof(elf_magic_header))) return E_HEADER;
+    if(ehdr->e_machine != EM_ARM) return E_MACHINE;
+
+    return E_NO_ERROR;
 }
 
 // Получение нужного размера в раме
@@ -42,9 +51,12 @@ __arch char* LoadData(Elf32_Exec* ex, int offset, int size)
 {
     if(size && lseek(ex->fp, offset - ex->v_addr, S_SET, &ferr, &ferr))
     {
-        char* data = malloc(size);
-        zeromem(data, size);
-        if(read(ex->fp, data, size, &ferr) == size) return data;
+        char* data = malloc(size+1);
+        //zeromem_a(data, size+1);
+        if(fread(ex->fp, data, size, &ferr) == size) {
+          data[size] = 0;
+          return data;
+        }
         else mfree(data);
     }
 
@@ -52,15 +64,22 @@ __arch char* LoadData(Elf32_Exec* ex, int offset, int size)
 }
 
 
-void test()
+/* Вспомогательная функция */
+__arch static inline unsigned int _look_sym(Elf32_Exec *ex, const char *name)
 {
-    ShowMSG(1, (int)"Hello");
+    Libs_Queue *lib = ex->libs;
+    unsigned int func = 0;
+    while(lib && !func)
+    {
+        func = (unsigned int)FindFunction(lib->lib, name);
+        lib = lib->next;
+    }
+    return func;
 }
 
 // Релокация
 __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
 {
-    zeromem(ex->dyn, sizeof(ex->dyn));
     unsigned int i = 0;
     Elf32_Word libs_needed[64];
     unsigned int libs_cnt = 0;
@@ -89,12 +108,12 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
     }
 
     // Таблички. Нужны только либам, и их юзающим)
-    //if(ex->type == EXEC_LIB || libs_cnt)
-    {
-        ex->symtab = (Elf32_Sym*)(ex->body + ex->dyn[DT_SYMTAB] - ex->v_addr);//LoadData(ex, ex->dyn[DT_SYMTAB], ex->dyn[DT_SYMENT]);
-        ex->jmprel = (Elf32_Rel*)(ex->body + ex->dyn[DT_JMPREL] - ex->v_addr);//LoadData(ex, ex->dyn[DT_JMPREL], ex->dyn[DT_PLTRELSZ]);
-        ex->strtab = ex->body + ex->dyn[DT_STRTAB] - ex->v_addr;//LoadData(ex, ex->dyn[DT_STRTAB], ex->dyn[DT_STRSZ]);
-    }
+    ex->symtab = ex->dyn[DT_SYMTAB]? (Elf32_Sym*)(ex->body + ex->dyn[DT_SYMTAB] - ex->v_addr) : 0;
+    ex->jmprel = (Elf32_Rel*)(ex->body + ex->dyn[DT_JMPREL] - ex->v_addr);
+    ex->strtab = ex->dyn[DT_STRTAB]? ex->body + ex->dyn[DT_STRTAB] - ex->v_addr : 0;
+    
+    printf("STRTAB: %X\n", ex->dyn[DT_STRTAB]);
+    printf("SYMTAB: %X\n", ex->dyn[DT_SYMTAB]);
 
     if(ex->type == EXEC_LIB)
     {
@@ -103,7 +122,14 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
         {
             int hash_size = hash_hdr[0] * sizeof(Elf32_Word) + hash_hdr[1] * sizeof(Elf32_Word) + 8;
             ex->hashtab = (Elf32_Word*)LoadData(ex, ex->dyn[DT_HASH], hash_size);
+	    if(!ex->hashtab) goto __hash_err;
         }
+        else
+	{
+	  __hash_err:
+	  ShowMSG(1, (int)"Error loading hashtab");
+	  return E_HASTAB;
+	}
     }
 
     // Загрузка библиотек
@@ -111,7 +137,7 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
     {
         char *lib_name = ex->strtab + libs_needed[i];
         Elf32_Lib* lib;
-        if(lib = dlopen(lib_name))
+        if( (lib = OpenLib(lib_name, ex)) )
         {
             Libs_Queue* libq = malloc(sizeof(Libs_Queue));
             libq->lib = lib;
@@ -123,8 +149,8 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
         }
         else
         {
-            sprintf(dbg, "Библиотека %s не найдена!", lib_name);
-            ShowMSG(1, (int)dbg);
+            sprintf(dbg, "Не могу загрузить %s!", lib_name);
+            l_msg(1, (int)dbg);
             return E_SHARED;
         }
     }
@@ -133,16 +159,16 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
     if (ex->dyn[DT_RELSZ])
     {
         i=0;
-        unsigned long* addr;
+        unsigned int* addr;
         Elf32_Word r_type;
-        Elf32_Rel* reltab;
+    
         char* name;
         Elf32_Word func = 0;
-        Libs_Queue* lib;
+        //Libs_Queue* lib;
 
         // Таблица релокаций
-        reltab = (Elf32_Rel*)LoadData(ex, phdr->p_offset + ex->dyn[DT_REL] - phdr->p_vaddr, ex->dyn[DT_RELSZ]);
-        //reltab = (Elf32_Rel*)((char*)dyn_sect + ex->dyn[DT_REL] -  phdr->p_vaddr);
+        Elf32_Rel* reltab = (Elf32_Rel*)LoadData(ex, phdr->p_offset + ex->dyn[DT_REL] - phdr->p_vaddr, ex->dyn[DT_RELSZ]);
+    
         if(!reltab)
         {
             elfclose(ex);
@@ -152,6 +178,8 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
         while(i * sizeof(Elf32_Rel) < ex->dyn[DT_RELSZ])
         {
             r_type = ELF32_R_TYPE(reltab[i].r_info);
+            Elf32_Sym *sym = ex->symtab? &ex->symtab[ELF32_R_SYM(reltab[i].r_info)] : 0;
+            int bind_type = sym ? ELF_ST_BIND(sym->st_info) : 0;
 
             switch(r_type)
             {
@@ -159,80 +187,145 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
                 break;
             case R_ARM_RABS32:
                 printf("R_ARM_RABS32\n");
-                addr = (unsigned long*)(ex->body + reltab[i].r_offset - ex->v_addr);
-                *addr += (unsigned long)(ex->body - ex->v_addr);
+                addr = (unsigned int*)(ex->body + reltab[i].r_offset - ex->v_addr);
+                *addr += (unsigned int)(ex->body - ex->v_addr);
                 break;
             case R_ARM_ABS32:
                 printf("R_ARM_ABS32\n");
-                name = ex->strtab + ex->symtab[ELF32_R_SYM(reltab[i].r_info)].st_name;
-                addr = (unsigned long*)(ex->body + reltab[i].r_offset - ex->v_addr);
+		
+		if( !ex->symtab )
+		{
+		   sprintf(dbg, "Relocation R_ARM_ABS32 cannot run without symtab\n");
+                   printf(1, (int)dbg);
+		   printf("warning: symtab not found, but relocation R_ARM_ABS32 is exist\n");
+		   *addr = (unsigned int)ex->body;
+		   break;
+                   //mfree(reltab);
+                   //return E_SYMTAB;
+		}
+		
+		if( !ex->strtab )
+		{
+		   sprintf(dbg, "Relocation R_ARM_ABS32 cannot run without strtab\n");
+                   printf(1, (int)dbg);
+		   printf("warning: strtab not found, but relocation R_ARM_ABS32 is exist\n");
+		   *addr = (unsigned int)ex->body;
+		   break;
+                   //mfree(reltab);
+                   //return E_STRTAB;
+		}
+		
+                name = ex->strtab + sym->st_name;
+                addr = (unsigned int*)(ex->body + reltab[i].r_offset - ex->v_addr);
 
-                int sk = ELF32_R_SYM(reltab[i].r_info);
+                //int sk = ELF32_R_SYM(reltab[i].r_info);
 
                 printf("'%s' %X\n", name, *addr);
                 // Если нужен указатель на эльф
 
-
-                if(!strcmp("__sys_switab_addres", name))
+                //if( *(int*)name == *(int*)"__ex" ) // че оно пикает?!
+                //if( !strcmp(name, "__ex") )
+                if( name[4] == 0   && 
+                    name[0] == '_' &&
+                    name[1] == '_' &&
+                    name[2] == 'e' &&
+                    name[3] == 'x'
+                    )
                 {
-                    *addr = (volatile unsigned int) *(int*)AddrLibrary();
-                }
-                else if(!strcmp("__ex", name))
-                {
+                    ex->__is_ex_import = 1;
                     printf("__ex: 0x%X\n", (int)ex);
                     *addr = (unsigned int)ex;
                     break;
                 }
-                else if(!strcmp("elfclose", name))
-                {
-                    *addr = (unsigned int)elfclose;
-                    printf(" [+] elfclose: 0x%X\n", *addr);
-                    break;
-                }
 
-                /* !!! O_o !!! */
-                if( ex->symtab[sk].st_info != 17  && ex->symtab[sk].st_info != 18)
-                {
-                    printf("st_info != 17 0x%X %d '%s'\n", elfclose, ex->symtab[sk].st_info, name);
-                    *addr = (unsigned int)ex->body;
-                    break;
-                }
-
-
-                func = 0;
-                lib = ex->libs;
-
-                while(lib && !func)
-                {
-                    func = dlsym(lib->lib, name);
-                    lib = lib->next;
-                }
+                func = findExport(ex, name);
+                
 
                 if(!func)
+                    func = _look_sym(ex, name);
+		
+		printf("%x - %s\n", func, name);
+                
+                if(!func && bind_type != STB_WEAK)
                 {
-                    sprintf(dbg, "Undefined reference to `%s'\n", name);
-                    ShowMSG(1, (int)dbg);
-                    mfree(reltab);
-                    return E_SHARED;
+		    // поищем в либе которая загрузила эту либу, если конечно её загрузила либа %)
+		    if(!func && ex->meloaded)
+		    {
+		      Elf32_Exec *mex = (Elf32_Exec*)ex->meloaded;
+		      while(mex && !func && mex->type == EXEC_LIB)
+		      {
+			func = findExport(mex, name);
+			mex = (Elf32_Exec*)mex->meloaded;
+		      }
+		    }
+		    
+		    if(!func)
+		    {
+		      sprintf(dbg, "r Undefined reference to `%s'\n", name);
+		      l_msg(1, (int)dbg);
+		      mfree(reltab);
+		      return E_UNDEF;
+		    }
                 }
 
-                addr = (unsigned long*)(ex->body + reltab[i].r_offset - ex->v_addr);
+                addr = (unsigned int*)(ex->body + reltab[i].r_offset - ex->v_addr);
                 *addr = func;
                 printf("addres: %X\n", name, *addr);
                 break;
             case R_ARM_RELATIVE:
                 printf("R_ARM_RELATIVE\n");
-                addr = (unsigned long*)(ex->body + reltab[i].r_offset - ex->v_addr);
-                *addr += (unsigned long)(ex->body - ex->v_addr);
+                addr = (unsigned int*)(ex->body + reltab[i].r_offset - ex->v_addr);
+                *addr += (unsigned int)(ex->body - ex->v_addr);
                 break;
             case R_ARM_GLOB_DAT:
                 printf("R_ARM_GLOB_DAT\n");
-                addr = (unsigned long*)(ex->body + reltab[i].r_offset - ex->v_addr);
-                *addr = (unsigned long)(ex->body + ex->symtab[ELF32_R_SYM(reltab[i].r_info)].st_value);
+		
+		if( !ex->symtab )
+		{
+		   sprintf(dbg, "Relocation R_ARM_GLOB_DAT cannot run without symtab\n");
+                   l_msg(1, (int)dbg);
+                   mfree(reltab);
+                   return E_SYMTAB;
+		}
+		
+		if( !ex->strtab )
+		{
+		   sprintf(dbg, "Relocation R_ARM_GLOB_DAT cannot run without strtab\n");
+                   l_msg(1, (int)dbg);
+                   mfree(reltab);
+                   return E_STRTAB;
+		}
+		
+                addr = (unsigned int*)(ex->body + reltab[i].r_offset - ex->v_addr);
+                name = ex->strtab + sym->st_name;
+                printf(" strtab: '%s' \n", name);
+                *addr = (unsigned int)(ex->body + sym->st_value);
+
+                if( !sym->st_value )
+                {
+                    printf("Searching in libs...\n");
+                    *addr = (unsigned int)_look_sym(ex, name);
+                    if( !*addr && bind_type != STB_WEAK)
+                    {
+                        sprintf(dbg, "g Undefined reference to `%s'\n", name);
+                        l_msg(1, (int)dbg);
+                        mfree(reltab);
+                        return E_UNDEF;
+                    }
+
+                    if(*addr){
+                        printf("found at 0x%X\n", *addr);
+                    }
+                }
+
                 break;
             default:
                 printf("unknow relocation type '%d'\n", r_type);
-                break;
+                sprintf(dbg, "Fatal error! Unknown type relocation '%d'!\n", r_type);
+                l_msg(1, (int)dbg);
+                mfree(reltab);
+                return E_RELOCATION;
+                //break;
             }
             i++;
         }
@@ -248,38 +341,49 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
         {
             int sym_idx = ELF32_R_SYM(ex->jmprel[i].r_info);
             char* name = ex->strtab + ex->symtab[sym_idx].st_name;
+            Elf32_Sym *sym = &ex->symtab[sym_idx];
             Elf32_Word func = 0;
-            Libs_Queue* lib = ex->libs;
+            //Libs_Queue* lib = ex->libs;
 
-            if(!strcmp("__sys_switab_addres", name))
+
+            // Если библиотека не SYMBOLIC - сначала ищем в ней самой
+            if(ex->type == EXEC_LIB && !ex->dyn[DT_SYMBOLIC])
+                func = findExport(ex, name);
+
+            if(!func)
+                func = _look_sym(ex, name);
+            
+            // поищем в либе которая загрузила эту либу, если конечно её загрузила либа %)
+            if(!func && ex->meloaded)
             {
-                    func = *(volatile unsigned int*)AddrLibrary();
+                Elf32_Exec *mex = (Elf32_Exec*)ex->meloaded;
+                while(mex && !func && mex->type == EXEC_LIB)
+                {
+                  func = findExport(mex, name);
+                  mex = (Elf32_Exec*)mex->meloaded;
+                }
             }
-            else if(!strcmp("elfclose", name))
-            {
-                printf("elfclose rel\n");
-                func = (long)elfclose;
-            }
-            else
-            {
-                // Если библиотека не SYMBOLIC - сначала ищем в ней самой
-                if(ex->type == EXEC_LIB && !ex->dyn[DT_SYMBOLIC])
-                {
-                    func = findExport(ex, name);
-                }
+                
+            printf("function addres: %x name: '%s'\n", func, name);
 
-                while(lib && !func)
-                {
-                    func = dlsym(lib->lib, name);
-                    lib = lib->next;
-                }
-
-                if(!func)
-                {
-                    sprintf(dbg, "Undefined reference to `%s'\n", name);
-                    ShowMSG(1, (int)dbg);
-                    return E_SHARED;
-                }
+            if(!func && ELF_ST_BIND(sym->st_info) != STB_WEAK)
+            {
+		if(!func && ex->meloaded)
+		{
+		   Elf32_Exec *mex = (Elf32_Exec*)ex->meloaded;
+		   //while(mex && !func && mex->type == EXEC_LIB)
+		   //{
+		      func = findExport(mex, name);
+		      mex = (Elf32_Exec*)mex->meloaded;
+		   //}
+		}
+		
+		if(!func)
+		{
+		  sprintf(dbg, "b Undefined reference to `%s'\n", name);
+		  l_msg(1, (int)dbg);
+		  return E_UNDEF;
+		}
             }
 
             *((Elf32_Word*)(ex->body + ex->jmprel[i].r_offset)) = func;
@@ -290,6 +394,7 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
     return E_NO_ERROR;
 }
 
+
 // Чтение сегментов из файла
 __arch int LoadSections(Elf32_Exec* ex)
 {
@@ -299,24 +404,45 @@ __arch int LoadSections(Elf32_Exec* ex)
     unsigned int hdr_offset = ex->ehdr.e_phoff;
     int i = 0;
 
+    unsigned long maxadr=0;
+    unsigned int end_adr;
+
     // Читаем заголовки
     while(i < ex->ehdr.e_phnum)
     {
         if(lseek(ex->fp, hdr_offset, S_SET, &ferr, &ferr) == -1) break;
-        if(read(ex->fp, &phdrs[i], sizeof(Elf32_Phdr), &ferr) < sizeof(Elf32_Phdr))
-            break;
-
+        if(fread(ex->fp, &phdrs[i], sizeof(Elf32_Phdr), &ferr) != sizeof(Elf32_Phdr))
+	{
+//#warning This is good?
+           /* кривой заголовок, шлём нафиг этот эльф */
+	   mfree(ex->body);
+           ex->body = 0;
+           mfree(phdrs);
+           return E_PHDR;
+	}
+        
+        /* тут же и размер бинарника посчитаем */
+        if (phdrs[i].p_type == PT_LOAD)
+        {
+            if (ex->v_addr > phdrs[i].p_vaddr) ex->v_addr = phdrs[i].p_vaddr;
+            end_adr = phdrs[i].p_vaddr + phdrs[i].p_memsz;
+            if (maxadr < end_adr) maxadr = end_adr;
+        }
+	
         hdr_offset += ex->ehdr.e_phentsize;
         ++i;
     }
+    
+    ex->bin_size = maxadr - ex->v_addr;
 
     if(i == ex->ehdr.e_phnum) // Если прочитались все заголовки
     {
-        ex->bin_size = GetBinSize(ex, phdrs);
+        //ex->bin_size = GetBinSize(ex, phdrs);
 
         if(ex->body = malloc(ex->bin_size+1)) // Если хватило рамы
         {
-            zeromem(ex->body, ex->bin_size);
+            zeromem_a(ex->body, ex->bin_size+1);
+            zeromem_a(ex->dyn, sizeof(ex->dyn));
 
             for(i=0; i < ex->ehdr.e_phnum; i++)
             {
@@ -330,7 +456,7 @@ __arch int LoadSections(Elf32_Exec* ex)
 
                     if(lseek(ex->fp, phdr.p_offset, S_SET, &ferr, &ferr) != -1)
                     {
-                        if(read(ex->fp, ex->body + phdr.p_vaddr - ex->v_addr, phdr.p_filesz, &ferr) == phdr.p_filesz)
+                        if(fread(ex->fp, ex->body + phdr.p_vaddr - ex->v_addr, phdr.p_filesz, &ferr) == phdr.p_filesz)
                             break;
                     }
 
@@ -353,6 +479,7 @@ __arch int LoadSections(Elf32_Exec* ex)
                     }
 
                     // Если что-то пошло не так...
+                    mfree(dyn_sect);
                     mfree(ex->body);
                     ex->body = 0;
                     mfree(phdrs);
@@ -375,17 +502,18 @@ __arch int LoadSections(Elf32_Exec* ex)
 /* constructors */
 __arch void run_INIT_Array(Elf32_Exec *ex)
 {
+  if(!ex->dyn[DT_FINI_ARRAY]) return;
   size_t sz = ex->dyn[DT_INIT_ARRAYSZ];
   void ** arr = (void**)(ex->body + ex->dyn[DT_INIT_ARRAY] - ex->v_addr);
 
   printf("init_array sz: %d\n", sz);
 
-  size_t cnt = sz/sizeof(void*);
-
-  for(int i=0; i<cnt; ++i)
+  for(int i=0; i*sizeof(void*) < sz; ++i)
   {
      printf("init %d: 0x%X\n", i, arr[i]);
+#ifndef _test_linux
      ( (void (*)())arr[i])();
+#endif
   }
 }
 
@@ -393,16 +521,17 @@ __arch void run_INIT_Array(Elf32_Exec *ex)
 /* destructors */
 __arch void run_FINI_Array(Elf32_Exec *ex)
 {
+  if(!ex->dyn[DT_FINI_ARRAY]) return;
   size_t sz = ex->dyn[DT_FINI_ARRAYSZ];
   void ** arr = (void**)(ex->body + ex->dyn[DT_FINI_ARRAY] - ex->v_addr);
 
   printf("fini_array sz: %d\n", sz);
 
-  size_t cnt = sz/sizeof(void*);
-
-  for(int i=0; i<cnt; ++i)
+  for(int i=0; i*sizeof(void*) < sz; ++i)
   {
      printf("fini %d: 0x%X\n", i, arr[i]);
+#ifndef _test_linux
      ( (void (*)())arr[i])();
+#endif
   }
 }

@@ -1,23 +1,28 @@
 
 /*
- * Р­С‚РѕС‚ С„Р°Р№Р» СЏРІР»СЏРµС‚СЃСЏ С‡Р°СЃС‚СЊСЋ РїСЂРѕРіСЂР°РјРјС‹ ElfLoader
+ * Этот файл является частью программы ElfLoader
  * Copyright (C) 2011 by Z.Vova, Ganster
  * Licence: GPLv3
  */
 
+#ifdef _test_linux
+#include <fcntl.h>
+#include <unistd.h>
+#endif
 
 #include "loader.h"
+#include "fix.h"
 
-// Р—Р°РіСЂСѓР·РєР° СЌР»СЊС„Р°
+// Загрузка эльфа
 __arch Elf32_Exec* elfopen(const char* filename)
 {
   int fp;
   Elf32_Ehdr ehdr;
   Elf32_Exec* ex;
 
-  if((fp = open(filename,A_ReadOnly+A_BIN,P_READ,&ferr)) == -1) return 0;
+  if((fp = fopen(filename,A_ReadOnly | A_BIN,P_READ,&ferr)) == -1) return 0;
 
-  if(read(fp, &ehdr, sizeof(Elf32_Ehdr), &ferr) == sizeof(Elf32_Ehdr))
+  if(fread(fp, &ehdr, sizeof(Elf32_Ehdr), &ferr) == sizeof(Elf32_Ehdr))
   {
     if( !CheckElf(&ehdr) )
     {
@@ -28,21 +33,28 @@ __arch Elf32_Exec* elfopen(const char* filename)
         memcpy(&ex->ehdr, &ehdr, sizeof(Elf32_Ehdr));
         ex->v_addr = (unsigned int)-1;
         ex->fp = fp;
+        ex->body = 0;
         ex->type = EXEC_ELF;
         ex->libs = 0;
         ex->hashtab = 0;
+        ex->complete = 0;
+	ex->__is_ex_import = 0;
+        ex->meloaded = 0;
 
         if(!LoadSections(ex))
         {
-          close(fp, &ferr);
+	  printf("loading data...\n");
+          ex->complete = 1;
+          fclose(fp, &ferr);
           return ex;
         }
-        else elfclose(ex);
+        else
+            elfclose(ex);
       }
     }
   }
 
-  close(fp, &ferr);
+  fclose(fp, &ferr);
   return 0;
 }
 
@@ -58,12 +70,13 @@ __arch int elfclose(Elf32_Exec* ex)
 {
   if(!ex) return E_EMPTY;
 
-  run_FINI_Array(ex);
-  // Р—Р°РєСЂС‹РІР°РµРј Р»РёР±С‹
+  if(ex->complete)
+    run_FINI_Array(ex);
+  // Закрываем либы
   while(ex->libs)
   {
     Libs_Queue* lib = ex->libs;
-    dlclose(lib->lib);
+    CloseLib(lib->lib);
     ex->libs = lib->next;
     mfree(lib);
   }
@@ -74,3 +87,9 @@ __arch int elfclose(Elf32_Exec* ex)
   return E_NO_ERROR;
 }
 
+
+__arch int sub_elfclose(Elf32_Exec* ex)
+{
+  SUBPROC((void*)elfclose, ex);
+  return 0;
+}
