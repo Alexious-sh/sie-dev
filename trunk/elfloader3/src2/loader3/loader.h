@@ -125,6 +125,7 @@ typedef struct
   Libs_Queue* libs;
   int fp;
   char complete, __is_ex_import;
+  void *meloaded;
 } Elf32_Exec;
 
 typedef struct
@@ -159,7 +160,7 @@ Elf32_Word findExport(Elf32_Exec* ex, const char* name);
 Elf32_Word FindFunction(Elf32_Lib* lib, const char* name);
 
 /* shared support */
-Elf32_Lib* OpenLib(const char *name);
+Elf32_Lib* OpenLib(const char *name, Elf32_Exec *ex);
 int CloseLib(Elf32_Lib* lib);
 int dlopen(const char *name);
 int dlclose(int handle);

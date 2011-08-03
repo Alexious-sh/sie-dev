@@ -1,0 +1,32 @@
+#!/bin/sh
+
+
+founded_elfs=$(find ./ -name "ELF*.elf")
+founded_vkps=$(find ./ -name "Elf*.vkp")
+founded_a79=$(find ./ -name "ELF*.a79")
+founded_hex=$(find ./ -name "ELF*.hex")
+
+#echo "elfs:"$founded_elfs
+#echo "vkps:"$founded_vkps
+
+echo "Removing patches..."
+if [[ $founded_vkps != "" ]]
+then rm $founded_vkps
+fi
+
+echo "Removing binaries..."
+if [[ $founded_elfs != "" ]]
+then rm $founded_elfs
+fi
+
+echo "Removing a79 binaries..."
+if [[ $founded_a79 != "" ]]
+then rm $founded_a79
+fi
+
+echo "Removing hexdump..."
+if [[ $founded_hex != "" ]]
+then rm $founded_hex
+fi
+
+echo "Done."

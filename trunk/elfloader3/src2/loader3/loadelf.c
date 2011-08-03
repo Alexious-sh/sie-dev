@@ -34,6 +34,7 @@ __arch Elf32_Exec* elfopen(const char* filename)
         ex->hashtab = 0;
         ex->complete = 0;
 	ex->__is_ex_import = 0;
+        ex->meloaded = 0;
 
         if(!LoadSections(ex))
         {
@@ -83,6 +84,7 @@ __arch int elfclose(Elf32_Exec* ex)
 
 __arch int sub_elfclose(Elf32_Exec* ex)
 {
+  //elfclose(ex);
   SUBPROC((void*)elfclose, ex);
   return 0;
 }
