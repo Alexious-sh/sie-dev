@@ -35,6 +35,7 @@ __arch Elf32_Exec* elfopen(const char* filename)
         ex->complete = 0;
 	ex->__is_ex_import = 0;
         ex->meloaded = 0;
+        ex->switab = (int*)AddrLibrary();
 
         if(!LoadSections(ex))
         {

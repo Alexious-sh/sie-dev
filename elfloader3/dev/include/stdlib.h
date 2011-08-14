@@ -9,6 +9,7 @@
 
 __BEGIN_DECLS
 
+#ifndef __NO_LIBC
 void *calloc(size_t nmemb, size_t size) __THROW __attribute_malloc__;
 void *malloc(size_t size)  __THROW __attribute_malloc__;
 void free(void *ptr) __THROW;
@@ -18,6 +19,7 @@ char *getenv(const char *name) __THROW __pure;
 int putenv(const char *string) __THROW;
 int setenv(const char *name, const char *value, int overwrite) __THROW;
 int unsetenv(const char *name) __THROW;
+#endif
 
 int system (const char * string) __THROW;
 int atexit(void (*function)(void)) __THROW;
@@ -25,8 +27,11 @@ int atexit(void (*function)(void)) __THROW;
 float strtof(const char *nptr, char **endptr) __THROW;
 double strtod(const char *nptr, char **endptr) __THROW;
 long double strtold(const char *nptr, char **endptr) __THROW;
+
+#ifndef __NO_LIBC
 long int strtol(const char *nptr, char **endptr, int base) __THROW;
 unsigned long int strtoul(const char *nptr, char **endptr, int base) __THROW;
+#endif
 
 extern int __ltostr(char *s, unsigned int size, unsigned long i, unsigned int base, int UpCase) __THROW;
 extern int __dtostr(double d,char *buf,unsigned int maxlen,unsigned int prec,unsigned int prec2,int g) __THROW;
