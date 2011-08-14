@@ -126,6 +126,7 @@ typedef struct
   int fp;
   char complete, __is_ex_import;
   void *meloaded;
+  int *switab;
 } Elf32_Exec;
 
 typedef struct

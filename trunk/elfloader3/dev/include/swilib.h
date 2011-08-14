@@ -3197,11 +3197,7 @@ int clearenv(void)
 __def( 0x2F5, int)
 #endif
 
-__inl
-void kill_elf()  {
-    extern void *__ex;
-    elfclose(&__ex);
-}
+void kill_elf();
 
 #ifdef __cplusplus
 }

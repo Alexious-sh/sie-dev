@@ -13,20 +13,23 @@ namespace std {
     using ::atoi;
     using ::atol;
     using ::bsearch;
-    using ::calloc;
     using ::div;
     //using ::exit;
+#ifndef __NO_LIBC
+    using ::calloc;
     using ::free;
     using ::getenv;
-    using ::labs;
     using ::malloc;
-    using ::qsort;
-    using ::rand;
     using ::realloc;
-    using ::srand;
-    using ::strtod;
     using ::strtol;
     using ::strtoul;
+#endif
+
+    using ::labs;
+    using ::qsort;
+    using ::rand;
+    using ::srand;
+    using ::strtod;
     using ::system;
 }
 

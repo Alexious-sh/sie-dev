@@ -42,7 +42,7 @@ __arch unsigned int GetBinSize(Elf32_Exec *ex, Elf32_Phdr* phdrs)
             end_adr = phdr.p_vaddr + phdr.p_memsz;
             if (maxadr < end_adr) maxadr = end_adr;
         }
-        i++;
+        ++i;
     }
     return maxadr - ex->v_addr;
 }
@@ -118,7 +118,7 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
                 ex->dyn[dyn_sect[i].d_tag] = dyn_sect[i].d_un.d_val;
             }
         }
-        i++;
+        ++i;
     }
 
     // Таблички. Нужны только либам, и их юзающим)
@@ -148,7 +148,7 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
     }
 
     // Загрузка библиотек
-    for(i=0; i < libs_cnt; i++)
+    for(i=0; i < libs_cnt; ++i)
     {
         char *lib_name = ex->strtab + libs_needed[i];
         Elf32_Lib* lib;
@@ -207,11 +207,12 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
                 break;
             case R_ARM_ABS32:
                 printf("R_ARM_ABS32\n");
-		
+		addr = (unsigned int*)(ex->body + reltab[i].r_offset - ex->v_addr);
+                                
 		if( !ex->symtab )
 		{
 		   sprintf(dbg, "Relocation R_ARM_ABS32 cannot run without symtab\n");
-                   printf(1, (int)dbg);
+                   printf(dbg);
 		   printf("warning: symtab not found, but relocation R_ARM_ABS32 is exist\n");
 		   *addr = (unsigned int)ex->body;
 		   break;
@@ -222,7 +223,7 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
 		if( !ex->strtab )
 		{
 		   sprintf(dbg, "Relocation R_ARM_ABS32 cannot run without strtab\n");
-                   printf(1, (int)dbg);
+                   printf(dbg);
 		   printf("warning: strtab not found, but relocation R_ARM_ABS32 is exist\n");
 		   *addr = (unsigned int)ex->body;
 		   break;
@@ -231,13 +232,13 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
 		}
 		
                 name = ex->strtab + sym->st_name;
-                addr = (unsigned int*)(ex->body + reltab[i].r_offset - ex->v_addr);
 
                 //int sk = ELF32_R_SYM(reltab[i].r_info);
 
                 printf("'%s' %X\n", name, *addr);
                 // Если нужен указатель на эльф
-
+                
+                
                 //if( *(int*)name == *(int*)"__ex" ) // че оно пикает?!
                 //if( !strcmp(name, "__ex") )
                 if( name[4] == 0   && 
@@ -275,7 +276,6 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
 		    }
                 }
 
-                addr = (unsigned int*)(ex->body + reltab[i].r_offset - ex->v_addr);
                 *addr = func;
                 printf("addres: %X\n", name, *addr);
                 break;
@@ -339,7 +339,7 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
                 return E_RELOCATION;
                 //break;
             }
-            i++;
+            ++i;
         }
 
         mfree(reltab);
@@ -380,7 +380,7 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
             }
 
             *((Elf32_Word*)(ex->body + ex->jmprel[i].r_offset)) = func;
-            i++;
+            ++i;
         }
     }
 
@@ -437,7 +437,7 @@ __arch int LoadSections(Elf32_Exec* ex)
             zeromem_a(ex->body, ex->bin_size+1);
             zeromem_a(ex->dyn, sizeof(ex->dyn));
 
-            for(i=0; i < ex->ehdr.e_phnum; i++)
+            for(i=0; i < ex->ehdr.e_phnum; ++i)
             {
                 Elf32_Phdr phdr = phdrs[i];
                 Elf32_Dyn* dyn_sect;
@@ -493,34 +493,34 @@ __arch int LoadSections(Elf32_Exec* ex)
 
 
 /* constructors */
-__arch void run_INIT_Array(Elf32_Exec *ex)
+/*__arch void run_INIT_Array(Elf32_Exec *ex)
 {
   if(!ex->dyn[DT_FINI_ARRAY]) return;
-  size_t sz = ex->dyn[DT_INIT_ARRAYSZ];
+  size_t sz = ex->dyn[DT_INIT_ARRAYSZ] / sizeof (void*);
   void ** arr = (void**)(ex->body + ex->dyn[DT_INIT_ARRAY] - ex->v_addr);
 
   printf("init_array sz: %d\n", sz);
 
-  for(int i=0; i*sizeof(void*) < sz; ++i)
+  for(int i=0; i < sz; ++i)
   {
      printf("init %d: 0x%X\n", i, arr[i]);
 #ifndef _test_linux
      ( (void (*)())arr[i])();
 #endif
   }
-}
+}*/
 
 
 /* destructors */
 __arch void run_FINI_Array(Elf32_Exec *ex)
 {
   if(!ex->dyn[DT_FINI_ARRAY]) return;
-  size_t sz = ex->dyn[DT_FINI_ARRAYSZ];
+  size_t sz = ex->dyn[DT_FINI_ARRAYSZ] / sizeof (void*);
   void ** arr = (void**)(ex->body + ex->dyn[DT_FINI_ARRAY] - ex->v_addr);
 
   printf("fini_array sz: %d\n", sz);
 
-  for(int i=0; i*sizeof(void*) < sz; ++i)
+  for(int i=0; i < sz; ++i)
   {
      printf("fini %d: 0x%X\n", i, arr[i]);
 #ifndef _test_linux

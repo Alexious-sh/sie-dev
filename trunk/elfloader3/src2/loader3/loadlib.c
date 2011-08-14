@@ -12,7 +12,7 @@
 #ifndef _test_linux
 extern int __e_div(int delitelb, int delimoe);
 #endif
-char tmp[256];
+char tmp[258];
 
 
 Global_Queue* lib_top = 0;
@@ -163,7 +163,7 @@ __arch const char * findShared(const char *name)
 __arch Elf32_Lib* OpenLib(const char *name, Elf32_Exec *_ex)
 {
     printf("Starting loading shared library '%s'...\n", name);
-    int fp;
+    int fp, _size = 0;
     Elf32_Ehdr ehdr;
     Elf32_Exec* ex;
 
@@ -193,15 +193,33 @@ __arch Elf32_Lib* OpenLib(const char *name, Elf32_Exec *_ex)
     
     if(!ld_path) return 0;
     
+try_again:
     /* Открываем */
-    if((fp = fopen(ld_path,A_ReadOnly+A_BIN,P_READ,&ferr)) == -1) return 0;
+    if((fp = fopen(ld_path, A_ReadOnly+A_BIN,P_READ, &ferr)) == -1) return 0;
 
     /* Читаем хедер */
-    if(fread(fp, &ehdr, sizeof(Elf32_Ehdr), &ferr) != sizeof(Elf32_Ehdr)) return 0;
-
+    if( (_size = fread(fp, &ehdr, sizeof(Elf32_Ehdr), &ferr)) <= 0) return 0;
+    
     /* Проверяем шо это вообще такое */
-    if(CheckElf(&ehdr)) return 0;
-
+    if( _size < sizeof(Elf32_Ehdr) || CheckElf(&ehdr) ) // не эльф? о_О мб симлинк?!
+    {
+      int ns = lseek(fp, 0, S_END, &ferr, &ferr); // если длина файл больше 256 байт то нахрен такой путь...
+      if(ns < 256 && ns > 0)
+      {
+        lseek(fp, 0, S_SET, &ferr, &ferr);
+        if(fread(fp, tmp, ns, &ferr) != ns){
+          fclose(fp, &ferr);
+          return 0;
+        }
+        tmp[ns] = 0;
+        ld_path = tmp;
+        fclose(fp, &ferr);
+        goto try_again;
+      }
+      fclose(fp, &ferr);
+      return 0;
+    }
+    
     /* Выделим память под структуру эльфа */
     if( !(ex = malloc(sizeof(Elf32_Exec))) ) return 0;
     memcpy(&ex->ehdr, &ehdr, sizeof(Elf32_Ehdr));
@@ -211,6 +229,7 @@ __arch Elf32_Lib* OpenLib(const char *name, Elf32_Exec *_ex)
     ex->libs = 0;
     ex->complete = 0;
     ex->meloaded = (void*)_ex;
+    ex->switab = (int*)AddrLibrary();
 
     /* Начинаем копать структуру либы */
     if( LoadSections(ex) ){
@@ -258,7 +277,7 @@ __arch Elf32_Lib* OpenLib(const char *name, Elf32_Exec *_ex)
     lib_top = global_ptr;
 
     /* запустим контсрукторы */
-    run_INIT_Array(ex);
+    //run_INIT_Array(ex);
     ex->complete = 1;
 
     /* запустим функциюю инициализации либы, если таковая имеется */

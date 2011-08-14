@@ -57,7 +57,7 @@ __arm int elf_load(char *filename, void *param1, void *param2, void *param3){
   extern __arm void ExecuteIMB(void);
   ExecuteIMB();
   
-  run_INIT_Array(ex);
+  //run_INIT_Array(ex);
 #ifdef __ELFTHREAD
   __run_proc((void*)entry, filename, param1, param2, param3);
 #else
