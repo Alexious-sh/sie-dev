@@ -19,9 +19,8 @@ __root unsigned int DEFAULT_COLOR = 1;
 __root CFG_CBOX_ITEM cfgcbox3_1[3]={"8 bits","16 bits","24 bits+alpha"};
 
 
-__root CFG_HDR cfghdr4={CFG_CBOX,"Load daemon in subproc",0,2};
+__root CFG_HDR cfghdr4={CFG_CHECKBOX,"Load daemon in subproc",0,2};
 __root unsigned int load_in_suproc = 1;
-__root CFG_CBOX_ITEM cfgcbox4_1[2]={"No","Yes"};
 
 
 __root CFG_HDR cfghdr5={CFG_STR_UTF8, "Image folder way", 0, 127};
@@ -40,7 +39,14 @@ __root char DAEMONS_FOLDER[128]="0:\\ZBin\\Daemons\\";
 
 __root CFG_HDR cfghdr7={CFG_STR_UTF8, "swi.blib way", 0, 127};
 #if NEWSGOLD || X75
-__root char SWIBLIB_WAY[128]="4:\\ZBin\\swi.blib";
+__root char SWIBLIB_WAY[128]="0:\\ZBin\\swi.blib";
 #else
 __root char SWIBLIB_WAY[128]="0:\\ZBin\\swi.blib";
 #endif
+
+__root CFG_HDR cfghdr8={CFG_CHECKBOX,"Realtime lib cache cleaner",0,2};
+__root unsigned int realtime_libclean = 1;
+
+
+
+
