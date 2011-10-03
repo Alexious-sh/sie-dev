@@ -2,7 +2,7 @@
 
 iar="/media/disk-1/ELF/IAR/EmbeddedWorkbenchEvaluation/common/bin/iarbuild.exe"
 err="Break with errors"
-cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/
+#cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/
 
 echo "CCLD  C72sw22..."
 wine $iar ElfLoader.ewp -make C72sw22 -log warnings &> /dev/null &
@@ -106,79 +106,94 @@ if [[ ${?} != 0 ]]
 then echo $err && exit 1 
 fi
 
+echo "CCLD  CL61sw00..."
+wine $iar ElfLoader.ewp -make CL61sw00 -log warnings &> /dev/null &
+if [[ ${?} != 0 ]] 
+then echo $err && exit 1 
+fi
+
+echo "CCLD  CF75sw23..."
+wine $iar ElfLoader.ewp -make CF75sw23 -log warnings &> /dev/null &
+if [[ ${?} != 0 ]] 
+then echo $err && exit 1 
+fi
 
 echo "HEX  C72sw22..."
-cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/C72sw22/Exe
+cd C72sw22/Exe
 ./postbuild &
 
 echo "HEX  C75sw22..."
-cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/C75sw22/Exe
+cd  ../../C75sw22/Exe
 ./postbuild
 
 echo "HEX  C75sw24..."
-cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/C75sw24/Exe
+cd  ../../C75sw24/Exe
 ./postbuild &
 
 echo "HEX  C81sw51..."
-cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/C81sw51/Exe
+cd  ../../C81sw51/Exe
 ./postbuild
 
-#echo "HEX  CF75sw23..."
-#cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/CF75sw23/Exe
-#./postbuild &
+echo "HEX  CF75sw23..."
+cd  ../../CF75sw23/Exe
+./postbuild &
 
 echo "HEX  CX70sw56..."
-cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/CX70sw56/Exe
+cd ../../CX70sw56/Exe
 ./postbuild
 
+
 echo "HEX  CX75sw25..."
-cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/CX75sw25/Exe
+cd  ../../CX75sw25/Exe
 ./postbuild &
 
 echo "HEX  E71sw45..."
-cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/E71sw45/Exe
+cd  ../../E71sw45/Exe
 ./postbuild
 
 echo "HEX  EL71sw45..."
-cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/EL71sw45/Exe
+cd  ../../EL71sw45/Exe
 ./postbuild &
 
 echo "HEX  S65sw58..."
-cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/S65sw58/Exe
+cd  ../../S65sw58/Exe
 ./postbuild
 
 echo "HEX  S68sw47..."
-cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/S68sw47/Exe
+cd  ../../S68sw47/Exe
 ./postbuild &
 
 echo "HEX  S68sw52..."
-cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/S68sw52/Exe
+cd  ../../S68sw52/Exe
 ./postbuild
 
 echo "HEX  S75sw47..."
-cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/S75sw47/Exe
+cd  ../../S75sw47/Exe
 ./postbuild &
 
 echo "HEX  S75sw52..."
-cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/S75sw52/Exe
+cd  ../../S75sw52/Exe
 ./postbuild
 
 echo "HEX  SK65sw50..."
-cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/SK65sw50/Exe
+cd  ../../SK65sw50/Exe
 ./postbuild &
 
 echo "HEX  SL65v53..."
-cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/SL65v53/Exe
+cd  ../../SL65v53/Exe
 ./postbuild
 
 echo "HEX  SL75sw47..."
-cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/SL75sw47/Exe
+cd  ../../SL75sw47/Exe
 ./postbuild &
 
 echo "HEX  SL75sw52..."
-cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/SL75sw52/Exe
+cd  ../../SL75sw52/Exe
 ./postbuild
 
+echo "HEX  CL61sw00..."
+cd  ../../CL61sw00/Exe
+./postbuild
 #=============================================================================
 echo "Upload elfpacks on server?[Yes/No]"
 read is
@@ -187,68 +202,70 @@ if [[ ${is,,} != "yes" ]]
 then exit 0
 fi
 
-cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/C72sw22/Exe
+cd  ../../C72sw22/Exe
 ../../parse.lua $(ompload -u ElfPack_C72sw22.vkp)
 
-cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/C75sw22/Exe
+cd  ../../C75sw22/Exe
 ../../parse.lua $(ompload -u ElfPack_C75sw22.vkp)
 
-cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/C75sw24/Exe
+cd  ../../C75sw24/Exe
 ../../parse.lua $(ompload -u ElfPack_C75sw24.vkp)
 
-cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/C81sw51/Exe
+cd  ../../C81sw51/Exe
 ../../parse.lua $(ompload -u ElfPack_C81sw51.vkp)
 
-#sleep 2
-#cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/CF75sw23/Exe
-#../../parse.lua $(ompload -u ElfPack_CF75sw23.vkp)
-
-cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/CX70sw56/Exe
+cd  ../../CX70sw56/Exe
 ../../parse.lua $(ompload -u ElfPack_CX70sw56.vkp)
 
-cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/CX75sw25/Exe
+cd  ../../CX75sw25/Exe
 ../../parse.lua $(ompload -u ElfPack_CX75sw25.vkp)
 
-cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/E71sw45/Exe
+cd  ../../E71sw45/Exe
 ../../parse.lua $(ompload -u ElfPack_E71sw45.vkp)
 
 echo "Please wait for 10 minutes"
 i=600; while [ $i != 0 ]; do i=`expr $i - 1`; echo -ne "\r$i"; sleep 1; done
 echo ""
 
-cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/EL71sw45/Exe
+cd  ../../EL71sw45/Exe
 ../../parse.lua $(ompload -u ElfPack_EL71sw45.vkp)
 
-cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/S65sw58/Exe
+cd  ../../S65sw58/Exe
 ../../parse.lua $(ompload -u ElfPack_S65sw58.vkp)
 
-cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/S68sw47/Exe
+cd  ../../S68sw47/Exe
 ../../parse.lua $(ompload -u ElfPack_S68sw47.vkp)
 
-cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/S68sw52/Exe
+cd  ../../S68sw52/Exe
 ../../parse.lua $(ompload -u ElfPack_S68sw52.vkp)
 
-cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/S75sw47/Exe
+cd  ../../S75sw47/Exe
 ../../parse.lua $(ompload -u ElfPack_S75sw47.vkp)
 
-cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/S75sw52/Exe
+cd  ../../S75sw52/Exe
 ../../parse.lua $(ompload -u ElfPack_S75sw52.vkp)
 
-cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/SK65sw50/Exe
+cd  ../../SK65sw50/Exe
 ../../parse.lua $(ompload -u ElfPack_SK65sw50.vkp)
 
 echo "Please wait for 10 minutes"
 i=600; while [ $i != 0 ]; do i=`expr $i - 1`; echo -ne "\r$i"; sleep 1; done
 echo ""
 
-cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/SL65v53/Exe
+cd  ../../SL65v53/Exe
 ../../parse.lua $(ompload -u ElfPack_SL65sw53.vkp)
 
-cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/SL75sw47/Exe
+cd  ../../SL75sw47/Exe
 ../../parse.lua $(ompload -u ElfPack_SL75sw47.vkp)
 
-cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/SL75sw52/Exe
+cd  ../../SL75sw52/Exe
 ../../parse.lua $(ompload -u ElfPack_SL75sw52.vkp)
+
+cd  ../../CL61sw00/Exe
+../../parse.lua $(ompload -u ElfPack_CL61sw00.vkp)
+
+cd  ../../CF75sw23/Exe
+../../parse.lua $(ompload -u ElfPack_CF75sw23.vkp)
 
 exit 0
 

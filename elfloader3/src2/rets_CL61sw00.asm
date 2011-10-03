@@ -1,4 +1,6 @@
+//CL61v00 (p)Marie
 
+        
 	RSEG	SWILIB_FUNC2EE_2F5:CODE
 	EXTERN	sub_elfclose
 	EXTERN	dlopen
@@ -36,6 +38,7 @@
 	DCD	pngtop
 	DCD	pLIB_TOP
 	DCD	SFE(DATA_N)
+        
 
 
 defadr	MACRO	a,b
@@ -44,45 +47,30 @@ a	EQU	b
 	ENDM
 
         RSEG	CODE:CODE
-        
-	
+
+
 	PUBLIC	OldOnClose
 OldOnClose:
-	DCD	0xA02A78F2+1
+	DCD	0xA07E3740+1
 	
 	PUBLIC	OldOnCreate
 OldOnCreate:
-	DCD	0xA02A76B0+1
-        
-	PUBLIC	ESIOld
-ESIOld:
-	DCD	0xA0A81EA8+1
-        
-        PUBLIC	PITgetN
+	DCD	0xA07E34C8+1
+	
+	PUBLIC	OldShowMsg
+OldShowMsg:
+	DCD	0xA0AE321C+1
+
+	PUBLIC	PITgetN
 PITgetN:
-	DCD	0xA07FF28E+1
+	DCD	0xA0B6E5C4
 	
 	PUBLIC	PITret
 PITret:
-	DCD	0xA07FF2A4+1
-        
-        PUBLIC	KEYBret
-KEYBret:
-	DCD	0xA07F41FE+1  
-        
-        PUBLIC	KEYBfunc
-KEYBfunc:
-	DCD	0xA08011D0+1
-        
-	PUBLIC	FReadOld
-FReadOld:
-	DCD	0xA07CA21C
-        
-        PUBLIC	FWriteOld
-FWriteOld:
-	DCD	0xA07CA304
-        
-        defadr	StoreErrInfoAndAbort,0xA07CADB0
-	defadr	StoreErrString,0xA07CABD4
+	DCD	0xA046B654+1
+	
+	defadr	StoreErrInfoAndAbort,0xA0737838
+	defadr	StoreErrString,0xA0737704
+
 
 	END

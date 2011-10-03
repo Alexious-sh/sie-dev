@@ -8,6 +8,10 @@
         EXTERN	unsetenv
         EXTERN	getenv
         EXTERN	clearenv
+        EXTERN  environ
+	EXTERN  dlerror
+        EXTERN  dlclean_cache
+        EXTERN  SHARED_TOP
         
 	DCD	sub_elfclose
 	DCD	dlopen
@@ -17,6 +21,10 @@
 	DCD	unsetenv
         DCD     getenv
         DCD     clearenv
+        DCD	environ
+        DCD	dlerror
+        DCD	dlclean_cache
+	DCD	SHARED_TOP
 	
 
 

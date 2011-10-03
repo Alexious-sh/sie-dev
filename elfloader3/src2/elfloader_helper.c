@@ -15,6 +15,7 @@ extern unsigned int run_elf_in_thread;
 extern char IMAGE_FOLDER[];
 extern char DAEMONS_FOLDER[];
 extern char SWIBLIB_WAY[];
+extern int dlclean_cache();
 //Mutex mutex;
 
 
@@ -228,6 +229,7 @@ __arm void MyIDLECSMonClose(void *data)
 #ifdef __ELFTHREAD
   KillGBSproc(ELF_PROC_RUNER_ID);
 #endif
+  dlclean_cache();
   clearenv();
   BXR1(data,OldOnClose);
   //  OldOnClose(data);
