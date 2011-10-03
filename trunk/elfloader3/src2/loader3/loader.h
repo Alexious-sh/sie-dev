@@ -70,6 +70,10 @@ static const unsigned char elf_magic_header[] =
   #define __arch __arm
 #endif
 
+#define NO_FILEORDIR	"no such file or directory"
+#define BADFILE		"bad file type"
+#define OUTOFMEM	"out of memory"
+
 enum ERROR{
 
     E_NO_ERROR = 0x0,
@@ -162,7 +166,7 @@ Elf32_Word FindFunction(Elf32_Lib* lib, const char* name);
 
 /* shared support */
 Elf32_Lib* OpenLib(const char *name, Elf32_Exec *ex);
-int CloseLib(Elf32_Lib* lib);
+int CloseLib(Elf32_Lib* lib, int immediate);
 int dlopen(const char *name);
 int dlclose(int handle);
 Elf32_Word dlsym(int handle, const char *name);
@@ -172,8 +176,10 @@ Elf32_Exec* elfopen(const char* filenam);
 int elfclose(Elf32_Exec* ex);
 void *elf_entry(Elf32_Exec *);
 
+__arch void sub_clients(Elf32_Lib* lib);
+
 /* init/fini arrays support */
-void run_INIT_Array(Elf32_Exec *ex);
+//void run_INIT_Array(Elf32_Exec *ex);
 void run_FINI_Array(Elf32_Exec *ex);
 
 #endif

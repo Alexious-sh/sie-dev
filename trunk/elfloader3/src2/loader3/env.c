@@ -176,3 +176,9 @@ __arm int clearenv(void)
 	return 0;
 }
 
+
+char **environ()
+{
+  return l__environ;
+}
+

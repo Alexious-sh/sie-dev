@@ -67,11 +67,13 @@ __arch int elfclose(Elf32_Exec* ex)
 
   if(ex->complete)
     run_FINI_Array(ex);
+  
   // Закрываем либы
   while(ex->libs)
   {
     Libs_Queue* lib = ex->libs;
-    CloseLib(lib->lib);
+    sub_clients(lib->lib);
+    CloseLib(lib->lib, 0);
     ex->libs = lib->next;
     mfree(lib);
   }
@@ -89,3 +91,5 @@ __arch int sub_elfclose(Elf32_Exec* ex)
   SUBPROC((void*)elfclose, ex);
   return 0;
 }
+
+
