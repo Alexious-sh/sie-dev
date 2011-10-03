@@ -8,11 +8,11 @@
 #include "loader.h"
 #include "env.h"
 
-
+extern unsigned int realtime_libclean;
 #ifndef _test_linux
 extern int __e_div(int delitelb, int delimoe);
 #endif
-char tmp[258];
+char tmp[258] = {0}, dlerr[128]={0};
 
 
 Global_Queue* lib_top = 0;
@@ -162,6 +162,7 @@ __arch const char * findShared(const char *name)
 // Открыть библиотеку
 __arch Elf32_Lib* OpenLib(const char *name, Elf32_Exec *_ex)
 {
+    if(!name || !*name) return 0;
     printf("Starting loading shared library '%s'...\n", name);
     int fp, _size = 0;
     Elf32_Ehdr ehdr;
@@ -169,19 +170,24 @@ __arch Elf32_Lib* OpenLib(const char *name, Elf32_Exec *_ex)
 
     // Поищем среди уже загруженых
     Global_Queue* ready_libs = lib_top;
+    
+    const char *cmp_share_name = strrchr(name, '\\');
+    if(!cmp_share_name) cmp_share_name = name;
+    else cmp_share_name++;
     while(ready_libs)
     {
         Elf32_Lib* lib = ready_libs->lib;
 
-        if(!strcmp (lib->soname, name))
+        if(!strcmp (lib->soname, cmp_share_name))
         {
-            printf(" '%s' is olready loaded\n", name);
+            printf(" '%s' is olready loaded\n", cmp_share_name);
             lib->users_cnt++;
+	    memset(dlerr, 0, 2);
             return lib;
         }
         ready_libs = ready_libs->prev;
     }
-    
+
     
     const char  *ld_path;
     
@@ -194,11 +200,17 @@ __arch Elf32_Lib* OpenLib(const char *name, Elf32_Exec *_ex)
     if(!ld_path) return 0;
     
 try_again:
-    /* Открываем */
-    if((fp = fopen(ld_path, A_ReadOnly+A_BIN,P_READ, &ferr)) == -1) return 0;
 
+    /* Открываем */
+    if((fp = fopen(ld_path, A_ReadOnly+A_BIN,P_READ, &ferr)) == -1) {
+      strcpy(dlerr, NO_FILEORDIR);
+      return 0;
+    }
     /* Читаем хедер */
-    if( (_size = fread(fp, &ehdr, sizeof(Elf32_Ehdr), &ferr)) <= 0) return 0;
+    if( (_size = fread(fp, &ehdr, sizeof(Elf32_Ehdr), &ferr)) <= 0) {
+      strcpy(dlerr, BADFILE);
+      return 0;
+    }
     
     /* Проверяем шо это вообще такое */
     if( _size < sizeof(Elf32_Ehdr) || CheckElf(&ehdr) ) // не эльф? о_О мб симлинк?!
@@ -216,12 +228,17 @@ try_again:
         fclose(fp, &ferr);
         goto try_again;
       }
+      strcpy(dlerr, BADFILE);
       fclose(fp, &ferr);
       return 0;
     }
     
     /* Выделим память под структуру эльфа */
-    if( !(ex = malloc(sizeof(Elf32_Exec))) ) return 0;
+    if( !(ex = malloc(sizeof(Elf32_Exec))) ) {
+      strcpy(dlerr, OUTOFMEM);
+      return 0;
+    }
+    
     memcpy(&ex->ehdr, &ehdr, sizeof(Elf32_Ehdr));
     ex->v_addr = (unsigned int)-1;
     ex->fp = fp;
@@ -233,6 +250,7 @@ try_again:
 
     /* Начинаем копать структуру либы */
     if( LoadSections(ex) ){
+        strcpy(dlerr, BADFILE);
         fclose(fp, &ferr);
         elfclose(ex);
         return 0;
@@ -245,20 +263,43 @@ try_again:
     Elf32_Lib* lib;
     if( !(lib = malloc(sizeof(Elf32_Lib))) ){
         elfclose(ex);
+        strcpy(dlerr, OUTOFMEM);
         return 0;
     }
 
     lib->ex = ex;
     lib->users_cnt = 1;
-
-    char* soname = ex->dyn[DT_SONAME] ? ex->strtab + ex->dyn[DT_SONAME] : (char*)name;
-    strcpy(lib->soname, soname);
+    
+    const char *soname;
+    
+    
+    if(!ex->dyn[DT_SONAME]) // пустой блок с именем либы о_О
+    {
+      if(name[1]==':') // путь относительный
+      {
+        soname = strrchr(name, '\\'); // отчекрыжим путь, берём имя
+        if(!soname) // шо за бляин путь такой?! 
+        {
+          soname = name; // лан, пох ...
+        }else
+          ++soname;
+      }else // путь не относительный
+      {
+        soname = name;
+      }
+    }else // все норм, имя либы есть
+    {
+      soname = ex->strtab + ex->dyn[DT_SONAME];
+    }
+    
+    strcpy(lib->soname, soname?soname : "Error Lib!");
 
     /*  Ведь капуста^W память всем нужна)) */
     Global_Queue* global_ptr = malloc(sizeof(Global_Queue));
     if(!global_ptr)    // ?????...?? ??? :'(
     {
-        CloseLib(lib);
+        strcpy(dlerr, OUTOFMEM);
+        CloseLib(lib, 0);
         return 0;
     }
 
@@ -273,7 +314,7 @@ try_again:
         global_ptr->prev = lib_top;
     }
     else global_ptr->prev = 0;
-
+    
     lib_top = global_ptr;
 
     /* запустим контсрукторы */
@@ -290,21 +331,26 @@ try_again:
     }
 
     printf(" '%s' Loade complete\n", name);
+    dlerr[0] = 0;
+    dlerr[1] = 0;
     return lib;
 }
 
 
+__arch void sub_clients(Elf32_Lib* lib)
+{
+  lib->users_cnt--;
+}
 
-__arch int CloseLib(Elf32_Lib* lib)
+__arch int CloseLib(Elf32_Lib* lib, int immediate)
 {
     if(!lib) return E_EMPTY;
-    lib->users_cnt--;
 
-    if(!lib->users_cnt)
+    if(lib->users_cnt < 1) // нету больше юзеров либы :(
     {
+        if(!realtime_libclean && !immediate) goto end;
+        
         Elf32_Exec* ex = lib->ex;
-
-
         if(lib->glob_queue)
         {
 	    // Функция финализации
@@ -313,8 +359,11 @@ __arch int CloseLib(Elf32_Lib* lib)
             Global_Queue* glob_queue = lib->glob_queue;
 
             Global_Queue* tmp = glob_queue->next;
-
-            if(glob_queue == lib_top) lib_top = 0;
+            
+            if( glob_queue == lib_top && !lib_top->prev) lib_top = 0;
+            else
+            if( glob_queue == lib_top ) lib_top = glob_queue->prev;
+              
             if(tmp) tmp->prev = glob_queue->prev;
             if(tmp = glob_queue->prev) tmp->next = glob_queue->next;
             mfree(glob_queue);
@@ -323,8 +372,10 @@ __arch int CloseLib(Elf32_Lib* lib)
         elfclose(ex);
         mfree(lib);
     }
+end:
     return E_NO_ERROR;
 }
+
 
 int dlopen(const char *name)
 {
@@ -383,9 +434,9 @@ int dlclose(int handle)
   {
     Elf32_Lib* lib = handles[handle];
     handles[handle] = 0;
-    
-    // Точто здесь стоит возвращать это? handle все равно же потерли...
-    return CloseLib(lib);
+    sub_clients(lib);
+    // То что здесь стоит возвращать это? handle все равно же потерли...
+    return CloseLib(lib, 0);
   }
   
   return 0;
@@ -400,3 +451,55 @@ Elf32_Word dlsym(int handle, const char *name)
   
   return 0;
 }
+
+
+__arch const char *dlerror()
+{
+  return dlerr;
+}
+
+
+__arch void *SHARED_TOP()
+{
+  return lib_top;
+}
+
+
+
+__arch int dlclean_cache()
+{
+  if(!lib_top) return -1;
+  
+  Elf32_Lib *bigger = 0;
+  Global_Queue *tmp = lib_top, *mem = lib_top;
+  int cleaned = 0;
+  while(tmp)
+  {
+    // найдем либу которая юзает само больше либ
+    bigger = tmp->lib;
+    
+    if( bigger->users_cnt < 1 )
+    {
+      // закроем её, и она закроет весб хлам который сама юзает
+      CloseLib(bigger, 1); // срочняком кроим их!
+      ++cleaned;
+    }
+    
+    // либ у нас поменьшало, мб топ изменился, чекаем
+    if(mem != lib_top )
+    {
+      tmp = lib_top;
+      mem = lib_top;
+    }
+    else // не неизменился, идем дальше тогда
+      tmp = tmp->prev;
+  }
+  
+  return cleaned;
+}
+
+
+
+
+
+
