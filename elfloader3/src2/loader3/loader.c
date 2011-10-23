@@ -493,7 +493,7 @@ __arch int LoadSections(Elf32_Exec* ex)
 
 
 /* constructors */
-/*__arch void run_INIT_Array(Elf32_Exec *ex)
+__arch void run_INIT_Array(Elf32_Exec *ex)
 {
   if(!ex->dyn[DT_FINI_ARRAY]) return;
   size_t sz = ex->dyn[DT_INIT_ARRAYSZ] / sizeof (void*);
@@ -508,7 +508,7 @@ __arch int LoadSections(Elf32_Exec* ex)
      ( (void (*)())arr[i])();
 #endif
   }
-}*/
+}
 
 
 /* destructors */

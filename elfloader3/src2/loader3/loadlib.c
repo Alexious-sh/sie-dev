@@ -318,7 +318,7 @@ try_again:
     lib_top = global_ptr;
 
     /* запустим контсрукторы */
-    //run_INIT_Array(ex);
+    run_INIT_Array(ex);
     ex->complete = 1;
 
     /* запустим функциюю инициализации либы, если таковая имеется */
