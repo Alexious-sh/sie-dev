@@ -179,7 +179,7 @@ void *elf_entry(Elf32_Exec *);
 __arch void sub_clients(Elf32_Lib* lib);
 
 /* init/fini arrays support */
-//void run_INIT_Array(Elf32_Exec *ex);
+void run_INIT_Array(Elf32_Exec *ex);
 void run_FINI_Array(Elf32_Exec *ex);
 
 #endif
