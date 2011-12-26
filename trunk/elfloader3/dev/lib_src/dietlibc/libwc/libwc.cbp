@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="libwc" />
+		<Option pch_mode="2" />
+		<Option compiler="armelfgcc" />
+		<Build>
+			<Target title="NSG">
+				<Option output="exe/libwc-1.0.so" prefix_auto="0" extension_auto="0" />
+				<Option object_output="objects/nsg" />
+				<Option type="3" />
+				<Option compiler="armelfgcc" />
+				<Compiler>
+					<Add option="-DNEWSGOLD" />
+				</Compiler>
+			</Target>
+			<Target title="SG">
+				<Option output="exe/libwc-1.0.so" prefix_auto="0" extension_auto="0" />
+				<Option object_output="objects/sg" />
+				<Option type="1" />
+				<Option compiler="armelfgcc" />
+				<Compiler>
+					<Add option="-DSGOLD" />
+				</Compiler>
+			</Target>
+			<Target title="ELKA">
+				<Option output="exe/libwc-1.0.so" prefix_auto="0" extension_auto="0" />
+				<Option object_output="objects/elka" />
+				<Option type="1" />
+				<Option compiler="armelfgcc" />
+				<Compiler>
+					<Add option="-DNEWSGOLD" />
+					<Add option="-DELKA" />
+				</Compiler>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-marm" />
+			<Add option="-O2" />
+			<Add option="-Wall" />
+			<Add option="-std=gnu99" />
+			<Add option="-D__ARM_EABI__" />
+			<Add option="-D__arm__" />
+			<Add option="-D__BUILDIN_FUNCTIONS" />
+			<Add directory="src/include" />
+			<Add directory="src" />
+		</Compiler>
+		<Linker>
+			<Add option="-s" />
+			<Add option="-init=_init" />
+			<Add option="-fini=_fini" />
+			<Add library="gcc" />
+			<Add library="c" />
+		</Linker>
+		<Unit filename="src/mbsrtowcs.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/mbstowcs.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/wcscat.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/wcschr.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/wcscmp.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/wcscpy.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/wcslen.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/wcsncat.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/wcsncpy.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/wcsrchr.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/wcsstr.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Extensions>
+			<envvars />
+			<code_completion />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

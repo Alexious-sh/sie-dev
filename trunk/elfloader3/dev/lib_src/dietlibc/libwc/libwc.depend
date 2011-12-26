@@ -1,0 +1,35 @@
+# depslib dependency file v1.0
+1222809226 source:/home/vova7890/Sie/dietlibc/libwc/src/mbsrtowcs.c
+	<wchar.h>
+
+1189303878 source:/home/vova7890/Sie/dietlibc/libwc/src/mbstowcs.c
+	<stdlib.h>
+	<wchar.h>
+
+1121452443 source:/home/vova7890/Sie/dietlibc/libwc/src/wcscat.c
+	<wchar.h>
+
+1121452443 source:/home/vova7890/Sie/dietlibc/libwc/src/wcschr.c
+	<wchar.h>
+
+1121452443 source:/home/vova7890/Sie/dietlibc/libwc/src/wcscmp.c
+	<wchar.h>
+
+1121452443 source:/home/vova7890/Sie/dietlibc/libwc/src/wcscpy.c
+	<wchar.h>
+
+1121452443 source:/home/vova7890/Sie/dietlibc/libwc/src/wcslen.c
+	<wchar.h>
+
+1191506309 source:/home/vova7890/Sie/dietlibc/libwc/src/wcsncat.c
+	<wchar.h>
+
+1191506309 source:/home/vova7890/Sie/dietlibc/libwc/src/wcsncpy.c
+	<wchar.h>
+
+1121452443 source:/home/vova7890/Sie/dietlibc/libwc/src/wcsrchr.c
+	<wchar.h>
+
+1191853439 source:/home/vova7890/Sie/dietlibc/libwc/src/wcsstr.c
+	<wchar.h>
+
