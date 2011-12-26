@@ -5,6 +5,8 @@ founded_elfs=$(find ./ -name "ELF*.elf")
 founded_vkps=$(find ./ -name "Elf*.vkp")
 founded_a79=$(find ./ -name "ELF*.a79")
 founded_hex=$(find ./ -name "ELF*.hex")
+founded_list=$(find ./ -name "List")
+founded_obj=$(find ./ -name "Obj")
 
 #echo "elfs:"$founded_elfs
 #echo "vkps:"$founded_vkps
@@ -27,6 +29,16 @@ fi
 echo "Removing hexdump..."
 if [[ $founded_hex != "" ]]
 then rm $founded_hex
+fi
+
+echo "Removing List folder..."
+if [[ $founded_list != "" ]]
+then rm -rf $founded_list
+fi
+
+echo "Removing Obj folder..."
+if [[ $founded_obj != "" ]]
+then rm -rf $founded_obj
 fi
 
 echo "Done."

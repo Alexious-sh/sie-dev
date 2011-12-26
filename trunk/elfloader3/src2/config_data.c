@@ -39,7 +39,7 @@ __root char DAEMONS_FOLDER[128]="0:\\ZBin\\Daemons\\";
 
 __root CFG_HDR cfghdr7={CFG_STR_UTF8, "swi.blib way", 0, 127};
 #if NEWSGOLD || X75
-__root char SWIBLIB_WAY[128]="0:\\ZBin\\swi.blib";
+__root char SWIBLIB_WAY[128]="4:\\ZBin\\swi.blib";
 #else
 __root char SWIBLIB_WAY[128]="0:\\ZBin\\swi.blib";
 #endif
@@ -47,6 +47,11 @@ __root char SWIBLIB_WAY[128]="0:\\ZBin\\swi.blib";
 __root CFG_HDR cfghdr8={CFG_CHECKBOX,"Realtime lib cache cleaner",0,2};
 __root unsigned int realtime_libclean = 1;
 
+__root CFG_HDR cfghdr10={CFG_STR_UTF8, "LD_LIBRARY_PATH", 0, 255};
+__root char LD_LIBRARY_PATH_env[256]="0:\\ZBin\\lib\\;4:\\ZBin\\lib\\;";
 
+__root CFG_HDR cfghdr11={CFG_STR_UTF8, "Optional log way", 0, 127};
+__root char ep_log_way[128]="0:\\ep3_log.txt";
 
-
+__root CFG_HDR cfghdr12={CFG_UINT,"Max log size in bytes",0,50*1024};
+__root unsigned int max_log_size = 512;

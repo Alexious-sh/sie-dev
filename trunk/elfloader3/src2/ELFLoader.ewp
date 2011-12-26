@@ -15765,7 +15765,7 @@
         </option>
         <option>
           <name>OGLastSavedByProductVersion</name>
-          <state>4.41A</state>
+          <state>4.42A</state>
         </option>
         <option>
           <name>GeneralMisraRules</name>
@@ -16830,7 +16830,7 @@
         <option>
           <name>CCInlineThreshold</name>
           <version>0</version>
-          <state>1</state>
+          <state>0</state>
         </option>
       </data>
     </settings>
@@ -20629,6 +20629,9 @@
     </file>
     <file>
       <name>$PROJ_DIR$\loader3\loadlib.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\loader3\log.c</name>
     </file>
     <file>
       <name>$PROJ_DIR$\loader3\Mutex.c</name>

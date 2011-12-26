@@ -5,115 +5,115 @@ err="Break with errors"
 #cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/
 
 echo "CCLD  C72sw22..."
-wine $iar ElfLoader.ewp -make C72sw22 -log warnings &> /dev/null &
+wine $iar ElfLoader.ewp -make C72sw22 -log warnings
 if [[ ${?} != 0 ]] 
 then echo $err && exit 1
 fi
 
 echo "CCLD  C75sw22..."
-wine $iar ElfLoader.ewp -make C75sw22 -log warnings &> /dev/null
+wine $iar ElfLoader.ewp -make C75sw22 -log warnings
 if [[ ${?} != 0 ]] 
 then echo $err && exit 1 
 fi
 
 echo "CCLD  C75sw24..."
-wine $iar ElfLoader.ewp -make C75sw24 -log warnings &> /dev/null &
+wine $iar ElfLoader.ewp -make C75sw24 -log warnings
 if [[ ${?} != 0 ]] 
 then echo $err && exit 1 
 fi
 
 echo "CCLD  C81sw51..."
-wine $iar ElfLoader.ewp -make C81sw51 -log warnings &> /dev/null
+wine $iar ElfLoader.ewp -make C81sw51 -log warnings
 if [[ ${?} != 0 ]] 
 then echo $err && exit 1 
 fi
 
 echo "CCLD  CX70sw56..."
-wine $iar ElfLoader.ewp -make CX70sw56 -log warnings &> /dev/null &
+wine $iar ElfLoader.ewp -make CX70sw56 -log warnings 
 if [[ ${?} != 0 ]] 
 then echo $err && exit 1 
 fi
 
 echo "CCLD  CX75sw25..."
-wine $iar ElfLoader.ewp -make CX75sw25 -log warnings &> /dev/null
+wine $iar ElfLoader.ewp -make CX75sw25 -log warnings
 if [[ ${?} != 0 ]] 
 then echo $err && exit 1 
 fi
 
 echo "CCLD  E71sw45..."
-wine $iar ElfLoader.ewp -make E71sw45 -log warnings &> /dev/null &
+wine $iar ElfLoader.ewp -make E71sw45 -log warnings
 if [[ ${?} != 0 ]] 
 then echo $err && exit 1 
 fi
 
 echo "CCLD  EL71sw45..."
-wine $iar ElfLoader.ewp -make EL71sw45 -log warnings &> /dev/null
+wine $iar ElfLoader.ewp -make EL71sw45 -log warnings
 if [[ ${?} != 0 ]] 
 then echo $err && exit 1 
 fi
 
 echo "CCLD  S65sw58..."
-wine $iar ElfLoader.ewp -make S65sw58 -log warnings &> /dev/null &
+wine $iar ElfLoader.ewp -make S65sw58 -log warnings
 if [[ ${?} != 0 ]] 
 then echo $err && exit 1 
 fi
 
 echo "CCLD  S68sw47..."
-wine $iar ElfLoader.ewp -make S68sw47 -log warnings &> /dev/null
+wine $iar ElfLoader.ewp -make S68sw47 -log warnings
 if [[ ${?} != 0 ]] 
 then echo $err && exit 1 
 fi
 
 echo "CCLD  S68sw52..."
-wine $iar ElfLoader.ewp -make S68sw52 -log warnings &> /dev/null
+wine $iar ElfLoader.ewp -make S68sw52 -log warnings
 if [[ ${?} != 0 ]] 
 then echo $err && exit 1 
 fi
 
 echo "CCLD  S75sw47..."
-wine $iar ElfLoader.ewp -make S75sw47 -log warnings &> /dev/null &
+wine $iar ElfLoader.ewp -make S75sw47 -log warnings 
 if [[ ${?} != 0 ]] 
 then echo $err && exit 1 
 fi
 
 echo "CCLD  S75sw52..."
-wine $iar ElfLoader.ewp -make S75sw52 -log warnings &> /dev/null
+wine $iar ElfLoader.ewp -make S75sw52 -log warnings 
 if [[ ${?} != 0 ]] 
 then echo $err && exit 1 
 fi
 
 echo "CCLD  SK65sw50..."
-wine $iar ElfLoader.ewp -make SK65sw50 -log warnings &> /dev/null &
+wine $iar ElfLoader.ewp -make SK65sw50 -log warnings
 if [[ ${?} != 0 ]] 
 then echo $err && exit 1 
 fi
 
 echo "CCLD  SL65v53..."
-wine $iar ElfLoader.ewp -make SL65v53 -log warnings &> /dev/null
+wine $iar ElfLoader.ewp -make SL65v53 -log warnings
 if [[ ${?} != 0 ]] 
 then echo $err && exit 1 
 fi
 
 echo "CCLD  SL75sw47..."
-wine $iar ElfLoader.ewp -make SL75sw47 -log warnings &> /dev/null &
+wine $iar ElfLoader.ewp -make SL75sw47 -log warnings
 if [[ ${?} != 0 ]] 
 then echo $err && exit 1 
 fi
 
 echo "CCLD  SL75sw52..."
-wine $iar ElfLoader.ewp -make SL75sw52 -log warnings &> /dev/null
+wine $iar ElfLoader.ewp -make SL75sw52 -log warnings
 if [[ ${?} != 0 ]] 
 then echo $err && exit 1 
 fi
 
 echo "CCLD  CL61sw00..."
-wine $iar ElfLoader.ewp -make CL61sw00 -log warnings &> /dev/null &
+wine $iar ElfLoader.ewp -make CL61sw00 -log warnings 
 if [[ ${?} != 0 ]] 
 then echo $err && exit 1 
 fi
 
 echo "CCLD  CF75sw23..."
-wine $iar ElfLoader.ewp -make CF75sw23 -log warnings &> /dev/null &
+wine $iar ElfLoader.ewp -make CF75sw23 -log warnings
 if [[ ${?} != 0 ]] 
 then echo $err && exit 1 
 fi

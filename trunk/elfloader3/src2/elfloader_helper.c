@@ -16,6 +16,7 @@ extern char IMAGE_FOLDER[];
 extern char DAEMONS_FOLDER[];
 extern char SWIBLIB_WAY[];
 extern int dlclean_cache();
+extern char LD_LIBRARY_PATH_env[];
 //Mutex mutex;
 
 
@@ -37,19 +38,19 @@ struct __param
 
 /* Загрузка эльфа */
 
-__arm int elf_load(char *filename, void *param1, void *param2, void *param3){
+__arch int elfload(char *filename, void *param1, void *param2, void *param3){
 
   //_f = open("0:\\Misc\\elfloader.log", A_WriteOnly | A_Append | A_Create | A_BIN, P_WRITE, 0);
   
   Elf32_Exec *ex = elfopen(filename);
   if(!ex){
-    ShowMSG(1, (int)"Cant open elf");
+    l_msg(1, (int)"Elf corrupt or missing");
     return -1;
   }
   
   int (*entry)(char *, void *, void*, void*) = (int (*)(char *, void *, void*, void*))elf_entry(ex);
   if(!entry){
-   l_msg(1, (int)"Cant found entry");
+   l_msg(1, (int)"Entry point not found");
    elfclose(ex);
    return -2;
   }
@@ -75,11 +76,6 @@ __arm int elf_load(char *filename, void *param1, void *param2, void *param3){
   return 0;
 }
 
-
-__arm long elfload(char *filename, void *param1, void *p2, void *p3){
-
-  return elf_load(filename, param1, p2, p3);
-}
 
 #ifdef __ELFTHREAD
 __arm void elf_proc_func()
@@ -126,7 +122,11 @@ __arm void __run_proc(void *entry, char *filename, void *param1, void *param2, v
 
 __arm void InitLoaderSystem()
 {
-  setenv("LD_LIBRARY_PATH", "0:\\ZBin\\lib\\;4:\\ZBin\\lib\\;", 1);
+  if(!*LD_LIBRARY_PATH_env){
+    strcpy(LD_LIBRARY_PATH_env, "0:\\ZBin\\lib\\;4:\\ZBin\\lib\\;");
+  }
+  
+  setenv("LD_LIBRARY_PATH", LD_LIBRARY_PATH_env, 1);
 
 #ifdef __ELFTHREAD
   static const char elf_p_name[]="ELF_PROC";

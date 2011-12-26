@@ -63,12 +63,18 @@ static const unsigned char elf_magic_header[] =
   0x01,                    /* Only ELF version 1. */
 };
 
+#define __thumb_mode 1
+
 #ifndef _test_linux
-  #define printf(...) 
-  #define __arch __arm
+  #define printf(...)
+#ifdef __thumb_mode 
+  #define __arch __thumb
 #else
   #define __arch __arm
-#endif
+#endif /*__thumb_mode*/
+#else
+  #define __arch 
+#endif /* _test_linux */
 
 #define NO_FILEORDIR	"no such file or directory"
 #define BADFILE		"bad file type"
@@ -131,6 +137,7 @@ typedef struct
   char complete, __is_ex_import;
   void *meloaded;
   int *switab;
+  const char *fname; // не постоянная переменная, после загрузки эльфа она обнулится
 } Elf32_Exec;
 
 typedef struct
@@ -155,6 +162,13 @@ extern unsigned int ferr;
  void l_msg(int a, int b);
  #endif
 #endif
+ 
+extern char tmp[258];
+void ep_log(Elf32_Exec *ex, const char *data, int size);
+
+#define lprintf(...) { int __dsz = snprintf(tmp, 256, __VA_ARGS__);\
+      ep_log(tmp, __dsz); }
+      
 
 int CheckElf(Elf32_Ehdr *ehdr);
 unsigned int GetBinSize(Elf32_Exec *ex, Elf32_Phdr* phdrs);

@@ -118,11 +118,13 @@ __arm int unsetenv(const char *name)
 	/* NB: clearenv(); unsetenv("foo"); should not segfault */
 	if (ep)	while (*ep != NULL) {
 		if (!strncmp(*ep, name, len) && (*ep)[len] == '=') {
+			char *rm = *ep;
 			/* Found it.  Remove this pointer by moving later ones back.  */
 			char **dp = ep;
 			do {
 				dp[0] = dp[1];
 			} while (*dp++);
+			mfree(rm);
 			/* Continue the loop in case NAME appears again.  */
 		} else {
 			++ep;

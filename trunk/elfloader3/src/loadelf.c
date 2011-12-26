@@ -13,6 +13,7 @@
 #include "loader.h"
 #include "fix.h"
 
+
 // Загрузка эльфа
 __arch Elf32_Exec* elfopen(const char* filename)
 {
@@ -40,10 +41,10 @@ __arch Elf32_Exec* elfopen(const char* filename)
         ex->complete = 0;
 	ex->__is_ex_import = 0;
         ex->meloaded = 0;
+        ex->switab = 0;
 
         if(!LoadSections(ex))
         {
-	  printf("loading data...\n");
           ex->complete = 1;
           fclose(fp, &ferr);
           return ex;
@@ -72,11 +73,13 @@ __arch int elfclose(Elf32_Exec* ex)
 
   if(ex->complete)
     run_FINI_Array(ex);
+  
   // Закрываем либы
   while(ex->libs)
   {
     Libs_Queue* lib = ex->libs;
-    CloseLib(lib->lib);
+    sub_clients(lib->lib);
+    CloseLib(lib->lib, 0);
     ex->libs = lib->next;
     mfree(lib);
   }
@@ -90,6 +93,9 @@ __arch int elfclose(Elf32_Exec* ex)
 
 __arch int sub_elfclose(Elf32_Exec* ex)
 {
+  //elfclose(ex);
   SUBPROC((void*)elfclose, ex);
   return 0;
 }
+
+
