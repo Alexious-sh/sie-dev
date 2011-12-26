@@ -8,11 +8,25 @@
 #include "loader.h"
 #include "env.h"
 
-extern unsigned int realtime_libclean;
 #ifndef _test_linux
 extern int __e_div(int delitelb, int delimoe);
 #endif
+extern unsigned int realtime_libclean;
 char tmp[258] = {0}, dlerr[128]={0};
+
+#ifdef __thumb_mode
+extern __arm void *memcpy_a (void *dest, const void *src, size_t size);
+extern __arm unsigned int AddrLibrary_a();
+
+__arm char * strrchr_a (const char *s, int c)
+{
+  return strrchr(s, c);
+}
+#else
+#define memcpy_a memcpy
+#define AddrLibrary_a AddrLibrary
+#define strrchr_a strrchr
+#endif
 
 
 Global_Queue* lib_top = 0;
@@ -134,7 +148,7 @@ __arch char * envparse(const char *str, char *buf, int num)
     }
   }
 
-  memcpy(buf, start, s-start);
+  memcpy_a(buf, start, s-start);
   buf[s-start] = 0;
   return buf;
 }
@@ -171,7 +185,7 @@ __arch Elf32_Lib* OpenLib(const char *name, Elf32_Exec *_ex)
     // Поищем среди уже загруженых
     Global_Queue* ready_libs = lib_top;
     
-    const char *cmp_share_name = strrchr(name, '\\');
+    const char *cmp_share_name = strrchr_a(name, '\\');
     if(!cmp_share_name) cmp_share_name = name;
     else cmp_share_name++;
     while(ready_libs)
@@ -239,14 +253,15 @@ try_again:
       return 0;
     }
     
-    memcpy(&ex->ehdr, &ehdr, sizeof(Elf32_Ehdr));
+    memcpy_a(&ex->ehdr, &ehdr, sizeof(Elf32_Ehdr));
     ex->v_addr = (unsigned int)-1;
     ex->fp = fp;
     ex->type = EXEC_LIB;
     ex->libs = 0;
     ex->complete = 0;
     ex->meloaded = (void*)_ex;
-    ex->switab = (int*)AddrLibrary();
+    ex->switab = (int*)AddrLibrary_a();
+    ex->fname  = name;
 
     /* Начинаем копать структуру либы */
     if( LoadSections(ex) ){
@@ -277,7 +292,7 @@ try_again:
     {
       if(name[1]==':') // путь относительный
       {
-        soname = strrchr(name, '\\'); // отчекрыжим путь, берём имя
+        soname = strrchr_a(name, '\\'); // отчекрыжим путь, берём имя
         if(!soname) // шо за бляин путь такой?! 
         {
           soname = name; // лан, пох ...
@@ -333,6 +348,7 @@ try_again:
     printf(" '%s' Loade complete\n", name);
     dlerr[0] = 0;
     dlerr[1] = 0;
+    ex->fname = 0;
     return lib;
 }
 
@@ -465,18 +481,18 @@ __arch void *SHARED_TOP()
 }
 
 
-
 __arch int dlclean_cache()
 {
   if(!lib_top) return -1;
   
   Elf32_Lib *bigger = 0;
-  Global_Queue *tmp = lib_top, *mem = lib_top;
+  Global_Queue *tmp = lib_top, *mem = lib_top, *prev = 0;
   int cleaned = 0;
   while(tmp)
   {
     // найдем либу которая юзает само больше либ
     bigger = tmp->lib;
+    prev = tmp->prev;
     
     if( bigger->users_cnt < 1 )
     {
@@ -492,11 +508,12 @@ __arch int dlclean_cache()
       mem = lib_top;
     }
     else // не неизменился, идем дальше тогда
-      tmp = tmp->prev;
+      tmp = prev;
   }
   
   return cleaned;
 }
+
 
 
 

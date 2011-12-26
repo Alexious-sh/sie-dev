@@ -10,10 +10,11 @@
 #include <stdlib.h>
 
 
-int main(char *exename, char *fname)
+int main(int argc, char **argv)
 {
-
-  #define NAME "test.elf"
+  if(argc < 2) return 0;
+  
+  const char *NAME = argv[1];
 
    // l_setenv("LD_LIBRARY_PATH", "0:\\Misc\\elf3\\");
    char buf[256]={0};
