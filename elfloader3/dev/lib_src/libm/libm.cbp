@@ -1,0 +1,566 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="libm" />
+		<Option pch_mode="2" />
+		<Option compiler="armelfgcc" />
+		<Build>
+			<Target title="NSG">
+				<Option output="exe/libm-1.0.so" prefix_auto="0" extension_auto="0" />
+				<Option object_output="objects/nsg" />
+				<Option type="3" />
+				<Option compiler="armelfgcc" />
+				<Compiler>
+					<Add option="-DNEWSGOLD" />
+				</Compiler>
+			</Target>
+			<Target title="SG">
+				<Option output="exe/elf_sg.elf" prefix_auto="0" extension_auto="0" />
+				<Option object_output="objects/sg" />
+				<Option type="1" />
+				<Option compiler="armelfgcc" />
+				<Compiler>
+					<Add option="-DSGOLD" />
+				</Compiler>
+			</Target>
+			<Target title="ELKA">
+				<Option output="exe/elf_el.elf" prefix_auto="0" extension_auto="0" />
+				<Option object_output="objects/elka" />
+				<Option type="1" />
+				<Option compiler="armelfgcc" />
+				<Compiler>
+					<Add option="-DNEWSGOLD" />
+					<Add option="-DELKA" />
+				</Compiler>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-mthumb" />
+			<Add option="-Os" />
+			<Add option="-W" />
+			<Add option="-D__dietlibc__" />
+		</Compiler>
+		<Linker>
+			<Add option="-s" />
+			<Add library="crt_helper" />
+			<Add library="gcc" />
+			<Add library="c" />
+		</Linker>
+		<Unit filename="src/_fpmath.h" />
+		<Unit filename="src/b_exp.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/b_log.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/b_tgamma.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/e_acos.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/e_acosf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/e_acosh.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/e_acoshf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/e_asin.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/e_asinf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/e_atan2.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/e_atan2f.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/e_atanh.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/e_atanhf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/e_cosh.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/e_coshf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/e_exp.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/e_expf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/e_fmod.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/e_fmodf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/e_gamma.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/e_gamma_r.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/e_gammaf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/e_gammaf_r.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/e_hypot.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/e_hypotf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/e_j0.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/e_j0f.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/e_j1.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/e_j1f.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/e_jn.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/e_jnf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/e_ldexpf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/e_lgamma.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/e_lgamma_r.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/e_lgammaf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/e_lgammaf_r.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/e_log.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/e_log10.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/e_log10f.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/e_logf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/e_pow.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/e_powf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/e_rem_pio2.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/e_rem_pio2f.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/e_remainder.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/e_remainderf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/e_scalb.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/e_scalbf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/e_sinh.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/e_sinhf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/e_sqrt.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/e_sqrtf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/fenv.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/fenv.h" />
+		<Unit filename="src/fpmath.h" />
+		<Unit filename="src/isinf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/k_cos.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/k_cosf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/k_rem_pio2.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/k_rem_pio2f.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/k_sin.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/k_sinf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/k_tan.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/k_tanf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/math_private.h" />
+		<Unit filename="src/mathimpl.h" />
+		<Unit filename="src/s_asinh.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_asinhf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_atan.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_atanf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_cbrt.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_cbrtf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_ceil.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_ceilf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_ceill.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_cimag.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_cimagf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_cimagl.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_conj.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_conjf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_conjl.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_copysign.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_copysignf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_copysignl.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_cos.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_cosf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_creal.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_crealf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_creall.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_erf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_erff.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_exp2.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_exp2f.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_expm1.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_expm1f.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_fabs.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_fabsf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_fabsl.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_fdim.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_finite.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_finitef.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_floor.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_floorf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_floorl.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_fma.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_fmaf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_fmal.c">
+			<Option compilerVar="CC" />
+			<Option compile="0" />
+			<Option link="0" />
+		</Unit>
+		<Unit filename="src/s_fmax.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_fmaxf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_fmaxl.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_fmin.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_fminf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_fminl.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_frexp.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_frexpf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_frexpl.c">
+			<Option compilerVar="CC" />
+			<Option compile="0" />
+			<Option link="0" />
+		</Unit>
+		<Unit filename="src/s_ilogb.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_ilogbf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_ilogbl.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_isfinite.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_isnan.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_isnormal.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_llrint.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_llrintf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_llround.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_llroundf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_llroundl.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_log1p.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_log1pf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_logb.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_logbf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_lrint.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_lrintf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_lround.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_lroundf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_lroundl.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_modf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_modff.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_nan.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_nearbyint.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_nextafter.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_nextafterf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_nexttowardf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_remquo.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_remquof.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_rint.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_rintf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_round.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_roundf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_roundl.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_scalbln.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_scalbn.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_scalbnf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_signbit.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_signgam.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_significand.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_significandf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_sin.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_sinf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_tan.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_tanf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_tanh.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_tanhf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_tgammaf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_trunc.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_truncf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/s_truncl.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/w_cabs.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/w_cabsf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/w_drem.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/w_dremf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Extensions>
+			<envvars />
+			<code_completion />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
