@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="USART" />
+		<Option pch_mode="2" />
+		<Option compiler="armelfgcc" />
+		<Build>
+			<Target title="SGOLD">
+				<Option output="exe/USART_pinger_SG.so" prefix_auto="0" extension_auto="0" />
+				<Option object_output="obj/SG/" />
+				<Option type="3" />
+				<Option compiler="armelfgcc" />
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+			<Target title="NEWSGOLD">
+				<Option output="exe/libusart.so" prefix_auto="0" extension_auto="0" />
+				<Option object_output="obj/NSG/" />
+				<Option type="3" />
+				<Option compiler="armelfgcc" />
+				<Compiler>
+					<Add option="-DNEWSGOLD" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+			<Target title="ELKA">
+				<Option output="exe/USART_pinger_EL.elf" prefix_auto="0" extension_auto="0" />
+				<Option object_output="obj/ELKA/" />
+				<Option type="1" />
+				<Option compiler="armelfgcc" />
+				<Compiler>
+					<Add option="-DNEWSGOLD" />
+					<Add option="-DELKA" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-O2" />
+			<Add option="-W" />
+			<Add option="-std=gnu99" />
+		</Compiler>
+		<Linker>
+			<Add option="-s" />
+			<Add library="crt" />
+			<Add library="crt_helper" />
+		</Linker>
+		<Unit filename="main.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="pmb8876_reg.h" />
+		<Unit filename="pmb8876_uart.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="pmb8876_uart.h" />
+		<Unit filename="uart.S" />
+		<Extensions>
+			<code_completion />
+			<debugger />
+			<envvars />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

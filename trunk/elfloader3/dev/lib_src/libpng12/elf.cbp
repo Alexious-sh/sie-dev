@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="libpng" />
+		<Option pch_mode="2" />
+		<Option compiler="armelfgcc" />
+		<Build>
+			<Target title="NSG">
+				<Option output="exe/libpng-12.so" prefix_auto="0" extension_auto="0" />
+				<Option object_output="objects/nsg" />
+				<Option type="3" />
+				<Option compiler="armelfgcc" />
+				<Compiler>
+					<Add option="-DNEWSGOLD" />
+				</Compiler>
+			</Target>
+			<Target title="SG">
+				<Option output="exe/elf_sg.elf" prefix_auto="0" extension_auto="0" />
+				<Option object_output="objects/sg" />
+				<Option type="1" />
+				<Option compiler="armelfgcc" />
+				<Compiler>
+					<Add option="-DSGOLD" />
+				</Compiler>
+			</Target>
+			<Target title="ELKA">
+				<Option output="exe/elf_el.elf" prefix_auto="0" extension_auto="0" />
+				<Option object_output="objects/elka" />
+				<Option type="1" />
+				<Option compiler="armelfgcc" />
+				<Compiler>
+					<Add option="-DNEWSGOLD" />
+					<Add option="-DELKA" />
+				</Compiler>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-mthumb" />
+			<Add option="-Os" />
+			<Add option="-W" />
+		</Compiler>
+		<Linker>
+			<Add option="-s" />
+			<Add library="crt_helper" />
+			<Add library="gcc" />
+			<Add library="c" />
+			<Add library="z" />
+			<Add library="m" />
+		</Linker>
+		<Unit filename="png.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="png.h" />
+		<Unit filename="pngconf.h" />
+		<Unit filename="pngerror.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="pnggccrd.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="pngget.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="pngmem.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="pngpread.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="pngread.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="pngrio.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="pngrtran.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="pngrutil.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="pngset.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="pngtrans.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="pngvcrd.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="pngwio.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="pngwrite.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="pngwtran.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="pngwutil.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Extensions>
+			<envvars />
+			<code_completion />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="7z" />
+		<Option pch_mode="2" />
+		<Option compiler="armelfgcc" />
+		<Build>
+			<Target title="NSG">
+				<Option output="exe/lib7z.so" prefix_auto="0" extension_auto="0" />
+				<Option object_output="objects/nsg" />
+				<Option type="3" />
+				<Option compiler="armelfgcc" />
+				<Compiler>
+					<Add option="-DNEWSGOLD" />
+				</Compiler>
+			</Target>
+			<Target title="SG">
+				<Option output="exe/elf_sg.elf" prefix_auto="0" extension_auto="0" />
+				<Option object_output="objects/sg" />
+				<Option type="1" />
+				<Option compiler="armelfgcc" />
+				<Compiler>
+					<Add option="-DSGOLD" />
+				</Compiler>
+			</Target>
+			<Target title="ELKA">
+				<Option output="exe/elf_el.elf" prefix_auto="0" extension_auto="0" />
+				<Option object_output="objects/elka" />
+				<Option type="1" />
+				<Option compiler="armelfgcc" />
+				<Compiler>
+					<Add option="-DNEWSGOLD" />
+					<Add option="-DELKA" />
+				</Compiler>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-mthumb" />
+			<Add option="-Os" />
+			<Add option="-W" />
+			<Add option="-D__NO_LIBC" />
+		</Compiler>
+		<Linker>
+			<Add option="-s" />
+			<Add option="-init=_init" />
+			<Add library="crt_helper" />
+			<Add library="gcc" />
+		</Linker>
+		<Unit filename="7zAlloc.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="7zAlloc.h" />
+		<Unit filename="7zBuffer.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="7zBuffer.h" />
+		<Unit filename="7zCrc.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="7zCrc.h" />
+		<Unit filename="7zDecode.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="7zDecode.h" />
+		<Unit filename="7zExtract.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="7zExtract.h" />
+		<Unit filename="7zHeader.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="7zHeader.h" />
+		<Unit filename="7zIn.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="7zIn.h" />
+		<Unit filename="7zItem.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="7zItem.h" />
+		<Unit filename="7zMethodID.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="7zMethodID.h" />
+		<Unit filename="7zTypes.h" />
+		<Unit filename="LzmaDecode.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="LzmaDecode.h" />
+		<Unit filename="LzmaTypes.h" />
+		<Unit filename="main.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Extensions>
+			<envvars />
+			<code_completion />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

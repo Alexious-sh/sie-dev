@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="uclibc++" />
+		<Option pch_mode="2" />
+		<Option compiler="armelfgcc" />
+		<Build>
+			<Target title="NSG">
+				<Option output="exe/libstdc++-1.2.2.so" prefix_auto="0" extension_auto="0" />
+				<Option object_output="objects/nsg" />
+				<Option type="3" />
+				<Option compiler="armelfgcc" />
+				<Compiler>
+					<Add option="-DNEWSGOLD" />
+				</Compiler>
+			</Target>
+			<Target title="SG">
+				<Option output="exe/elf_sg.elf" prefix_auto="0" extension_auto="0" />
+				<Option object_output="objects/sg" />
+				<Option type="1" />
+				<Option compiler="armelfgcc" />
+				<Compiler>
+					<Add option="-DSGOLD" />
+				</Compiler>
+			</Target>
+			<Target title="ELKA">
+				<Option output="exe/elf_el.elf" prefix_auto="0" extension_auto="0" />
+				<Option object_output="objects/elka" />
+				<Option type="1" />
+				<Option compiler="armelfgcc" />
+				<Compiler>
+					<Add option="-DNEWSGOLD" />
+					<Add option="-DELKA" />
+				</Compiler>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-mthumb" />
+			<Add option="-O2" />
+			<Add option="-W" />
+			<Add option="-D__ARM_EABI__" />
+			<Add option="-D__arm__" />
+			<Add option="-D__ARM_EABI_UNWINDER__" />
+			<Add directory="src/include" />
+			<Add directory="src" />
+		</Compiler>
+		<Linker>
+			<Add option="-s" />
+			<Add library="crt_helper" />
+			<Add library="gcc" />
+			<Add library="c" />
+			<Add library="supc++" />
+		</Linker>
+		<Unit filename="src/abi/abi.cpp" />
+		<Unit filename="src/abi/cxa/cp-damagle.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/abi/cxa/cxa_atexit.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/abi/cxa/exit.h" />
+		<Unit filename="src/algorithm.cpp" />
+		<Unit filename="src/associative_base.cpp" />
+		<Unit filename="src/bitset.cpp" />
+		<Unit filename="src/char_traits.cpp" />
+		<Unit filename="src/complex.cpp" />
+		<Unit filename="src/del_op.cpp" />
+		<Unit filename="src/del_opnt.cpp" />
+		<Unit filename="src/del_opv.cpp" />
+		<Unit filename="src/del_opvnt.cpp" />
+		<Unit filename="src/deque.cpp" />
+		<Unit filename="src/eh_alloc.cpp" />
+		<Unit filename="src/eh_globals.cpp" />
+		<Unit filename="src/exception.cpp" />
+		<Unit filename="src/fstream.cpp" />
+		<Unit filename="src/func_exception.cpp" />
+		<Unit filename="src/iomanip.cpp" />
+		<Unit filename="src/ios.cpp" />
+		<Unit filename="src/iostream.cpp" />
+		<Unit filename="src/istream.cpp" />
+		<Unit filename="src/iterator.cpp" />
+		<Unit filename="src/limits.cpp" />
+		<Unit filename="src/list.cpp" />
+		<Unit filename="src/locale.cpp" />
+		<Unit filename="src/map.cpp" />
+		<Unit filename="src/new_handler.cpp" />
+		<Unit filename="src/new_op.cpp" />
+		<Unit filename="src/new_opnt.cpp" />
+		<Unit filename="src/new_opv.cpp" />
+		<Unit filename="src/new_opvnt.cpp" />
+		<Unit filename="src/numeric.cpp" />
+		<Unit filename="src/ostream.cpp" />
+		<Unit filename="src/queue.cpp" />
+		<Unit filename="src/set.cpp" />
+		<Unit filename="src/sstream.cpp" />
+		<Unit filename="src/stack.cpp" />
+		<Unit filename="src/stdexcept.cpp" />
+		<Unit filename="src/streambuf.cpp" />
+		<Unit filename="src/string.cpp" />
+		<Unit filename="src/support.cpp" />
+		<Unit filename="src/utility.cpp" />
+		<Unit filename="src/valarray.cpp" />
+		<Unit filename="src/vector.cpp" />
+		<Unit filename="supc++/cxxabi.h" />
+		<Unit filename="supc++/cxxabi_forced.h" />
+		<Unit filename="supc++/exception" />
+		<Unit filename="supc++/exception_defines.h" />
+		<Unit filename="supc++/exception_ptr.h" />
+		<Unit filename="supc++/hash_bytes.h" />
+		<Unit filename="supc++/initializer_list" />
+		<Unit filename="supc++/nested_exception.h" />
+		<Unit filename="supc++/new" />
+		<Unit filename="supc++/tinfo.h" />
+		<Unit filename="supc++/typeinfo" />
+		<Unit filename="supc++/unwind-cxx.h" />
+		<Extensions>
+			<envvars />
+			<code_completion />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

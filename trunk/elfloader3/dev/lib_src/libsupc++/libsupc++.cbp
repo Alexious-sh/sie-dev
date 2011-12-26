@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="libsupc++" />
+		<Option pch_mode="2" />
+		<Option compiler="armelfgcc" />
+		<Build>
+			<Target title="NSG">
+				<Option output="exe/libsupc++.a" prefix_auto="0" extension_auto="0" />
+				<Option working_dir="" />
+				<Option object_output="objects/nsg" />
+				<Option type="2" />
+				<Option compiler="armelfgcc" />
+				<Compiler>
+					<Add option="-DNEWSGOLD" />
+				</Compiler>
+			</Target>
+			<Target title="SG">
+				<Option output="exe/elf_sg.elf" prefix_auto="0" extension_auto="0" />
+				<Option object_output="objects/sg" />
+				<Option type="1" />
+				<Option compiler="armelfgcc" />
+				<Compiler>
+					<Add option="-DSGOLD" />
+				</Compiler>
+			</Target>
+			<Target title="ELKA">
+				<Option output="exe/elf_el.elf" prefix_auto="0" extension_auto="0" />
+				<Option object_output="objects/elka" />
+				<Option type="1" />
+				<Option compiler="armelfgcc" />
+				<Compiler>
+					<Add option="-DNEWSGOLD" />
+					<Add option="-DELKA" />
+				</Compiler>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-marm" />
+			<Add option="-O2" />
+			<Add option="-W" />
+			<Add option="-D__NO_LIBC" />
+			<Add directory="src" />
+		</Compiler>
+		<Linker>
+			<Add option="-s" />
+		</Linker>
+		<Unit filename="main.cpp" />
+		<Unit filename="src/array_type_info.cc" />
+		<Unit filename="src/atexit_arm.cc" />
+		<Unit filename="src/bad_alloc.cc" />
+		<Unit filename="src/bad_cast.cc" />
+		<Unit filename="src/bad_typeid.cc" />
+		<Unit filename="src/class_type_info.cc" />
+		<Unit filename="src/cxxabi.h" />
+		<Unit filename="src/cxxabi_forced.h" />
+		<Unit filename="src/dyncast.cc" />
+		<Unit filename="src/eh_alloc.cc" />
+		<Unit filename="src/eh_arm.cc" />
+		<Unit filename="src/eh_aux_runtime.cc" />
+		<Unit filename="src/eh_call.cc" />
+		<Unit filename="src/eh_catch.cc" />
+		<Unit filename="src/eh_exception.cc" />
+		<Unit filename="src/eh_globals.cc" />
+		<Unit filename="src/eh_personality.cc" />
+		<Unit filename="src/eh_ptr.cc" />
+		<Unit filename="src/eh_term_handler.cc" />
+		<Unit filename="src/eh_terminate.cc" />
+		<Unit filename="src/eh_throw.cc" />
+		<Unit filename="src/eh_type.cc" />
+		<Unit filename="src/eh_unex_handler.cc" />
+		<Unit filename="src/enum_type_info.cc" />
+		<Unit filename="src/exception" />
+		<Unit filename="src/exception_defines.h" />
+		<Unit filename="src/exception_ptr.h" />
+		<Unit filename="src/function_type_info.cc" />
+		<Unit filename="src/fundamental_type_info.cc" />
+		<Unit filename="src/guard.cc" />
+		<Unit filename="src/guard_error.cc" />
+		<Unit filename="src/hash_bytes.cc" />
+		<Unit filename="src/hash_bytes.h" />
+		<Unit filename="src/initializer_list" />
+		<Unit filename="src/nested_exception.cc" />
+		<Unit filename="src/nested_exception.h" />
+		<Unit filename="src/new" />
+		<Unit filename="src/pbase_type_info.cc" />
+		<Unit filename="src/pmem_type_info.cc" />
+		<Unit filename="src/pointer_type_info.cc" />
+		<Unit filename="src/pure.cc" />
+		<Unit filename="src/si_class_type_info.cc" />
+		<Unit filename="src/tinfo.cc" />
+		<Unit filename="src/tinfo.h" />
+		<Unit filename="src/tinfo2.cc" />
+		<Unit filename="src/typeinfo" />
+		<Unit filename="src/unwind-cxx.h" />
+		<Unit filename="src/vec.cc" />
+		<Unit filename="src/vmi_class_type_info.cc" />
+		<Unit filename="src/vterminate.cc" />
+		<Extensions>
+			<envvars />
+			<code_completion />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
