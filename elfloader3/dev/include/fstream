@@ -20,21 +20,18 @@
 #define __STD_HEADER_FSTREAM 1
 
 
-#include <basic_definitions>
-
+#include<basic_definitions>
 
 #include <cstdio>
 #include <cstdlib>
 #include <streambuf>
 #include <istream>
-#include <iostream>
 #include <ostream>
 #include <char_traits>
 
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
-#include <iosfwd>
 
 #ifdef __UCLIBCXX_HAS_WCHAR__
 #include <cwchar>
@@ -102,15 +99,12 @@ namespace std{
 		}
 
 		_UCXXEXPORT basic_filebuf<charT,traits>* open(const char* s, ios_base::openmode mode){
-
 			bool move_end = (mode & ios_base::ate) != 0;
 			if(is_open() !=false){	//Must call close() first
 				return 0;
 			}
-
 			basic_streambuf<charT,traits>::openedFor = mode;
 			mode = mode & ~ios_base::ate;
-			fp = 0;
 
 			if(mode == ios_base::out || mode == (ios_base::out | ios_base::trunc)){
 				fp = fopen(s, "w" );
@@ -122,8 +116,7 @@ namespace std{
 						fp = fopen(s, "ab");
 					}
 				}else{
-					if(mode & ios_base::in)
-			{
+					if(mode & ios_base::in){
 						fp = fopen(s, "a+");
 					}else{
 						fp = fopen(s, "a");
@@ -147,7 +140,6 @@ namespace std{
 				fp = fopen(s, "w+b");
 			}
 
-
 			if(fp == 0){
 				return 0;
 			}
@@ -169,8 +161,6 @@ namespace std{
 				fp=0;
 				return 0;
 			}
-
-
 
 			basic_streambuf<charT,traits>::mgnext = basic_streambuf<charT,traits>::mgend;
 
@@ -449,8 +439,7 @@ namespace std{
 			}
 			return -1;
 		}
-
-		_UCXXEXPORT int sync(){
+		virtual _UCXXEXPORT int sync(){
 			if(pbuffer !=0){
 				if(overflow() == traits::eof()){
 					return -1;
@@ -461,7 +450,6 @@ namespace std{
 			}
 			return 0;
 		}
-
 		virtual _UCXXEXPORT void imbue(const locale&){
 			return;
 		}

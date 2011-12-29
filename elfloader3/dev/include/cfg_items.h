@@ -45,6 +45,9 @@ typedef struct
   (c) Z.Vova
 */
 
+#define __DATA_CFG_BEGIN(x) ((void*)(&__config_begin##x)+4)
+#define __DATA_CFG_END(x) ((void*)(&__config_end##x))
+
 #define __root __attribute__((section("CONFIG"), used)) volatile
 #define __CFG_BEGIN(x) __root int __config_begin##x = 0L;
 #define __CFG_END(x) __root int __config_end##x = 0L;
