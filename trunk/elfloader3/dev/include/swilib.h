@@ -2717,8 +2717,8 @@ __inl
 void StartCpuUsageCount(void)
 __defn( 0x019E)
 
-#ifdef __NO_LIBC
-/*__inl
+#ifdef __SWI_LIBZ
+__inl
 int inflateInit2_ (z_streamp strm, int windowBits,const char *version, int stream_size)
 __def( 0x019F, int, strm, windowBits, version, stream_size)
 
@@ -2729,7 +2729,6 @@ __def( 0x01A0, int, strm, flush)
 __inl
 int inflateEnd (z_streamp strm)
 __def( 0x01A1, int, strm)
-*/
 #endif
 
 __inl
@@ -3004,7 +3003,7 @@ int GetSymbolWidth(int wchar,int font)
 __def( 0x1E1, int, wchar, font)
 
 __inl
-int ws_2utf8( WSHDR *from, char *to , int *result_length, int max_len)
+int ws_2utf8( WSHDR *from, char *to , int *result_length, unsigned int max_len)
 __def( 0x1E2, int, from, to, result_length, max_len)
 
 __inl
