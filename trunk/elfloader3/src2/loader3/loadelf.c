@@ -57,7 +57,19 @@ __arch Elf32_Exec* elfopen(const char* filename)
         ex->meloaded = 0;
         ex->switab = (int*)AddrLibrary_a();
 	ex->fname = filename;
-
+	
+	const char *p = strrchr(filename, '\\'); 
+	if(p)
+	{
+          ++p;
+	  ex->temp_env = malloc(p - filename + 2);
+	  memcpy(ex->temp_env, filename, p - filename);
+	  ex->temp_env[p - filename] = 0;
+	} else
+	  ex->temp_env = 0;
+	  
+	
+	
         if(!LoadSections(ex))
         {
           ex->complete = 1;
@@ -102,6 +114,7 @@ __arch int elfclose(Elf32_Exec* ex)
 
   if(ex->hashtab) mfree(ex->hashtab);
   if(ex->body) mfree(ex->body);
+  if(ex->temp_env) mfree(ex->temp_env);
   mfree(ex);
   return E_NO_ERROR;
 }

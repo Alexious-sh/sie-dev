@@ -63,7 +63,7 @@ static const unsigned char elf_magic_header[] =
   0x01,                    /* Only ELF version 1. */
 };
 
-#define __thumb_mode 1
+//#define __thumb_mode 1
 
 #ifndef _test_linux
   #define printf(...)
@@ -137,7 +137,8 @@ typedef struct
   char complete, __is_ex_import;
   void *meloaded;
   int *switab;
-  const char *fname; // не постоянная переменная, после загрузки эльфа она обнулится
+  const char *fname;	// не постоянная переменная, после загрузки эльфа она обнулится
+  char *temp_env;	// временное переменное окружение для эльфа
 } Elf32_Exec;
 
 typedef struct
