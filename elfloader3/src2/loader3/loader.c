@@ -4,28 +4,35 @@
  * Licence: GPLv3
  */
 
+#include "loader.h"
+
+
+/* forr testing on pc */
 #ifdef _test_linux
 #include <fcntl.h>
 #include <unistd.h>
-#endif
-
-#include "loader.h"
-#ifdef _test_linux
 #include "fix.h"
+
+void ep_log(Elf32_Exec *ex, const char *l, int sz)
+{
+    printf("AAA: %s\n", l);
+}
 #endif
 
 
+
+/* wraper for thumb-mode calling */
 #ifdef __thumb_mode
 extern __arm void l_msg(int a, int b);
 
 __arm void *memcpy_a(void *dest, const void *src, size_t size)
 {
-  return memcpy(dest, src, size);
+    return memcpy(dest, src, size);
 }
 
 __arm int memcmp_a (const void *m1, const void *m2, size_t n)
 {
-  return memcmp(m1, m2, n);
+    return memcmp(m1, m2, n);
 }
 #else
 #define l_msg ShowMSG
@@ -35,6 +42,7 @@ __arm int memcmp_a (const void *m1, const void *m2, size_t n)
 
 unsigned int ferr;
 
+
 // Проверка валидности эльфа
 __arch int CheckElf(Elf32_Ehdr *ehdr)
 {
@@ -43,6 +51,7 @@ __arch int CheckElf(Elf32_Ehdr *ehdr)
 
     return E_NO_ERROR;
 }
+
 
 // Получение нужного размера в раме
 __arch unsigned int GetBinSize(Elf32_Exec *ex, Elf32_Phdr* phdrs)
@@ -66,15 +75,18 @@ __arch unsigned int GetBinSize(Elf32_Exec *ex, Elf32_Phdr* phdrs)
     return maxadr - ex->v_addr;
 }
 
+
+
 __arch char* LoadData(Elf32_Exec* ex, int offset, int size)
 {
     if(size && lseek(ex->fp, offset - ex->v_addr, S_SET, &ferr, &ferr))
     {
         char* data = malloc(size+1);
         //zeromem_a(data, size+1);
-        if(fread(ex->fp, data, size, &ferr) == size) {
-          data[size] = 0;
-          return data;
+        if(fread(ex->fp, data, size, &ferr) == size)
+        {
+            data[size] = 0;
+            return data;
         }
         else mfree(data);
     }
@@ -102,24 +114,24 @@ __arch unsigned int try_search_in_base(Elf32_Exec* ex, const char *name, int bin
 {
     printf("Searching in libs...\n");
     unsigned int address = 0;
-    
+
     if(ex->type == EXEC_LIB && !ex->dyn[DT_SYMBOLIC])
-	address = findExport(ex, name);
+        address = findExport(ex, name);
 
     if(!address)
-	address = (unsigned int)_look_sym(ex, name);
-    
+        address = (unsigned int)_look_sym(ex, name);
+
     if( !address )
     {
         if(!address && ex->meloaded)
-	{
-	    Elf32_Exec *mex = (Elf32_Exec*)ex->meloaded;
-	    while(mex && !address && mex->type == EXEC_LIB)
-	    {
-	      address = findExport(mex, name);
-	      mex = (Elf32_Exec*)mex->meloaded;
-	    }
-	}
+        {
+            Elf32_Exec *mex = (Elf32_Exec*)ex->meloaded;
+            while(mex && !address && mex->type == EXEC_LIB)
+            {
+                address = findExport(mex, name);
+                mex = (Elf32_Exec*)mex->meloaded;
+            }
+        }
     }
     return address;
 }
@@ -159,7 +171,7 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
     ex->symtab = ex->dyn[DT_SYMTAB]? (Elf32_Sym*)(ex->body + ex->dyn[DT_SYMTAB] - ex->v_addr) : 0;
     ex->jmprel = (Elf32_Rel*)(ex->body + ex->dyn[DT_JMPREL] - ex->v_addr);
     ex->strtab = ex->dyn[DT_STRTAB]? ex->body + ex->dyn[DT_STRTAB] - ex->v_addr : 0;
-    
+
     printf("STRTAB: %X\n", ex->dyn[DT_STRTAB]);
     printf("SYMTAB: %X\n", ex->dyn[DT_SYMTAB]);
 
@@ -171,15 +183,15 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
             int hash_size = hash_hdr[0] * sizeof(Elf32_Word) + hash_hdr[1] * sizeof(Elf32_Word) + 8;
             ex->hashtab = (Elf32_Word*)LoadData(ex, ex->dyn[DT_HASH], hash_size);
             mfree(hash_hdr);
-	    if(!ex->hashtab) goto __hash_err;
+            if(!ex->hashtab) goto __hash_err;
         }
         else
-	{
-	  __hash_err:
-	  //ShowMSG(1, (int)"Error loading hashtab");
-	  ep_log(ex, "Hash tab is mising", 18);
-	  return E_HASTAB;
-	}
+        {
+__hash_err:
+            //ShowMSG(1, (int)"Error loading hashtab");
+            ep_log(ex, "Hash tab is mising", 18);
+            return E_HASTAB;
+        }
     }
 
     // Загрузка библиотек
@@ -200,7 +212,7 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
         else
         {
             int csz = sprintf(dbg, "Не могу загрузить %s!", lib_name);
-	    l_msg(1, (int)dbg);
+            l_msg(1, (int)dbg);
             ep_log(ex, dbg, csz);
             return E_SHARED;
         }
@@ -211,15 +223,16 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
     {
         i=0;
         unsigned int* addr;
-	char* name;
+        char* name;
         Elf32_Word r_type;
-        Elf32_Word func = 0;
-	int symtab_index = 0;
-	int bind_type = 0;
+        unsigned int func = 0;
+        int symtab_index = 0;
+        int bind_type = 0;
+        int reloc_type = 0;
 
         // Таблица релокаций
         Elf32_Rel* reltab = (Elf32_Rel*)LoadData(ex, phdr->p_offset + ex->dyn[DT_REL] - phdr->p_vaddr, ex->dyn[DT_RELSZ]);
-    
+
         if(!reltab)
         {
             elfclose(ex);
@@ -229,9 +242,10 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
         while(i * sizeof(Elf32_Rel) < ex->dyn[DT_RELSZ])
         {
             r_type = ELF32_R_TYPE(reltab[i].r_info);
-	    symtab_index = ELF32_R_SYM(reltab[i].r_info);
+            symtab_index = ELF32_R_SYM(reltab[i].r_info);
             Elf32_Sym *sym = ex->symtab? &ex->symtab[symtab_index] : 0;
             bind_type = sym ? ELF_ST_BIND(sym->st_info) : 0;
+            reloc_type = ELF_ST_TYPE(sym->st_info);
             addr = (unsigned int*)(ex->body + reltab[i].r_offset - ex->v_addr);
 
             switch(r_type)
@@ -241,140 +255,199 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
             case R_ARM_RABS32:
                 printf("R_ARM_RABS32\n");
                 *addr += (unsigned int)(ex->body - ex->v_addr);
+                printf("*addr = %X\n", *addr);
                 break;
             case R_ARM_ABS32:
                 printf("R_ARM_ABS32\n");
-   
-		if( !ex->symtab )
-		{
+
+                if( !ex->symtab )
+                {
 #ifdef _test_linux
-		   sprintf(dbg, "Relocation R_ARM_ABS32 cannot run without symtab\n");
-                   printf(dbg);
-		   printf("warning: symtab not found, but relocation R_ARM_ABS32 is exist\n");
+                    sprintf(dbg, "Relocation R_ARM_ABS32 cannot run without symtab\n");
+                    printf(dbg);
+                    printf("warning: symtab not found, but relocation R_ARM_ABS32 is exist\n");
 #endif
-		   *addr = (unsigned int)ex->body;
-		   break;
-		}
-		
-		if( !ex->strtab )
-		{
+                    *addr = (unsigned int)ex->body;
+                    break;
+                }
+
+                if( !ex->strtab )
+                {
 #ifdef _test_linux
-		   sprintf(dbg, "Relocation R_ARM_ABS32 cannot run without strtab\n");
-                   printf(dbg);
-		   printf("warning: strtab not found, but relocation R_ARM_ABS32 is exist\n");
+                    sprintf(dbg, "Relocation R_ARM_ABS32 cannot run without strtab\n");
+                    printf(dbg);
+                    printf("warning: strtab not found, but relocation R_ARM_ABS32 is exist\n");
 #endif
-		   *addr = (unsigned int)ex->body;
-		   break;
-		}
-		
-		/* на всякий случай, вдруг сум пустой будет */
-		if(sym) {
-		  
-		    /* имя требуемой функции */
-		    name = ex->strtab + sym->st_name;
-		    printf("'%s' %X\n", name, *addr);
-		
+                    *addr = (unsigned int)ex->body;
+                    break;
+                }
+
+                /* на всякий случай, вдруг сум пустой будет */
+                if(sym)
+                {
+                    /* имя требуемой функции */
+                    name = ex->strtab + sym->st_name;
+
                     // Если нужен указатель на эльф
-                    if( name[4] == 0   && 
-                        name[0] == '_' &&
-                        name[1] == '_' &&
-                        name[2] == 'e' &&
-                        name[3] == 'x'
-                        )
+                    if( name[4] == 0   &&
+                            name[0] == '_' &&
+                            name[1] == '_' &&
+                            name[2] == 'e' &&
+                            name[3] == 'x'
+                      )
                     {
                         ex->__is_ex_import = 1;
-                        printf("__ex: 0x%X\n", (int)ex);
                         *addr = (unsigned int)ex;
                         break;
                     }
-		    
-		    /* ищем по либам */
-                    func = try_search_in_base(ex, name, bind_type);
-		} else {
-		    func = 0;
-		}
-		
-		/* ничего не нашли, жаль */
-		if(!func && bind_type != STB_WEAK){
-		     int csz = sprintf(dbg, "[2] Undefined reference to `%s'\n", name?name : "");
-		     //l_msg(1, (int)dbg);
-		     ep_log(ex, dbg, csz);
-		     return E_UNDEF;
-		}
-		
-		/* в ABS32 релоке в *addr всегда должен быть 0 */
+
+                    
+                    switch(reloc_type)
+                    {
+                    case STT_NOTYPE:
+                        func = sym->st_value;
+                        goto skeep_err;
+
+                    default:
+                        if(sym->st_value)
+                            func = (unsigned int)ex->body + sym->st_value;
+                        else
+                            func = try_search_in_base(ex, name, bind_type);
+                        break;
+                    }
+
+                }
+                else
+                {
+                    func = 0;
+                }
+
+                /* ничего не нашли, жаль */
+                if(!func && bind_type != STB_WEAK)
+                {
+                    int csz = sprintf(dbg, "[2] Undefined reference to `%s'\n", name?name : "");
+                    //l_msg(1, (int)dbg);
+                    ep_log(ex, dbg, csz);
+                    return E_UNDEF;
+                }
+
+skeep_err:
+
+                /* в ABS32 релоке в *addr всегда должен быть 0 */
                 *addr += func;
-                printf("addres: %X\n", name, *addr);
                 break;
+		
             case R_ARM_RELATIVE:
                 printf("R_ARM_RELATIVE\n");
                 *addr += (unsigned int)(ex->body - ex->v_addr);
                 break;
-		
+
             case R_ARM_GLOB_DAT:
-	    case R_ARM_JUMP_SLOT:
+            case R_ARM_JUMP_SLOT:
                 printf("R_ARM_GLOB_DAT\n");
-		
-		if( !ex->symtab )
-		{
-		   int csz = sprintf(dbg, "Relocation R_ARM_GLOB_DAT cannot run without symtab\n");
-                   ep_log(ex, dbg, csz);
-                   mfree(reltab);
-                   return E_SYMTAB;
-		}
-		
-		if( !ex->strtab )
-		{
-		   int csz = sprintf(dbg, "Relocation R_ARM_GLOB_DAT cannot run without strtab\n");
-                   //l_msg(1, (int)dbg);
-		   ep_log(ex, dbg, csz);
-                   mfree(reltab);
-                   return E_STRTAB;
-		}
-		
-		if(sym){
-		    name = ex->strtab + sym->st_name;
-		} else
-		    name = 0;
+
+                if( !ex->symtab )
+                {
+                    int csz = sprintf(dbg, "Relocation R_ARM_GLOB_DAT cannot run without symtab\n");
+                    ep_log(ex, dbg, csz);
+                    mfree(reltab);
+                    return E_SYMTAB;
+                }
+
+                if( !ex->strtab )
+                {
+                    int csz = sprintf(dbg, "Relocation R_ARM_GLOB_DAT cannot run without strtab\n");
+                    //l_msg(1, (int)dbg);
+                    ep_log(ex, dbg, csz);
+                    mfree(reltab);
+                    return E_STRTAB;
+                }
+
+                if(sym)
+                {
+                    name = ex->strtab + sym->st_name;
+                }
+                else
+                    name = 0;
 
                 printf(" strtab: '%s' \n", name);
- 
+
                 if( symtab_index && name )
                 {
-                    printf("Searching in libs...\n");
-		    func = try_search_in_base(ex, name, bind_type);
-		    if(!func && bind_type != STB_WEAK){
-			int csz = sprintf(dbg, "[2] Undefined reference to `%s'\n", name?name : "");
-			//l_msg(1, (int)dbg);
-			ep_log(ex, dbg, csz);
-			return E_UNDEF;
-		    }
-		    
-		    /* В доках написано что бинды типа STB_WEAK могут быть нулевыми */
-		    *addr = func;
+                    switch(reloc_type)
+                    {
+                    case STT_NOTYPE:
+                        func = sym->st_value;
+                        goto skeep_err1;
+			
 
-                    if(*addr){
+                    default:
+                        if(sym->st_value)
+                            func = (unsigned int)ex->body + sym->st_value;
+                        else
+                        {
+                            printf("Searching in libs...\n");
+                            func = try_search_in_base(ex, name, bind_type);
+                        }
+                        break;
+                    }
+
+
+                    if(!func && bind_type != STB_WEAK)
+                    {
+                        int csz = sprintf(dbg, "[2] Undefined reference to `%s'\n", name?name : "");
+                        //l_msg(1, (int)dbg);
+                        ep_log(ex, dbg, csz);
+                        return E_UNDEF;
+                    }
+
+skeep_err1:
+
+                    /* В доках написано что бинды типа STB_WEAK могут быть нулевыми */
+                    *addr = func;
+
+                    if(*addr)
+                    {
                         printf("found at 0x%X\n", *addr);
                     }
-                } else 
-			*addr = sym->st_value;
+                    else
+                    {
+                        printf("warning: address is zero\n");
+                    }
+                }
+                else
+                    *addr = sym->st_value;
 
                 break;
+
 		
-	    case R_ARM_COPY:
-		memcpy_a((void *) addr,
-			   (void *)(ex->body + sym->st_value), sym->st_size);
-		break;
+            case R_ARM_COPY:
+                printf("R_ARM_COPY\n");
+                memcpy_a((void *) addr,
+                         (void *)(ex->body + sym->st_value), sym->st_size);
+                break;
+
 		
-	    case R_ARM_REL32:
-		*addr += sym->st_value - (unsigned int)addr;
-		
-		break;
+	    /* хз чо за релок, ни в одном лоадере его не встречал, 
+	     * хотя по описанию похож на R_ARM_REL32.
+	     * Но, если выполнить релокацию по описанию - эльфятник падает.
+	     * С пропуском - работает, так что хайтек.
+	     */
+            case R_ARM_THM_RPC22:
+                printf("R_ARM_THM_RPC22 stub\n");
+                break;
+
+                // S + A - P
+            case R_ARM_REL32:
+                printf("R_ARM_REL32\n");
+                *addr += sym->st_value - (unsigned int)addr;
+                break;
+
             default:
                 printf("unknow relocation type '%d'\n", r_type);
                 int csz = sprintf(dbg, "Fatal error! Unknown type relocation '%d'!\n", r_type);
                 //l_msg(1, (int)dbg);
-		ep_log(ex, dbg, csz);
+                ep_log(ex, dbg, csz);
                 mfree(reltab);
                 return E_RELOCATION;
             }
@@ -395,16 +468,16 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
             Elf32_Sym *sym = &ex->symtab[sym_idx];
             Elf32_Word func = 0;
             int bind_type = ELF_ST_BIND(sym->st_info);
-	    
-	    
-	    func = try_search_in_base(ex, name, bind_type);
-	    if(!func && bind_type != STB_WEAK)
-	    {
-		int csz = sprintf(dbg, "[3] Undefined reference to `%s'\n", name);
-		//l_msg(1, (int)dbg);
-		ep_log(ex, dbg, csz);
-		return E_UNDEF;
-	    }
+
+
+            func = try_search_in_base(ex, name, bind_type);
+            if(!func && bind_type != STB_WEAK)
+            {
+                int csz = sprintf(dbg, "[3] Undefined reference to `%s'\n", name);
+                //l_msg(1, (int)dbg);
+                ep_log(ex, dbg, csz);
+                return E_UNDEF;
+            }
 
             *((Elf32_Word*)(ex->body + ex->jmprel[i].r_offset)) = func;
             ++i;
@@ -432,14 +505,14 @@ __arch int LoadSections(Elf32_Exec* ex)
     {
         if(lseek(ex->fp, hdr_offset, S_SET, &ferr, &ferr) == -1) break;
         if(fread(ex->fp, &phdrs[i], sizeof(Elf32_Phdr), &ferr) != sizeof(Elf32_Phdr))
-	{
-           /* кривой заголовок, шлём нафиг этот эльф */
-	   mfree(ex->body);
-           ex->body = 0;
-           mfree(phdrs);
-           return E_PHDR;
-	}
-        
+        {
+            /* кривой заголовок, шлём нафиг этот эльф */
+            mfree(ex->body);
+            ex->body = 0;
+            mfree(phdrs);
+            return E_PHDR;
+        }
+
         /* тут же и размер бинарника посчитаем */
         if (phdrs[i].p_type == PT_LOAD)
         {
@@ -447,11 +520,11 @@ __arch int LoadSections(Elf32_Exec* ex)
             end_adr = phdrs[i].p_vaddr + phdrs[i].p_memsz;
             if (maxadr < end_adr) maxadr = end_adr;
         }
-	
+
         hdr_offset += ex->ehdr.e_phentsize;
         ++i;
     }
-    
+
     ex->bin_size = maxadr - ex->v_addr;
 
     if(i == ex->ehdr.e_phnum) // Если прочитались все заголовки
@@ -472,7 +545,7 @@ __arch int LoadSections(Elf32_Exec* ex)
                 {
                 case PT_LOAD:
                     if(phdr.p_filesz == 0) break; // Пропускаем пустые сегменты
-
+                    printf("PT_LOAD: %X - %X\n", phdr.p_offset, phdr.p_filesz);
                     if(lseek(ex->fp, phdr.p_offset, S_SET, &ferr, &ferr) != -1)
                     {
                         if(fread(ex->fp, ex->body + phdr.p_vaddr - ex->v_addr, phdr.p_filesz, &ferr) == phdr.p_filesz)
@@ -488,6 +561,7 @@ __arch int LoadSections(Elf32_Exec* ex)
                 case PT_DYNAMIC:
                     if(phdr.p_filesz == 0) break; // Пропускаем пустые сегменты
 
+                    printf("Load data dynamic segment: %d - %d\n", phdr.p_offset, phdr.p_filesz);
                     if(dyn_sect = (Elf32_Dyn*)LoadData(ex, phdr.p_offset, phdr.p_filesz))
                     {
                         if(!DoRelocation(ex, dyn_sect, &phdr))
@@ -521,36 +595,36 @@ __arch int LoadSections(Elf32_Exec* ex)
 /* constructors */
 __arch void run_INIT_Array(Elf32_Exec *ex)
 {
-  if(!ex->dyn[DT_FINI_ARRAY]) return;
-  size_t sz = ex->dyn[DT_INIT_ARRAYSZ] / sizeof (void*);
-  void ** arr = (void**)(ex->body + ex->dyn[DT_INIT_ARRAY] - ex->v_addr);
+    if(!ex->dyn[DT_FINI_ARRAY]) return;
+    size_t sz = ex->dyn[DT_INIT_ARRAYSZ] / sizeof (void*);
+    void ** arr = (void**)(ex->body + ex->dyn[DT_INIT_ARRAY] - ex->v_addr);
 
-  printf("init_array sz: %d\n", sz);
+    printf("init_array sz: %d\n", sz);
 
-  for(int i=0; i < sz; ++i)
-  {
-     printf("init %d: 0x%X\n", i, arr[i]);
+    for(int i=0; i < sz; ++i)
+    {
+        printf("init %d: 0x%X\n", i, arr[i]);
 #ifndef _test_linux
-     ( (void (*)())arr[i])();
+        ( (void (*)())arr[i])();
 #endif
-  }
+    }
 }
 
 
 /* destructors */
 __arch void run_FINI_Array(Elf32_Exec *ex)
 {
-  if(!ex->dyn[DT_FINI_ARRAY]) return;
-  size_t sz = ex->dyn[DT_FINI_ARRAYSZ] / sizeof (void*);
-  void ** arr = (void**)(ex->body + ex->dyn[DT_FINI_ARRAY] - ex->v_addr);
+    if(!ex->dyn[DT_FINI_ARRAY]) return;
+    size_t sz = ex->dyn[DT_FINI_ARRAYSZ] / sizeof (void*);
+    void ** arr = (void**)(ex->body + ex->dyn[DT_FINI_ARRAY] - ex->v_addr);
 
-  printf("fini_array sz: %d\n", sz);
+    printf("fini_array sz: %d\n", sz);
 
-  for(int i=0; i < sz; ++i)
-  {
-     printf("fini %d: 0x%X\n", i, arr[i]);
+    for(int i=0; i < sz; ++i)
+    {
+        printf("fini %d: 0x%X\n", i, arr[i]);
 #ifndef _test_linux
-     ( (void (*)())arr[i])();
+        ( (void (*)())arr[i])();
 #endif
-  }
+    }
 }

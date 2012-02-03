@@ -36,5 +36,6 @@ __arch void ep_log(Elf32_Exec *ex, const char *data, int size)
     
     write(fp, _data, sz, &err);
     close(fp, &err);
+    mfree(_data);
 }
 
