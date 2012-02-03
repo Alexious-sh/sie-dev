@@ -42,9 +42,20 @@ int main(int argc, char **argv)
     printf("entry: 0x%X\n", addr);
       fflush(stdout);
      //addr( NAME, (char*)0);
+      
+#undef fopen
+#undef fread
+#undef fwrite
+#undef fclose
+      FILE *fp = fopen("elfdump.bin", "w+");
+      if(fp)
+      {
+	fwrite(ex->body, 1, ex->bin_size, fp);
+	fclose(fp);
+      }
   }
   
-  unsetenv("sie_test");
+    unsetenv("sie_test");
     elfclose(ex);
     return 0;
 }

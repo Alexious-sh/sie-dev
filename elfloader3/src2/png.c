@@ -1,6 +1,7 @@
 #include "loader3\loader.h"
 #include <inc/pnglist.h>
 #include <inc/png.h>
+#include <inc/swilib.h>
 
 extern unsigned int DEFAULT_COLOR;
 extern unsigned int ALPHA_THRESHOLD;
@@ -262,51 +263,132 @@ __arm void print10(char *s, unsigned int v)
   *s='\0';
 }
 
-__arm IMGHDR *find_png_in_cache(char *png_name)
+
+/* хешовый поиск картинок */
+unsigned int name_hash(const char* name);
+unsigned int hash_strcpy(char *dst, const char* name)
+{
+    unsigned int hash = 0;
+    unsigned int hi;
+    /* два раза *name требует больше времени */
+    register unsigned char c = *name++;
+
+    while (c != '\0')
+    {
+        hash = (hash << 4) + c;
+        hi = hash & 0xf0000000;
+        hash ^= hi;
+        hash ^= hi >> 24;
+
+        *dst++ = c;
+        c = *name++;
+    }
+    *dst = 0;
+    return hash;
+}
+
+
+/**
+ * Я так и не понял как ОНО работает, какая-то наркоманская реализация. Хоть-бы коментировали %)
+ * Поэтому просто добавил проверку по хешу.
+ */
+
+
+__arm IMGHDR *find_png_in_cache(const char *png_name)
 {
   PNGLIST *pl;
   PNGLIST *pl_prev;
   LockSched();
   pl=(PNGLIST *)(&(pngtop.pltop));
-  pl_prev=NULL;  
-  while((pl=pl->next))
+  pl_prev=NULL;
+  unsigned int hash = name_hash(png_name);
+  
+  while((pl = pl->next))
   {
-    // Вызов сви слишком тормозный для таких циклов :D
-    if (!strcmp(pl->pngname,png_name))
+    /* если хеш совпал, смотрим на имя */
+    if (pl->hash == hash && !strcmp(pl->pngname, png_name))
     {
       //Найден, переносим в начало и выходим
       if (pl_prev)
       {
 	//Только если не в самом начале
-	pl_prev->next=pl->next; //Удалили из найденого места
-	pl->next=(PNGLIST *)(pngtop.pltop); //Следующий - весь список
-	pngtop.pltop=pl; //А первый в списке - найденый
+	pl_prev->next = pl->next; //Удалили из найденого места
+	pl->next = (PNGLIST *)(pngtop.pltop); //Следующий - весь список
+	pngtop.pltop = pl; //А первый в списке - найденый
       }
       UnlockSched();
       return(pl->img);
     }
-    pl_prev=pl; //Текущий обработанный - теперь предыдущий
+    pl_prev = pl; //Текущий обработанный - теперь предыдущий
   }
   UnlockSched();
   return (0);
 }
 
+
+__arm IMGHDR *add_png_in_cache(const char *fname, IMGHDR *img)
+{
+  PNGLIST *cur = malloc(sizeof(PNGLIST)), *pl_prev; //Создаем элемент списка
+  cur->pngname = malloc(strlen(fname)+1);
+  
+  /* копируем имя и генерим хеш */
+  cur->hash = hash_strcpy(cur->pngname, fname);
+  
+  cur->img = img;
+  int i = 0; //Это количество элементов в списке
+  LockSched();
+  cur->next=(PNGLIST *)(pngtop.pltop); //Следующий - весь список
+  pngtop.pltop=cur; //Первый в списке - новый элемент
+  //Теперь подрезаем конец
+  PNGLIST *pl=(PNGLIST *)(&(pngtop.pltop));
+  do
+  {
+    pl_prev=pl;
+    pl=pl->next;
+    if (!pl)
+    {
+      //Закончились элементы раньше
+      UnlockSched();
+      return (cur->img);
+    }
+    i++;
+  }
+  while(i<=CACHE_PNG); //Пока количество элементов меньше допустимого
+  pl_prev->next=NULL; //Обрежем список
+  UnlockSched();
+  //Остальное можно сделать с разлоченной многозадачностью
+  do
+  {
+    //Удаляем текущий
+    if (pl->img)
+    { 
+      mfree(pl->img->bitmap);
+      mfree(pl->img);
+    }
+    mfree(pl->pngname);
+    pl_prev=pl;
+    pl=pl->next;
+    mfree(pl_prev);
+  }
+  while(pl); //Пока есть элементы, освобождаем их
+  return img;
+}
+
+
+
 __arm IMGHDR* PatchGetPIT(unsigned int pic)
 {
-  IMGHDR * img;
+  IMGHDR * img = 0;
   unsigned int i;
   char fname[256];
-  
-  PNGLIST *pl;
-  PNGLIST *pl_prev;
-  PNGLIST *cur;
+
   unsigned int mask80;
   unsigned int mask40;
   char *bp;
   if ((pic>>28)==0xA)
   {
-    strcpy_tolow(fname,(char*)pic);
-    img=find_png_in_cache(fname);
+    strcpy_tolow(fname, (char*)pic);
+    img = find_png_in_cache(fname);
     if (img) return (img);
     img=create_imghdr(fname,0);
     if (!img) return ((IMGHDR *)&empty_img);
@@ -381,53 +463,16 @@ __arm IMGHDR* PatchGetPIT(unsigned int pic)
   //Ничего не нашли, теперь пробуем добавить
   
   //if (!img) return (0); //Нечего добавлять
-  cur=malloc(sizeof(PNGLIST)); //Создаем элемент списка
-  cur->pngname=malloc(strlen(fname)+1);
-  strcpy(cur->pngname,fname);
-  cur->img=img;
-  i=0; //Это количество элементов в списке
-  LockSched();
-  cur->next=(PNGLIST *)(pngtop.pltop); //Следующий - весь список
-  pngtop.pltop=cur; //Первый в списке - новый элемент
-  //Теперь подрезаем конец
-  pl=(PNGLIST *)(&(pngtop.pltop));
-  do
-  {
-    pl_prev=pl;
-    pl=pl->next;
-    if (!pl)
-    {
-      //Закончились элементы раньше
-      UnlockSched();
-      return(cur->img);
-    }
-    i++;
-  }
-  while(i<=CACHE_PNG); //Пока количество элементов меньше допустимого
-  pl_prev->next=NULL; //Обрежем список
-  UnlockSched();
-  //Остальное можно сделать с разлоченной многозадачностью
-  do
-  {
-    //Удаляем текущий
-    if (pl->img)
-    { 
-      mfree(pl->img->bitmap);
-      mfree(pl->img);
-    }
-    mfree(pl->pngname);
-    pl_prev=pl;
-    pl=pl->next;
-    mfree(pl_prev);
-  }
-  while(pl); //Пока есть элементы, освобождаем их
-  return(cur->img);
+
+  return add_png_in_cache(fname, img);
 }
+
+
+
 
 __arm void InitPngBitMap(void)
 {
-
-  
+  memset((void *)&pngtop, 0, sizeof(pngtop));
   if (!pngtop.bitmap)
   {
     pngtop.bitmap=malloc(20000/8*2);
@@ -438,3 +483,6 @@ __arm void InitPngBitMap(void)
 #pragma diag_suppress=Pe177
 __root static const int SWILIB_FUNC1E9 @ "SWILIB_FUNC1E9" = (int)create_imghdr;
 #pragma diag_default=Pe177
+
+
+

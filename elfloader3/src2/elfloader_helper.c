@@ -373,8 +373,8 @@ __arm void MyIDLECSMonCreate(void *data)
   CreateHELPER_PROC();
   InitConfig();
   LoadLibrary();
-  InitPngBitMap();
   InitLoaderSystem();
+  InitPngBitMap();
   //strcpy(smallicons_str+1,":\\ZBin\\img\\elf_small.png");
   //strcpy(bigicons_str+1,":\\ZBin\\img\\elf_big.png");
   //smallicons_str[0]=bigicons_str[0]=DEFAULT_DISK_N+'0';
