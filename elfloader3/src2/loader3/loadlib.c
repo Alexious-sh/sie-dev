@@ -134,7 +134,7 @@ __arch Elf32_Word findExport (Elf32_Exec* ex, const char* name)
 
 
 
-__arch static inline Elf32_Word FindFunction(Elf32_Lib* lib, const char *name)
+__arch inline Elf32_Word FindFunction(Elf32_Lib* lib, const char *name)
 {
     if(!lib) return 0;
     return findExport(lib->ex, name);
@@ -415,7 +415,7 @@ try_again:
  /*
   * ¬ычесть общее количество клиентов либ
   */
-__arch static inline void sub_clients(Elf32_Lib* lib)
+__arch inline void sub_clients(Elf32_Lib* lib)
 {
   lib->users_cnt--;
 }
