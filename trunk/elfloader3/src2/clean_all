@@ -11,10 +11,10 @@ founded_obj=$(find ./ -name "Obj")
 #echo "elfs:"$founded_elfs
 #echo "vkps:"$founded_vkps
 
-echo "Removing patches..."
-if [[ $founded_vkps != "" ]]
-then rm $founded_vkps
-fi
+#echo "Removing patches..."
+#if [[ $founded_vkps != "" ]]
+#then rm $founded_vkps
+#fi
 
 echo "Removing binaries..."
 if [[ $founded_elfs != "" ]]
