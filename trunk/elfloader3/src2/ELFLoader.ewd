@@ -4800,7 +4800,7 @@
     </settings>
   </configuration>
   <configuration>
-    <name>SL65v53</name>
+    <name>SL65sw53</name>
     <toolchain>
       <name>ARM</name>
     </toolchain>

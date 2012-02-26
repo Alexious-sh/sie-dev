@@ -9,12 +9,9 @@
 #ifndef __LOADER_H__
 #define __LOADER_H__
 
-//#define _test_linux
+#define _test_linux
 //#define __ZVOVA
 //#define __GANSTER
-
-
-#include "elf.h"
 
 #ifdef __GANSTER
 #include <swilib.h>
@@ -32,19 +29,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include <fcntl.h>
 
 #define A_ReadOnly O_RDONLY
 #define A_BIN 0
 #define A_TXT O_TXT
 
+#define __arch
+  
 #define mfree free
 
-#define fopen(p, t, m, er) open(p, t)
-#define fread(f, b, s, er) read(f, b, s)
-#define fwrite(f, b, s, er) write(f, b, s)
-#define fclose(f, er) close(f)
-#define lseek(f, s, s1, er, er1) lseek(f, s, s1)
+#define fopen open
+#define fread read
+#define fwrite write
+#define fclose close
 
 #define S_SET SEEK_SET
 #define S_END SEEK_END
@@ -57,6 +55,7 @@
 #define __e_div(a, b) (b % a)
 #endif
 
+#include "elf.h"
 
 static const unsigned char elf_magic_header[] =
 {
@@ -66,12 +65,22 @@ static const unsigned char elf_magic_header[] =
   0x01,                    /* Only ELF version 1. */
 };
 
+//#define __thumb_mode 1
+
 #ifndef _test_linux
-  #define printf(...) 
+  #define printf(...)
+#ifdef __thumb_mode 
+  #define __arch __thumb
+#else
   #define __arch __arm
+#endif /*__thumb_mode*/
 #else
   #define __arch 
-#endif
+#endif /* _test_linux */
+
+#define NO_FILEORDIR	"no such file or directory"
+#define BADFILE		"bad file type"
+#define OUTOFMEM	"out of memory"
 
 enum ERROR{
 
@@ -93,10 +102,6 @@ enum ERROR{
     E_HASTAB
 };
 
-#define NO_FILEORDIR	"no such file or directory"
-#define BADFILE		"bad file type"
-#define OUTOFMEM	"out of memory"
-
 typedef struct
 {
   void *lib;
@@ -117,7 +122,6 @@ typedef enum elf32_type
   EXEC_LIB,
 } Elf32_Type;
 
-
 typedef struct
 {
   char* body;
@@ -135,8 +139,9 @@ typedef struct
   char complete, __is_ex_import;
   void *meloaded;
   int *switab;
+  const char *fname;	// не постоянная переменная, после загрузки эльфа она обнулится
+  char *temp_env;	// временное переменное окружение для эльфа
 } Elf32_Exec;
-
 
 typedef struct
 {
@@ -160,6 +165,13 @@ extern unsigned int ferr;
  void l_msg(int a, int b);
  #endif
 #endif
+ 
+extern char tmp[258];
+void ep_log(Elf32_Exec *ex, const char *data, int size);
+
+#define lprintf(...) { int __dsz = snprintf(tmp, 256, __VA_ARGS__);\
+      ep_log(tmp, __dsz); }
+      
 
 int CheckElf(Elf32_Ehdr *ehdr);
 unsigned int GetBinSize(Elf32_Exec *ex, Elf32_Phdr* phdrs);

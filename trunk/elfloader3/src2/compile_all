@@ -90,8 +90,8 @@ if [[ ${?} != 0 ]]
 then echo $err && exit 1 
 fi
 
-echo "CCLD  SL65v53..."
-wine $iar ElfLoader.ewp -make SL65v53 -log warnings
+echo "CCLD  SL65sw53..."
+wine $iar ElfLoader.ewp -make SL65sw53 -log warnings
 if [[ ${?} != 0 ]] 
 then echo $err && exit 1 
 fi
@@ -181,8 +181,8 @@ echo "HEX  SK65sw50..."
 cd  ../../SK65sw50/Exe
 ./postbuild &
 
-echo "HEX  SL65v53..."
-cd  ../../SL65v53/Exe
+echo "HEX  SL65sw53..."
+cd  ../../SL65sw53/Exe
 ./postbuild
 
 echo "HEX  SL75sw47..."
@@ -254,7 +254,7 @@ echo "Please wait for 10 minutes"
 i=600; while [ $i != 0 ]; do i=`expr $i - 1`; echo -ne "\r$i"; sleep 1; done
 echo ""
 
-cd  ../../SL65v53/Exe
+cd  ../../SL65sw53/Exe
 ../../parse.lua $(ompload -u ElfPack_SL65sw53.vkp)
 
 cd  ../../SL75sw47/Exe

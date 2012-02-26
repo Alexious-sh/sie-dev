@@ -27,20 +27,9 @@ __arm void l_msg(int a, int b) {ShowMSG(a, b);}
 #endif
 
 
-#ifdef __ELFTHREAD
-struct __param
-{
-  void *p1, *p2, *p3, *p4;
-};
-#endif
-
-
 
 /* Загрузка эльфа */
-
 __arch int elfload(char *filename, void *param1, void *param2, void *param3){
-
-  //_f = open("0:\\Misc\\elfloader.log", A_WriteOnly | A_Append | A_Create | A_BIN, P_WRITE, 0);
   
   Elf32_Exec *ex = elfopen(filename);
   if(!ex){
@@ -55,16 +44,24 @@ __arch int elfload(char *filename, void *param1, void *param2, void *param3){
    return -2;
   }
   
+    
+  if(!ex->__is_ex_import && ex->libs)
+  {
+    l_msg(1, (int)"Incorrect elf");
+    
+    char dbg[256];
+    int csz = sprintf(dbg, "If you wont to use the shared libraries, you must add to linker option '--defsym __ex=0' add use elfclose function!\n");
+    ep_log(ex, dbg, csz);
+    elfclose(ex);
+    return -3;
+  }
   
   extern __arm void ExecuteIMB(void);
   ExecuteIMB();
   
   //run_INIT_Array(ex);
-#ifdef __ELFTHREAD
-  __run_proc((void*)entry, filename, param1, param2, param3);
-#else
   entry(filename, param1, param2, param3);
-#endif
+
   
   if(!ex->__is_ex_import && !ex->libs)
   {
@@ -72,52 +69,9 @@ __arch int elfload(char *filename, void *param1, void *param2, void *param3){
     elfclose(ex);
   }
   
-  //close(_f,0);
+
   return 0;
 }
-
-
-#ifdef __ELFTHREAD
-__arm void elf_proc_func()
-{
-    GBS_MSG msg;
-    if (GBS_RecActDstMessage(&msg))
-    {
-        if (msg.msg==1)
-        {
-            if (msg.data0)
-            {
-                ExecuteIMB();
-                struct __param * p = (struct __param*)msg.data1;
-                ((void (*)(void *, void*, void*, void*))(msg.data0))(p->p1, p->p2, p->p3, p->p4);
-                mfree(p);
-                //mutex_unlock(&mutex);
-                //mutex_destroy(&mutex);
-                lock_thread = 0;
-            }
-        }
-    }
-}
-
-
-__arm void __run_proc(void *entry, char *filename, void *param1, void *param2, void *param3)
-{
-  lock_thread = 1;
-  //mutex_init(&mutex);
-  struct __param *p = malloc(sizeof(struct __param));
-  p->p1 = filename;
-  p->p2 = param1;
-  p->p3 = param2;
-  p->p4 = param3;
-  GBS_SendMessage(ELF_PROC_RUNER_ID, 1, 0, entry, (void*)p);
-  //mutex_lock(&mutex);
-  while(lock_thread)
-  {
-    if(!lock_thread) break;
-    NU_Sleep(5);
-  }
-}
-#endif
 
 
 __arm void InitLoaderSystem()
@@ -127,13 +81,6 @@ __arm void InitLoaderSystem()
   }
   
   setenv("LD_LIBRARY_PATH", LD_LIBRARY_PATH_env, 1);
-
-#ifdef __ELFTHREAD
-  static const char elf_p_name[]="ELF_PROC";
-  extern const int elf_run_prio;
-  CreateGBSproc(ELF_PROC_RUNER_ID, elf_p_name, elf_proc_func, elf_run_prio, 0);
-#endif
-  
 }
 
 
@@ -142,7 +89,7 @@ int main()
   return 0;
 }
 
-#ifndef wintel
+
 int elfloader_onload(WSHDR *filename, WSHDR *ext, void *param){
   char fn[128];
   ws_2str(filename,fn,126);
@@ -226,9 +173,6 @@ __arm void MyIDLECSMonClose(void *data)
 {
   extern BXR1(void *, void (*)(void *));
   KillGBSproc(HELPER_CEPID);
-#ifdef __ELFTHREAD
-  KillGBSproc(ELF_PROC_RUNER_ID);
-#endif
   dlclean_cache();
   clearenv();
   BXR1(data,OldOnClose);
@@ -384,11 +328,6 @@ __arm void MyIDLECSMonCreate(void *data)
 
   /* ну а хуле, плюшки для блондинок */
   if( *RamPressedKey() != '#')
-#ifndef __ELFTHREAD
-  if(load_in_suproc)
-    SUBPROC((void*)LoadDaemons);
-  else
-#endif
     LoadDaemons();
   
   extern BXR1(void *, void (*)(void *));
@@ -608,5 +547,5 @@ __root static const int SWILIB_FUNC172 @ "SWILIB_FUNC172" = (int)REDRAW_impl;
 
 __root static const int SWILIB_FUNC19C @ "SWILIB_FUNC19C" = (int)SEQKILLER_impl;
 #pragma diag_default=Pe177
-#endif
+
 

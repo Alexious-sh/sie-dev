@@ -8,6 +8,7 @@
 #include "loader.h"
 #include "env.h"
 
+
 #ifndef _test_linux
 extern int __e_div(int delitelb, int delimoe);
 #endif
@@ -39,8 +40,12 @@ int handles_cnt = 0;
   */
 __arch char __is_file_exist(const char *fl)
 {
+#ifdef _test_linux
+    return access(fl, 0) != -1;
+#else
     FSTATS st;
     if( GetFileStats(fl, &st, 0) == -1 ) return 0;
+#endif
     return 1;
 }
 
@@ -134,7 +139,7 @@ __arch Elf32_Word findExport (Elf32_Exec* ex, const char* name)
 
 
 
-__arch inline Elf32_Word FindFunction(Elf32_Lib* lib, const char *name)
+__arch Elf32_Word FindFunction(Elf32_Lib* lib, const char *name)
 {
     if(!lib) return 0;
     return findExport(lib->ex, name);
@@ -182,8 +187,12 @@ __arch char * envparse(const char *str, char *buf, int num)
   */
 __arch const char * findShared(const char *name)
 {
+#ifdef _test_linux
+    const char *env = getenv("sie_test");
+#else
     const char *env = getenv("LD_LIBRARY_PATH");
-   
+#endif
+    
     for(int i=0;; ++i)
     {
         if( !envparse(env, tmp, i) ) return 0;
@@ -312,12 +321,12 @@ try_again:
     ex->switab = (int*)AddrLibrary_a();
     ex->fname  = name;
     
-    const char *p = strrchr(name, '\\');
+    const char *p = strrchr_a(name, '\\');
     if(p)
     {
       ++p;
       ex->temp_env = malloc(p - name + 2);
-      memcpy(ex->temp_env, name, p - name);
+      memcpy_a(ex->temp_env, name, p - name);
       ex->temp_env[p - name] = 0;
     } else
 	ex->temp_env = 0;
@@ -415,7 +424,7 @@ try_again:
  /*
   * Âû÷åñòü îáùåå êîëè÷åñòâî êëèåíòîâ ëèá
   */
-__arch inline void sub_clients(Elf32_Lib* lib)
+__arch void sub_clients(Elf32_Lib* lib)
 {
   lib->users_cnt--;
 }
@@ -434,11 +443,13 @@ __arch int CloseLib(Elf32_Lib* lib, int immediate)
         if(!realtime_libclean && !immediate) goto end;
         
         Elf32_Exec* ex = lib->ex;
+#ifdef _test_linux
+	if(ex->dyn[DT_FINI]) ((LIB_FUNC*)(ex->body + ex->dyn[DT_FINI] - ex->v_addr))();
+#endif
+	
         if(lib->glob_queue)
         {
 	    // Ôóíêöèÿ ôèíàëèçàöèè
-            if(ex->dyn[DT_FINI]) ((LIB_FUNC*)(ex->body + ex->dyn[DT_FINI] - ex->v_addr))();
-
             Global_Queue* glob_queue = lib->glob_queue;
 
             Global_Queue* tmp = glob_queue->next;
@@ -581,13 +592,13 @@ __arch int dlclean_cache()
   int cleaned = 0;
   while(tmp)
   {
-    // íàéäåì ëèáó êîòîğàÿ şçàåò ñàìî áîëüøå ëèá
+    // íàéäåì ëèáó êîòîğàÿ şçàåò ñàìî ëèáû
     bigger = tmp->lib;
     prev = tmp->prev;
     
     if( bigger->users_cnt < 1 )
     {
-      // çàêğîåì å¸, è îíà çàêğîåò âåñá õëàì êîòîğûé ñàìà şçàåò
+      // çàêğîåì å¸, è îíà çàêğîåò âåñü õëàì êîòîğûé ñàìà şçàåò
       CloseLib(bigger, 1); // ñğî÷íÿêîì êğîèì èõ!
       ++cleaned;
     }
@@ -604,9 +615,6 @@ __arch int dlclean_cache()
   
   return cleaned;
 }
-
-
-
 
 
 

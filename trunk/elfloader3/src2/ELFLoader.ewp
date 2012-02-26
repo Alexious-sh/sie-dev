@@ -7425,7 +7425,7 @@
     </settings>
   </configuration>
   <configuration>
-    <name>SL65v53</name>
+    <name>SL65sw53</name>
     <toolchain>
       <name>ARM</name>
     </toolchain>
@@ -7443,15 +7443,15 @@
         </option>
         <option>
           <name>ExePath</name>
-          <state>SL65v53\Exe</state>
+          <state>SL65sw53\Exe</state>
         </option>
         <option>
           <name>ObjPath</name>
-          <state>SL65v53\Obj</state>
+          <state>SL65sw53\Obj</state>
         </option>
         <option>
           <name>ListPath</name>
-          <state>SL65v53\List</state>
+          <state>SL65sw53\List</state>
         </option>
         <option>
           <name>Variant</name>
@@ -22692,7 +22692,7 @@
       </settings>
     </configuration>
     <configuration>
-      <name>SL65v53</name>
+      <name>SL65sw53</name>
       <settings>
         <name>ICCARM</name>
         <data>
@@ -26996,7 +26996,7 @@
       <configuration>EL71sw45</configuration>
       <configuration>C81sw51</configuration>
       <configuration>S68sw47</configuration>
-      <configuration>SL65v53</configuration>
+      <configuration>SL65sw53</configuration>
       <configuration>S65sw58</configuration>
       <configuration>SK65sw50</configuration>
       <configuration>M75sw25</configuration>
@@ -27025,7 +27025,7 @@
       <configuration>EL71sw45</configuration>
       <configuration>C81sw51</configuration>
       <configuration>S68sw47</configuration>
-      <configuration>SL65v53</configuration>
+      <configuration>SL65sw53</configuration>
       <configuration>S65sw58</configuration>
       <configuration>SK65sw50</configuration>
       <configuration>M75sw25</configuration>
@@ -27054,7 +27054,7 @@
       <configuration>EL71sw45</configuration>
       <configuration>C81sw51</configuration>
       <configuration>S68sw47</configuration>
-      <configuration>SL65v53</configuration>
+      <configuration>SL65sw53</configuration>
       <configuration>S65sw58</configuration>
       <configuration>SK65sw50</configuration>
       <configuration>M75sw25</configuration>
@@ -27082,7 +27082,7 @@
       <configuration>E71sw45</configuration>
       <configuration>EL71sw45</configuration>
       <configuration>S68sw47</configuration>
-      <configuration>SL65v53</configuration>
+      <configuration>SL65sw53</configuration>
       <configuration>S65sw58</configuration>
       <configuration>SK65sw50</configuration>
       <configuration>M75sw25</configuration>
@@ -27112,7 +27112,7 @@
       <configuration>EL71sw45</configuration>
       <configuration>C81sw51</configuration>
       <configuration>S68sw47</configuration>
-      <configuration>SL65v53</configuration>
+      <configuration>SL65sw53</configuration>
       <configuration>S65sw58</configuration>
       <configuration>SK65sw50</configuration>
       <configuration>M75sw25</configuration>
@@ -27141,7 +27141,7 @@
       <configuration>EL71sw45</configuration>
       <configuration>C81sw51</configuration>
       <configuration>S68sw47</configuration>
-      <configuration>SL65v53</configuration>
+      <configuration>SL65sw53</configuration>
       <configuration>S65sw58</configuration>
       <configuration>SK65sw50</configuration>
       <configuration>M75sw25</configuration>
@@ -27169,7 +27169,7 @@
       <configuration>EL71sw45</configuration>
       <configuration>C81sw51</configuration>
       <configuration>S68sw47</configuration>
-      <configuration>SL65v53</configuration>
+      <configuration>SL65sw53</configuration>
       <configuration>S65sw58</configuration>
       <configuration>SK65sw50</configuration>
       <configuration>M75sw25</configuration>
@@ -27199,7 +27199,7 @@
       <configuration>EL71sw45</configuration>
       <configuration>C81sw51</configuration>
       <configuration>S68sw47</configuration>
-      <configuration>SL65v53</configuration>
+      <configuration>SL65sw53</configuration>
       <configuration>S65sw58</configuration>
       <configuration>SK65sw50</configuration>
       <configuration>M75sw25</configuration>
@@ -27228,7 +27228,7 @@
       <configuration>EL71sw45</configuration>
       <configuration>C81sw51</configuration>
       <configuration>S68sw47</configuration>
-      <configuration>SL65v53</configuration>
+      <configuration>SL65sw53</configuration>
       <configuration>S65sw58</configuration>
       <configuration>SK65sw50</configuration>
       <configuration>M75sw25</configuration>
@@ -27257,7 +27257,7 @@
       <configuration>EL71sw45</configuration>
       <configuration>C81sw51</configuration>
       <configuration>S68sw47</configuration>
-      <configuration>SL65v53</configuration>
+      <configuration>SL65sw53</configuration>
       <configuration>S65sw58</configuration>
       <configuration>SK65sw50</configuration>
       <configuration>M75sw25</configuration>
@@ -27285,7 +27285,7 @@
       <configuration>EL71sw45</configuration>
       <configuration>C81sw51</configuration>
       <configuration>S68sw47</configuration>
-      <configuration>SL65v53</configuration>
+      <configuration>SL65sw53</configuration>
       <configuration>S65sw58</configuration>
       <configuration>SK65sw50</configuration>
       <configuration>M75sw25</configuration>
@@ -27314,7 +27314,7 @@
       <configuration>EL71sw45</configuration>
       <configuration>C81sw51</configuration>
       <configuration>S68sw47</configuration>
-      <configuration>SL65v53</configuration>
+      <configuration>SL65sw53</configuration>
       <configuration>S65sw58</configuration>
       <configuration>SK65sw50</configuration>
       <configuration>M75sw25</configuration>
@@ -27343,7 +27343,7 @@
       <configuration>E71sw45</configuration>
       <configuration>C81sw51</configuration>
       <configuration>S68sw47</configuration>
-      <configuration>SL65v53</configuration>
+      <configuration>SL65sw53</configuration>
       <configuration>S65sw58</configuration>
       <configuration>SK65sw50</configuration>
       <configuration>M75sw25</configuration>
@@ -27373,7 +27373,7 @@
       <configuration>EL71sw45</configuration>
       <configuration>C81sw51</configuration>
       <configuration>S68sw47</configuration>
-      <configuration>SL65v53</configuration>
+      <configuration>SL65sw53</configuration>
       <configuration>S65sw58</configuration>
       <configuration>SK65sw50</configuration>
       <configuration>C72sw22</configuration>
@@ -27402,7 +27402,7 @@
       <configuration>EL71sw45</configuration>
       <configuration>C81sw51</configuration>
       <configuration>S68sw47</configuration>
-      <configuration>SL65v53</configuration>
+      <configuration>SL65sw53</configuration>
       <configuration>S65sw58</configuration>
       <configuration>SK65sw50</configuration>
       <configuration>M75sw25</configuration>
@@ -27431,7 +27431,7 @@
       <configuration>EL71sw45</configuration>
       <configuration>C81sw51</configuration>
       <configuration>S68sw47</configuration>
-      <configuration>SL65v53</configuration>
+      <configuration>SL65sw53</configuration>
       <configuration>SK65sw50</configuration>
       <configuration>M75sw25</configuration>
       <configuration>C72sw22</configuration>
@@ -27459,7 +27459,7 @@
       <configuration>E71sw45</configuration>
       <configuration>EL71sw45</configuration>
       <configuration>C81sw51</configuration>
-      <configuration>SL65v53</configuration>
+      <configuration>SL65sw53</configuration>
       <configuration>S65sw58</configuration>
       <configuration>SK65sw50</configuration>
       <configuration>M75sw25</configuration>
@@ -27489,7 +27489,7 @@
       <configuration>EL71sw45</configuration>
       <configuration>C81sw51</configuration>
       <configuration>S68sw47</configuration>
-      <configuration>SL65v53</configuration>
+      <configuration>SL65sw53</configuration>
       <configuration>S65sw58</configuration>
       <configuration>SK65sw50</configuration>
       <configuration>M75sw25</configuration>
@@ -27517,7 +27517,7 @@
       <configuration>EL71sw45</configuration>
       <configuration>C81sw51</configuration>
       <configuration>S68sw47</configuration>
-      <configuration>SL65v53</configuration>
+      <configuration>SL65sw53</configuration>
       <configuration>S65sw58</configuration>
       <configuration>SK65sw50</configuration>
       <configuration>M75sw25</configuration>
@@ -27546,7 +27546,7 @@
       <configuration>EL71sw45</configuration>
       <configuration>C81sw51</configuration>
       <configuration>S68sw47</configuration>
-      <configuration>SL65v53</configuration>
+      <configuration>SL65sw53</configuration>
       <configuration>S65sw58</configuration>
       <configuration>SK65sw50</configuration>
       <configuration>M75sw25</configuration>
@@ -27576,7 +27576,7 @@
       <configuration>EL71sw45</configuration>
       <configuration>C81sw51</configuration>
       <configuration>S68sw47</configuration>
-      <configuration>SL65v53</configuration>
+      <configuration>SL65sw53</configuration>
       <configuration>S65sw58</configuration>
       <configuration>SK65sw50</configuration>
       <configuration>M75sw25</configuration>
@@ -27605,7 +27605,7 @@
       <configuration>EL71sw45</configuration>
       <configuration>C81sw51</configuration>
       <configuration>S68sw47</configuration>
-      <configuration>SL65v53</configuration>
+      <configuration>SL65sw53</configuration>
       <configuration>S65sw58</configuration>
       <configuration>M75sw25</configuration>
       <configuration>C72sw22</configuration>
@@ -27662,7 +27662,7 @@
       <configuration>EL71sw45</configuration>
       <configuration>C81sw51</configuration>
       <configuration>S68sw47</configuration>
-      <configuration>SL65v53</configuration>
+      <configuration>SL65sw53</configuration>
       <configuration>S65sw58</configuration>
       <configuration>SK65sw50</configuration>
       <configuration>M75sw25</configuration>
@@ -27692,7 +27692,7 @@
       <configuration>EL71sw45</configuration>
       <configuration>C81sw51</configuration>
       <configuration>S68sw47</configuration>
-      <configuration>SL65v53</configuration>
+      <configuration>SL65sw53</configuration>
       <configuration>S65sw58</configuration>
       <configuration>SK65sw50</configuration>
       <configuration>M75sw25</configuration>

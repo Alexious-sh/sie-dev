@@ -5,60 +5,90 @@
  * Licence: GPLv3
  */
 
-#ifdef _test_linux
-#include <fcntl.h>
-#include <unistd.h>
-int realtime_libclean = 1;
-#endif
-
 #include "loader.h"
-#include "fix.h"
+#include "env.h"
+
 
 #ifndef _test_linux
 extern int __e_div(int delitelb, int delimoe);
 #endif
+extern unsigned int realtime_libclean;
 char tmp[258] = {0}, dlerr[128]={0};
+
+#ifdef __thumb_mode
+extern __arm void *memcpy_a (void *dest, const void *src, size_t size);
+extern __arm unsigned int AddrLibrary_a();
+
+__arm char * strrchr_a (const char *s, int c)
+{
+  return strrchr(s, c);
+}
+#else
+#define memcpy_a memcpy
+#define AddrLibrary_a AddrLibrary
+#define strrchr_a strrchr
+#endif
 
 
 Global_Queue* lib_top = 0;
 Elf32_Lib** handles = 0;
 int handles_cnt = 0;
 
+
+ /*
+  * Существует ли файл
+  */
 __arch char __is_file_exist(const char *fl)
 {
-    int f;
-    if( (f=fopen(fl, A_ReadOnly | A_BIN, P_READ,0)) != -1)
-    {
-        fclose(f,0);
-        return 1;
-    }
-    return 0;
+#ifdef _test_linux
+    return access(fl, 0) != -1;
+#else
+    FSTATS st;
+    if( GetFileStats(fl, &st, 0) == -1 ) return 0;
+#endif
+    return 1;
 }
 
 
-__arch unsigned long elfhash(const char* name)
+
+ /*
+  * Возвращает хеш имени
+  */
+__arch unsigned int name_hash(const char* name)
 {
-    unsigned long int hash = 0;
-    while (*name != '\0')
+    unsigned int hash = 0;
+    unsigned int hi;
+    /* два раза *name требует больше времени */
+    register unsigned char c = *name++;
+    
+    while (c != '\0')
     {
-        unsigned long int hi;
-        hash = (hash << 4) + *name++;
+        hash = (hash << 4) + c;
         hi = hash & 0xf0000000;
-        if (hi != 0)
+        /*if (hi != 0)
         {
             hash ^= hi >> 24;
             hash ^= hi;
-        }
+        }*/
+        /* оптимизация из uclibc */
+        hash ^= hi;
+	hash ^= hi >> 24;
+        
+        c = *name++;
     }
     return hash;
 }
 
 
+
+ /*
+  * Находит в библиотеке требуемый експорт
+  */
 __arch Elf32_Word findExport (Elf32_Exec* ex, const char* name)
 {
     if(!ex || !ex->hashtab) return 0;
 
-    long hash = elfhash(name);
+    long hash = name_hash(name);
 
     Elf32_Word nbucket = ex->hashtab[0];
     //Elf32_Word nchain = ex->hashtab[1];
@@ -108,13 +138,19 @@ __arch Elf32_Word findExport (Elf32_Exec* ex, const char* name)
 }
 
 
-__arch Elf32_Word FindFunction(Elf32_Lib* lib, const char *name)
+
+__arch inline Elf32_Word FindFunction(Elf32_Lib* lib, const char *name)
 {
     if(!lib) return 0;
     return findExport(lib->ex, name);
 }
 
 
+
+ /*
+  * пропарсить содержимое переменной LD_LIBRARY_PATH
+  * путь1;путь2;путь3;
+  */
 __arch char * envparse(const char *str, char *buf, int num)
 {
   if( !str || !buf || num < 0) return 0;
@@ -139,16 +175,24 @@ __arch char * envparse(const char *str, char *buf, int num)
     }
   }
 
-  memcpy(buf, start, s-start);
+  memcpy_a(buf, start, s-start);
   buf[s-start] = 0;
   return buf;
 }
 
 
+
+ /*
+  * Поиск библиотек в папках переменной окружения
+  */
 __arch const char * findShared(const char *name)
 {
+#ifdef _test_linux
     const char *env = getenv("sie_test");
-   
+#else
+    const char *env = getenv("LD_LIBRARY_PATH");
+#endif
+    
     for(int i=0;; ++i)
     {
         if( !envparse(env, tmp, i) ) return 0;
@@ -164,7 +208,10 @@ __arch const char * findShared(const char *name)
 }
 
 
-// Открыть библиотеку
+
+ /*
+  * Открывает и парсит заданную библиотеку
+  */
 __arch Elf32_Lib* OpenLib(const char *name, Elf32_Exec *_ex)
 {
     if(!name || !*name) return 0;
@@ -172,11 +219,12 @@ __arch Elf32_Lib* OpenLib(const char *name, Elf32_Exec *_ex)
     int fp, _size = 0;
     Elf32_Ehdr ehdr;
     Elf32_Exec* ex;
+    char __mem[256];
 
     // Поищем среди уже загруженых
     Global_Queue* ready_libs = lib_top;
     
-    const char *cmp_share_name = strrchr(name, '\\');
+    const char *cmp_share_name = strrchr_a(name, '\\');
     if(!cmp_share_name) cmp_share_name = name;
     else cmp_share_name++;
     while(ready_libs)
@@ -194,15 +242,34 @@ __arch Elf32_Lib* OpenLib(const char *name, Elf32_Exec *_ex)
     }
 
     
-    const char  *ld_path;
+    const char *ld_path = 0;
     
     /* путь у нас реальный */
     if(name[1] == ':')
       ld_path = name;
-    else
-      ld_path = findShared(name);
     
+    else
+    {
+      /* есть у нас временное окружение */
+      if(_ex && _ex->temp_env)
+      {
+	/* попробуем из него достать переменную */
+	ld_path = (const char*)__mem;
+	sprintf((char *)ld_path, "%s%s", _ex->temp_env, name);
+	
+	/* нету её... */
+	if(!__is_file_exist(ld_path))
+	{
+	  /* ну поищим по глобальным */
+	  ld_path = findShared(name);
+	}
+      } else
+	ld_path = findShared(name);
+    }
+    
+    /* ничего не нашли */
     if(!ld_path) return 0;
+    
     
 try_again:
 
@@ -244,14 +311,25 @@ try_again:
       return 0;
     }
     
-    memcpy(&ex->ehdr, &ehdr, sizeof(Elf32_Ehdr));
+    memcpy_a(&ex->ehdr, &ehdr, sizeof(Elf32_Ehdr));
     ex->v_addr = (unsigned int)-1;
     ex->fp = fp;
     ex->type = EXEC_LIB;
     ex->libs = 0;
     ex->complete = 0;
     ex->meloaded = (void*)_ex;
-    ex->switab = 0;
+    ex->switab = (int*)AddrLibrary_a();
+    ex->fname  = name;
+    
+    const char *p = strrchr(name, '\\');
+    if(p)
+    {
+      ++p;
+      ex->temp_env = malloc(p - name + 2);
+      memcpy(ex->temp_env, name, p - name);
+      ex->temp_env[p - name] = 0;
+    } else
+	ex->temp_env = 0;
 
     /* Начинаем копать структуру либы */
     if( LoadSections(ex) ){
@@ -282,7 +360,7 @@ try_again:
     {
       if(name[1]==':') // путь относительный
       {
-        soname = strrchr(name, '\\'); // отчекрыжим путь, берём имя
+        soname = strrchr_a(name, '\\'); // отчекрыжим путь, берём имя
         if(!soname) // шо за бляин путь такой?! 
         {
           soname = name; // лан, пох ...
@@ -338,15 +416,24 @@ try_again:
     printf(" '%s' Loade complete\n", name);
     dlerr[0] = 0;
     dlerr[1] = 0;
+    ex->fname = 0;
     return lib;
 }
 
 
-__arch void sub_clients(Elf32_Lib* lib)
+ /*
+  * Вычесть общее количество клиентов либ
+  */
+__arch inline void sub_clients(Elf32_Lib* lib)
 {
   lib->users_cnt--;
 }
 
+
+
+ /*
+  * Закрывает бибилотеку и освобождает ресурсы
+  */
 __arch int CloseLib(Elf32_Lib* lib, int immediate)
 {
     if(!lib) return E_EMPTY;
@@ -356,13 +443,13 @@ __arch int CloseLib(Elf32_Lib* lib, int immediate)
         if(!realtime_libclean && !immediate) goto end;
         
         Elf32_Exec* ex = lib->ex;
+#ifdef _test_linux
+	if(ex->dyn[DT_FINI]) ((LIB_FUNC*)(ex->body + ex->dyn[DT_FINI] - ex->v_addr))();
+#endif
+	
         if(lib->glob_queue)
         {
-	    printf("Freeing lib '%s'\n", lib->soname);
 	    // Функция финализации
-#ifndef _test_linux
-            if(ex->dyn[DT_FINI]) ((LIB_FUNC*)(ex->body + ex->dyn[DT_FINI] - ex->v_addr))();
-#endif
             Global_Queue* glob_queue = lib->glob_queue;
 
             Global_Queue* tmp = glob_queue->next;
@@ -375,8 +462,7 @@ __arch int CloseLib(Elf32_Lib* lib, int immediate)
             if(tmp = glob_queue->prev) tmp->next = glob_queue->next;
             mfree(glob_queue);
         }
-        
-        
+
         elfclose(ex);
         mfree(lib);
     }
@@ -385,7 +471,11 @@ end:
 }
 
 
-int dlopen(const char *name)
+
+ /*
+  * POSIX-подобная dlopen
+  */
+__arch int dlopen(const char *name)
 {
   int handle = -1;
   
@@ -434,9 +524,13 @@ int dlopen(const char *name)
 }
 
 
+
+ /*
+  * POSIX-подобная dlclose
+  */
 int dlclose(int handle)
 {
-  if(0 > handle > handles_cnt - 1) return 0;
+  if(0 > handle > handles_cnt - 1 || !handles) return -1;
   
   if(handles[handle])
   {
@@ -451,22 +545,34 @@ int dlclose(int handle)
 }
 
 
+
+ /*
+  * POSIX-подобная dlsym
+  */
 Elf32_Word dlsym(int handle, const char *name)
 {
   if(0 > handle > handles_cnt - 1) return 0;
   
-  if(handles[handle]) return FindFunction(handles[handle], name);
+  if(handles && handles[handle]) return FindFunction(handles[handle], name);
   
   return 0;
 }
 
 
+
+ /*
+  * POSIX-подобная dlerror
+  */
 __arch const char *dlerror()
 {
   return dlerr;
 }
 
 
+
+ /*
+  * Шапка резинового массива^W^W связного списка либ
+  */
 __arch void *SHARED_TOP()
 {
   return lib_top;
@@ -474,39 +580,20 @@ __arch void *SHARED_TOP()
 
 
 
+ /*
+  * Очистка не нужных библиотек
+  */
 __arch int dlclean_cache()
 {
   if(!lib_top) return -1;
-  
-  Elf32_Lib *bigger = 0;
-  Global_Queue *tmp = lib_top, *mem = lib_top, *prev = 0;
+
   int cleaned = 0;
-  while(tmp)
-  {
-    // найдем либу которая юзает само больше либ
-    bigger = tmp->lib;
-    prev = tmp->prev;
-    
-    if( bigger->users_cnt < 1 )
-    {
-      // закроем её, и она закроет весб хлам который сама юзает
-      CloseLib(bigger, 1); // срочняком кроим их!
-      ++cleaned;
-    }
-    
-    tmp = 0;
-    // либ у нас поменьшало, мб топ изменился, чекаем
-    if(mem != lib_top )
-    {
-      tmp = lib_top;
-      mem = lib_top;
-    }
-    else // не неизменился, идем дальше тогда
-      tmp = prev;
-  }
   
   return cleaned;
 }
+
+
+
 
 
 
