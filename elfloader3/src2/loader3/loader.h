@@ -63,7 +63,7 @@ static const unsigned char elf_magic_header[] =
   0x01,                    /* Only ELF version 1. */
 };
 
-//#define __thumb_mode 1
+#define __thumb_mode 1
 
 #ifndef _test_linux
   #define printf(...)

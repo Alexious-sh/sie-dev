@@ -1,17 +1,20 @@
 /*
- * Р­С‚РѕС‚ С„Р°Р№Р» СЏРІР»СЏРµС‚СЃСЏ С‡Р°СЃС‚СЊСЋ РїСЂРѕРіСЂР°РјРјС‹ ElfLoader
+ * Этот файл является частью программы ElfLoader
  * Copyright (C) 2011 by Z.Vova, Ganster
  * Licence: GPLv3
  */
 
+#include "loader.h"
+
+
+/* for testing on pc */
 #ifdef _test_linux
 #include <fcntl.h>
 #include <unistd.h>
-#endif
-
-#include "loader.h"
-#ifdef _test_linux
 #include "fix.h"
+int loader_warnings = 1;
+int realtime_libclean = 1;
+int AddrLibrary() {return 1;}
 
 void ep_log(Elf32_Exec *ex, const char *l, int sz)
 {
@@ -20,6 +23,8 @@ void ep_log(Elf32_Exec *ex, const char *l, int sz)
 #endif
 
 
+
+/* wraper for thumb-mode calling */
 #ifdef __thumb_mode
 extern __arm void l_msg(int a, int b);
 
@@ -40,7 +45,8 @@ __arm int memcmp_a (const void *m1, const void *m2, size_t n)
 
 unsigned int ferr;
 
-// РџСЂРѕРІРµСЂРєР° РІР°Р»РёРґРЅРѕСЃС‚Рё СЌР»СЊС„Р°
+
+// Проверка валидности эльфа
 __arch int CheckElf(Elf32_Ehdr *ehdr)
 {
     if(memcmp_a(ehdr, elf_magic_header, sizeof(elf_magic_header))) return E_HEADER;
@@ -49,7 +55,8 @@ __arch int CheckElf(Elf32_Ehdr *ehdr)
     return E_NO_ERROR;
 }
 
-// РџРѕР»СѓС‡РµРЅРёРµ РЅСѓР¶РЅРѕРіРѕ СЂР°Р·РјРµСЂР° РІ СЂР°РјРµ
+
+// Получение нужного размера в раме
 __arch unsigned int GetBinSize(Elf32_Exec *ex, Elf32_Phdr* phdrs)
 {
     unsigned int i = 0;
@@ -71,13 +78,22 @@ __arch unsigned int GetBinSize(Elf32_Exec *ex, Elf32_Phdr* phdrs)
     return maxadr - ex->v_addr;
 }
 
+
+
 __arch char* LoadData(Elf32_Exec* ex, int offset, int size)
 {
+#ifdef _test_linux
+    if(size && lseek(ex->fp, offset - ex->v_addr, S_SET))
+#else
     if(size && lseek(ex->fp, offset - ex->v_addr, S_SET, &ferr, &ferr))
+#endif
     {
         char* data = malloc(size+1);
-        //zeromem_a(data, size+1);
+#ifdef _test_linux
+        if(fread(ex->fp, data, size) == size)
+#else
         if(fread(ex->fp, data, size, &ferr) == size)
+#endif
         {
             data[size] = 0;
             return data;
@@ -89,7 +105,7 @@ __arch char* LoadData(Elf32_Exec* ex, int offset, int size)
 }
 
 
-/* Р’СЃРїРѕРјРѕРіР°С‚РµР»СЊРЅР°СЏ С„СѓРЅРєС†РёСЏ */
+/* Вспомогательная функция */
 __arch static inline unsigned int _look_sym(Elf32_Exec *ex, const char *name)
 {
     Libs_Queue *lib = ex->libs;
@@ -103,7 +119,7 @@ __arch static inline unsigned int _look_sym(Elf32_Exec *ex, const char *name)
 }
 
 
-/* С„СѓРЅРєС†РёСЏ РїСЂРѕР»РµС‚Р°РµС‚СЃСЏ СЂРµРєСѓСЂСЃРёРІРЅРѕ РїРѕ Р»РёР±Р°Рј РєРѕС‚РѕСЂС‹Рµ РІ Р·Р°РІРёСЃРёРјРѕСЃС‚СЏС… */
+/* функция пролетается рекурсивно по либам которые в зависимостях */
 __arch unsigned int try_search_in_base(Elf32_Exec* ex, const char *name, int bind_type)
 {
     printf("Searching in libs...\n");
@@ -131,7 +147,7 @@ __arch unsigned int try_search_in_base(Elf32_Exec* ex, const char *name, int bin
 }
 
 
-// Р РµР»РѕРєР°С†РёСЏ
+// Релокация
 __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
 {
     unsigned int i = 0;
@@ -139,7 +155,7 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
     unsigned int libs_cnt = 0;
     char dbg[128];
 
-    // Р’С‹С‚Р°СЃРєРёРІР°РµРј С‚РµРіРё
+    // Вытаскиваем теги
     while (dyn_sect[i].d_tag != DT_NULL)
     {
         if (dyn_sect[i].d_tag <= DT_FLAGS)
@@ -147,11 +163,11 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
             switch(dyn_sect[i].d_tag)
             {
             case DT_SYMBOLIC:
-                // Р¤Р»Р°Рі SYMBOLIC-Р±РёР±Р»РёРѕС‚РµРє. Р’ d_val 0, РґР°Р¶Рµ РїСЂРё РЅР°Р»РёС‡РёРё :(
+                // Флаг SYMBOLIC-библиотек. В d_val 0, даже при наличии :(
                 ex->dyn[dyn_sect[i].d_tag] = 1;
                 break;
             case DT_NEEDED:
-                // РџРѕР»СѓС‡Р°РµРј СЃРјРµС‰РµРЅРёСЏ РІ .symtab РЅР° РёРјРµРЅР° Р»РёР±
+                // Получаем смещения в .symtab на имена либ
                 libs_needed[libs_cnt++] = dyn_sect[i].d_un.d_val;
                 break;
             default:
@@ -161,13 +177,13 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
         ++i;
     }
 
-    // РўР°Р±Р»РёС‡РєРё. РќСѓР¶РЅС‹ С‚РѕР»СЊРєРѕ Р»РёР±Р°Рј, Рё РёС… СЋР·Р°СЋС‰РёРј)
+    // Таблички. Нужны только либам, и их юзающим)
     ex->symtab = ex->dyn[DT_SYMTAB]? (Elf32_Sym*)(ex->body + ex->dyn[DT_SYMTAB] - ex->v_addr) : 0;
     ex->jmprel = (Elf32_Rel*)(ex->body + ex->dyn[DT_JMPREL] - ex->v_addr);
     ex->strtab = ex->dyn[DT_STRTAB]? ex->body + ex->dyn[DT_STRTAB] - ex->v_addr : 0;
 
     printf("STRTAB: %X\n", ex->dyn[DT_STRTAB]);
-    printf("SYMTAB: %X\n", ex->dyn[DT_SYMTAB]);
+    printf("SYMTAB: %X %X\n", ex->dyn[DT_SYMTAB], ex->symtab);
 
     if(ex->type == EXEC_LIB)
     {
@@ -188,7 +204,7 @@ __hash_err:
         }
     }
 
-    // Р—Р°РіСЂСѓР·РєР° Р±РёР±Р»РёРѕС‚РµРє
+    // Загрузка библиотек
     for(i=0; i < libs_cnt; ++i)
     {
         char *lib_name = ex->strtab + libs_needed[i];
@@ -205,14 +221,14 @@ __hash_err:
         }
         else
         {
-            int csz = sprintf(dbg, "РќРµ РјРѕРіСѓ Р·Р°РіСЂСѓР·РёС‚СЊ %s!", lib_name);
+            int csz = sprintf(dbg, "Не могу загрузить %s!", lib_name);
             l_msg(1, (int)dbg);
             ep_log(ex, dbg, csz);
             return E_SHARED;
         }
     }
 
-    // Р РµР»РѕРєР°С†РёСЏ
+    // Релокация
     if (ex->dyn[DT_RELSZ])
     {
         i=0;
@@ -224,7 +240,7 @@ __hash_err:
         int bind_type = 0;
         int reloc_type = 0;
 
-        // РўР°Р±Р»РёС†Р° СЂРµР»РѕРєР°С†РёР№
+        // Таблица релокаций
         Elf32_Rel* reltab = (Elf32_Rel*)LoadData(ex, phdr->p_offset + ex->dyn[DT_REL] - phdr->p_vaddr, ex->dyn[DT_RELSZ]);
 
         if(!reltab)
@@ -237,15 +253,17 @@ __hash_err:
         {
             r_type = ELF32_R_TYPE(reltab[i].r_info);
             symtab_index = ELF32_R_SYM(reltab[i].r_info);
-            Elf32_Sym *sym = ex->symtab? &ex->symtab[symtab_index] : 0;
+	   
+	    Elf32_Sym *sym = ex->symtab? &ex->symtab[symtab_index] : 0;
             bind_type = sym ? ELF_ST_BIND(sym->st_info) : 0;
-            reloc_type = ELF_ST_TYPE(sym->st_info);
+            reloc_type = sym ? ELF_ST_TYPE(sym->st_info) : 0;
             addr = (unsigned int*)(ex->body + reltab[i].r_offset - ex->v_addr);
 
             switch(r_type)
             {
             case R_ARM_NONE:
                 break;
+		
             case R_ARM_RABS32:
                 printf("R_ARM_RABS32\n");
                 *addr += (unsigned int)(ex->body - ex->v_addr);
@@ -256,34 +274,30 @@ __hash_err:
 
                 if( !ex->symtab )
                 {
-#ifdef _test_linux
-                    sprintf(dbg, "Relocation R_ARM_ABS32 cannot run without symtab\n");
-                    printf(dbg);
-                    printf("warning: symtab not found, but relocation R_ARM_ABS32 is exist\n");
-#endif
-                    *addr = (unsigned int)ex->body;
-                    break;
+		    int csz = sprintf(dbg, "warning: symtab not found, but relocation R_ARM_ABS32 is exist");
+		    if(loader_warnings)
+		      ep_log(ex, dbg, csz);
+		    *addr = (unsigned int)ex->body;
+		    break;
                 }
 
                 if( !ex->strtab )
                 {
-#ifdef _test_linux
-                    sprintf(dbg, "Relocation R_ARM_ABS32 cannot run without strtab\n");
-                    printf(dbg);
-                    printf("warning: strtab not found, but relocation R_ARM_ABS32 is exist\n");
-#endif
-                    *addr = (unsigned int)ex->body;
-                    break;
+		    int csz = sprintf(dbg, "warning: symtab not found, but relocation R_ARM_ABS32 is exist");
+		    if(loader_warnings)
+		      ep_log(ex, dbg, csz);
+		    
+		    *addr = (unsigned int)ex->body;
+		    break;
                 }
 
-                /* РЅР° РІСЃСЏРєРёР№ СЃР»СѓС‡Р°Р№, РІРґСЂСѓРі СЃСѓРј РїСѓСЃС‚РѕР№ Р±СѓРґРµС‚ */
+                /* на всякий случай, вдруг сум пустой будет */
                 if(sym)
                 {
-                    /* РёРјСЏ С‚СЂРµР±СѓРµРјРѕР№ С„СѓРЅРєС†РёРё */
+                    /* имя требуемой функции */
                     name = ex->strtab + sym->st_name;
-                    printf("'%s' %X %X %d %d\n", name, *addr, sym->st_value, bind_type, reloc_type);
 
-                    // Р•СЃР»Рё РЅСѓР¶РµРЅ СѓРєР°Р·Р°С‚РµР»СЊ РЅР° СЌР»СЊС„
+                    // Если нужен указатель на эльф
                     if( name[4] == 0   &&
                             name[0] == '_' &&
                             name[1] == '_' &&
@@ -292,18 +306,16 @@ __hash_err:
                       )
                     {
                         ex->__is_ex_import = 1;
-                        printf("__ex: 0x%X\n", (int)ex);
                         *addr = (unsigned int)ex;
                         break;
                     }
 
+                    
                     switch(reloc_type)
                     {
                     case STT_NOTYPE:
                         func = sym->st_value;
-                        printf("AAAAAAAAAAAAAA: %X\n", func);
                         goto skeep_err;
-                        break;
 
                     default:
                         if(sym->st_value)
@@ -313,14 +325,13 @@ __hash_err:
                         break;
                     }
 
-
                 }
                 else
                 {
                     func = 0;
                 }
 
-                /* РЅРёС‡РµРіРѕ РЅРµ РЅР°С€Р»Рё, Р¶Р°Р»СЊ */
+                /* ничего не нашли, жаль */
                 if(!func && bind_type != STB_WEAK)
                 {
                     int csz = sprintf(dbg, "[2] Undefined reference to `%s'\n", name?name : "");
@@ -331,10 +342,10 @@ __hash_err:
 
 skeep_err:
 
-                /* РІ ABS32 СЂРµР»РѕРєРµ РІ *addr РІСЃРµРіРґР° РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ 0 */
+                /* в ABS32 релоке в *addr всегда должен быть 0 */
                 *addr += func;
-                printf("addres: %s - %X\n", name, (unsigned int)*addr);
                 break;
+		
             case R_ARM_RELATIVE:
                 printf("R_ARM_RELATIVE\n");
                 *addr += (unsigned int)(ex->body - ex->v_addr);
@@ -377,7 +388,7 @@ skeep_err:
                     case STT_NOTYPE:
                         func = sym->st_value;
                         goto skeep_err1;
-                        break;
+			
 
                     default:
                         if(sym->st_value)
@@ -390,8 +401,7 @@ skeep_err:
                         break;
                     }
 
-                    //printf("Searching in libs...\n");
-                    //func = try_search_in_base(ex, name, bind_type);
+
                     if(!func && bind_type != STB_WEAK)
                     {
                         int csz = sprintf(dbg, "[2] Undefined reference to `%s'\n", name?name : "");
@@ -402,7 +412,7 @@ skeep_err:
 
 skeep_err1:
 
-                    /* Р’ РґРѕРєР°С… РЅР°РїРёСЃР°РЅРѕ С‡С‚Рѕ Р±РёРЅРґС‹ С‚РёРїР° STB_WEAK РјРѕРіСѓС‚ Р±С‹С‚СЊ РЅСѓР»РµРІС‹РјРё */
+                    /* В доках написано что бинды типа STB_WEAK могут быть нулевыми */
                     *addr = func;
 
                     if(*addr)
@@ -419,13 +429,19 @@ skeep_err1:
 
                 break;
 
+		
             case R_ARM_COPY:
                 printf("R_ARM_COPY\n");
                 memcpy_a((void *) addr,
                          (void *)(ex->body + sym->st_value), sym->st_size);
                 break;
 
-
+		
+	    /* хз чо за релок, ни в одном лоадере его не встречал, 
+	     * хотя по описанию похож на R_ARM_REL32.
+	     * Но, если выполнить релокацию по описанию - эльфятник падает.
+	     * С пропуском - работает, так что хайтек.
+	     */
             case R_ARM_THM_RPC22:
                 printf("R_ARM_THM_RPC22 stub\n");
                 break;
@@ -434,7 +450,6 @@ skeep_err1:
             case R_ARM_REL32:
                 printf("R_ARM_REL32\n");
                 *addr += sym->st_value - (unsigned int)addr;
-                //printf("*addr = %X; st_value = %X; addr = %X; body = %X\n", *addr, sym->st_value, addr, ex->body);
                 break;
 
             default:
@@ -451,7 +466,7 @@ skeep_err1:
         mfree(reltab);
     }
 
-    // Р‘РёРЅРґРёРј С„СѓРЅРєС†РёРё
+    // Биндим функции
     if(ex->dyn[DT_PLTRELSZ])
     {
         i=0;
@@ -482,7 +497,7 @@ skeep_err1:
 }
 
 
-// Р§С‚РµРЅРёРµ СЃРµРіРјРµРЅС‚РѕРІ РёР· С„Р°Р№Р»Р°
+// Чтение сегментов из файла
 __arch int LoadSections(Elf32_Exec* ex)
 {
     Elf32_Phdr* phdrs = malloc(sizeof(Elf32_Phdr) * ex->ehdr.e_phnum);
@@ -494,20 +509,25 @@ __arch int LoadSections(Elf32_Exec* ex)
     unsigned long maxadr=0;
     unsigned int end_adr;
 
-    // Р§РёС‚Р°РµРј Р·Р°РіРѕР»РѕРІРєРё
+    // Читаем заголовки
     while(i < ex->ehdr.e_phnum)
     {
-        if(lseek(ex->fp, hdr_offset, S_SET, &ferr, &ferr) == -1) break;
+#ifdef _test_linux
+        if(lseek(ex->fp, hdr_offset, S_SET) == -1) break;
+        if(fread(ex->fp, &phdrs[i], sizeof(Elf32_Phdr)) != sizeof(Elf32_Phdr))
+#else
+	if(lseek(ex->fp, hdr_offset, S_SET, &ferr, &ferr) == -1) break;
         if(fread(ex->fp, &phdrs[i], sizeof(Elf32_Phdr), &ferr) != sizeof(Elf32_Phdr))
+#endif
         {
-            /* РєСЂРёРІРѕР№ Р·Р°РіРѕР»РѕРІРѕРє, С€Р»С‘Рј РЅР°С„РёРі СЌС‚РѕС‚ СЌР»СЊС„ */
+            /* кривой заголовок, шлём нафиг этот эльф */
             mfree(ex->body);
             ex->body = 0;
             mfree(phdrs);
             return E_PHDR;
         }
 
-        /* С‚СѓС‚ Р¶Рµ Рё СЂР°Р·РјРµСЂ Р±РёРЅР°СЂРЅРёРєР° РїРѕСЃС‡РёС‚Р°РµРј */
+        /* тут же и размер бинарника посчитаем */
         if (phdrs[i].p_type == PT_LOAD)
         {
             if (ex->v_addr > phdrs[i].p_vaddr) ex->v_addr = phdrs[i].p_vaddr;
@@ -521,11 +541,11 @@ __arch int LoadSections(Elf32_Exec* ex)
 
     ex->bin_size = maxadr - ex->v_addr;
 
-    if(i == ex->ehdr.e_phnum) // Р•СЃР»Рё РїСЂРѕС‡РёС‚Р°Р»РёСЃСЊ РІСЃРµ Р·Р°РіРѕР»РѕРІРєРё
+    if(i == ex->ehdr.e_phnum) // Если прочитались все заголовки
     {
         //ex->bin_size = GetBinSize(ex, phdrs);
 
-        if(ex->body = malloc(ex->bin_size+1)) // Р•СЃР»Рё С…РІР°С‚РёР»Рѕ СЂР°РјС‹
+        if(ex->body = malloc(ex->bin_size+1)) // Если хватило рамы
         {
             zeromem_a(ex->body, ex->bin_size+1);
             zeromem_a(ex->dyn, sizeof(ex->dyn));
@@ -538,22 +558,30 @@ __arch int LoadSections(Elf32_Exec* ex)
                 switch (phdr.p_type)
                 {
                 case PT_LOAD:
-                    if(phdr.p_filesz == 0) break; // РџСЂРѕРїСѓСЃРєР°РµРј РїСѓСЃС‚С‹Рµ СЃРµРіРјРµРЅС‚С‹
+                    if(phdr.p_filesz == 0) break; // Пропускаем пустые сегменты
                     printf("PT_LOAD: %X - %X\n", phdr.p_offset, phdr.p_filesz);
+#ifdef _test_linux
+                    if(lseek(ex->fp, phdr.p_offset, S_SET) != -1)
+#else
                     if(lseek(ex->fp, phdr.p_offset, S_SET, &ferr, &ferr) != -1)
+#endif
                     {
-                        if(fread(ex->fp, ex->body + phdr.p_vaddr - ex->v_addr, phdr.p_filesz, &ferr) == phdr.p_filesz)
+#ifdef _test_linux
+                        if(fread(ex->fp, ex->body + phdr.p_vaddr - ex->v_addr, phdr.p_filesz) == phdr.p_filesz)
+#else
+			 if(fread(ex->fp, ex->body + phdr.p_vaddr - ex->v_addr, phdr.p_filesz, &ferr) == phdr.p_filesz)
+#endif
                             break;
                     }
 
-                    // РќРµ РїСЂРѕС‡РёС‚Р°Р»Рё СЃРєРѕР»СЊРєРѕ РЅСѓР¶РЅРѕ
+                    // Не прочитали сколько нужно
                     mfree(ex->body);
                     ex->body = 0;
                     mfree(phdrs);
                     return E_SECTION;
 
                 case PT_DYNAMIC:
-                    if(phdr.p_filesz == 0) break; // РџСЂРѕРїСѓСЃРєР°РµРј РїСѓСЃС‚С‹Рµ СЃРµРіРјРµРЅС‚С‹
+                    if(phdr.p_filesz == 0) break; // Пропускаем пустые сегменты
 
                     printf("Load data dynamic segment: %d - %d\n", phdr.p_offset, phdr.p_filesz);
                     if(dyn_sect = (Elf32_Dyn*)LoadData(ex, phdr.p_offset, phdr.p_filesz))
@@ -565,7 +593,7 @@ __arch int LoadSections(Elf32_Exec* ex)
                         }
                     }
 
-                    // Р•СЃР»Рё С‡С‚Рѕ-С‚Рѕ РїРѕС€Р»Рѕ РЅРµ С‚Р°Рє...
+                    // Если что-то пошло не так...
                     mfree(dyn_sect);
                     mfree(ex->body);
                     ex->body = 0;

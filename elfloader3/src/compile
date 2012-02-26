@@ -1,4 +1,4 @@
 #!/bin/sh
 
 
-gcc *.c -O2 -oloader -std=gnu99 -w -m32 -D_test_linux
+gcc -g *.c -O2 -oloader -std=gnu99 -w -m32 -D_test_linux

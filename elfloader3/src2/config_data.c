@@ -55,3 +55,6 @@ __root char ep_log_way[128]="0:\\ep3_log.txt";
 
 __root CFG_HDR cfghdr12={CFG_UINT,"Max log size in bytes",0,50*1024};
 __root unsigned int max_log_size = 512;
+
+__root CFG_HDR cfghdr13={CFG_CHECKBOX, "Loader warnings", 0, 2};
+__root unsigned int loader_warnings = 1;

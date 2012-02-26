@@ -7,11 +7,14 @@
 #include "loader.h"
 
 
-/* forr testing on pc */
+/* for testing on pc */
 #ifdef _test_linux
 #include <fcntl.h>
 #include <unistd.h>
 #include "fix.h"
+int loader_warnings = 1;
+int realtime_libclean = 1;
+int AddrLibrary() {return 1;}
 
 void ep_log(Elf32_Exec *ex, const char *l, int sz)
 {
@@ -41,7 +44,7 @@ __arm int memcmp_a (const void *m1, const void *m2, size_t n)
 #endif
 
 unsigned int ferr;
-
+extern unsigned int loader_warnings;
 
 // Проверка валидности эльфа
 __arch int CheckElf(Elf32_Ehdr *ehdr)
@@ -79,11 +82,18 @@ __arch unsigned int GetBinSize(Elf32_Exec *ex, Elf32_Phdr* phdrs)
 
 __arch char* LoadData(Elf32_Exec* ex, int offset, int size)
 {
+#ifdef _test_linux
+    if(size && lseek(ex->fp, offset - ex->v_addr, S_SET))
+#else
     if(size && lseek(ex->fp, offset - ex->v_addr, S_SET, &ferr, &ferr))
+#endif
     {
         char* data = malloc(size+1);
-        //zeromem_a(data, size+1);
+#ifdef _test_linux
+        if(fread(ex->fp, data, size) == size)
+#else
         if(fread(ex->fp, data, size, &ferr) == size)
+#endif
         {
             data[size] = 0;
             return data;
@@ -173,7 +183,7 @@ __arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
     ex->strtab = ex->dyn[DT_STRTAB]? ex->body + ex->dyn[DT_STRTAB] - ex->v_addr : 0;
 
     printf("STRTAB: %X\n", ex->dyn[DT_STRTAB]);
-    printf("SYMTAB: %X\n", ex->dyn[DT_SYMTAB]);
+    printf("SYMTAB: %X %X\n", ex->dyn[DT_SYMTAB], ex->symtab);
 
     if(ex->type == EXEC_LIB)
     {
@@ -243,15 +253,17 @@ __hash_err:
         {
             r_type = ELF32_R_TYPE(reltab[i].r_info);
             symtab_index = ELF32_R_SYM(reltab[i].r_info);
-            Elf32_Sym *sym = ex->symtab? &ex->symtab[symtab_index] : 0;
+	   
+	    Elf32_Sym *sym = ex->symtab? &ex->symtab[symtab_index] : 0;
             bind_type = sym ? ELF_ST_BIND(sym->st_info) : 0;
-            reloc_type = ELF_ST_TYPE(sym->st_info);
+            reloc_type = sym ? ELF_ST_TYPE(sym->st_info) : 0;
             addr = (unsigned int*)(ex->body + reltab[i].r_offset - ex->v_addr);
 
             switch(r_type)
             {
             case R_ARM_NONE:
                 break;
+		
             case R_ARM_RABS32:
                 printf("R_ARM_RABS32\n");
                 *addr += (unsigned int)(ex->body - ex->v_addr);
@@ -262,24 +274,21 @@ __hash_err:
 
                 if( !ex->symtab )
                 {
-#ifdef _test_linux
-                    sprintf(dbg, "Relocation R_ARM_ABS32 cannot run without symtab\n");
-                    printf(dbg);
-                    printf("warning: symtab not found, but relocation R_ARM_ABS32 is exist\n");
-#endif
-                    *addr = (unsigned int)ex->body;
-                    break;
+		    int csz = sprintf(dbg, "warning: symtab not found, but relocation R_ARM_ABS32 is exist");
+		    if(loader_warnings)
+		      ep_log(ex, dbg, csz);
+		    *addr = (unsigned int)ex->body;
+		    break;
                 }
 
                 if( !ex->strtab )
                 {
-#ifdef _test_linux
-                    sprintf(dbg, "Relocation R_ARM_ABS32 cannot run without strtab\n");
-                    printf(dbg);
-                    printf("warning: strtab not found, but relocation R_ARM_ABS32 is exist\n");
-#endif
-                    *addr = (unsigned int)ex->body;
-                    break;
+		    int csz = sprintf(dbg, "warning: symtab not found, but relocation R_ARM_ABS32 is exist");
+		    if(loader_warnings)
+		      ep_log(ex, dbg, csz);
+		    
+		    *addr = (unsigned int)ex->body;
+		    break;
                 }
 
                 /* на всякий случай, вдруг сум пустой будет */
@@ -503,8 +512,13 @@ __arch int LoadSections(Elf32_Exec* ex)
     // Читаем заголовки
     while(i < ex->ehdr.e_phnum)
     {
-        if(lseek(ex->fp, hdr_offset, S_SET, &ferr, &ferr) == -1) break;
+#ifdef _test_linux
+        if(lseek(ex->fp, hdr_offset, S_SET) == -1) break;
+        if(fread(ex->fp, &phdrs[i], sizeof(Elf32_Phdr)) != sizeof(Elf32_Phdr))
+#else
+	if(lseek(ex->fp, hdr_offset, S_SET, &ferr, &ferr) == -1) break;
         if(fread(ex->fp, &phdrs[i], sizeof(Elf32_Phdr), &ferr) != sizeof(Elf32_Phdr))
+#endif
         {
             /* кривой заголовок, шлём нафиг этот эльф */
             mfree(ex->body);
@@ -546,9 +560,17 @@ __arch int LoadSections(Elf32_Exec* ex)
                 case PT_LOAD:
                     if(phdr.p_filesz == 0) break; // Пропускаем пустые сегменты
                     printf("PT_LOAD: %X - %X\n", phdr.p_offset, phdr.p_filesz);
+#ifdef _test_linux
+                    if(lseek(ex->fp, phdr.p_offset, S_SET) != -1)
+#else
                     if(lseek(ex->fp, phdr.p_offset, S_SET, &ferr, &ferr) != -1)
+#endif
                     {
-                        if(fread(ex->fp, ex->body + phdr.p_vaddr - ex->v_addr, phdr.p_filesz, &ferr) == phdr.p_filesz)
+#ifdef _test_linux
+                        if(fread(ex->fp, ex->body + phdr.p_vaddr - ex->v_addr, phdr.p_filesz) == phdr.p_filesz)
+#else
+			 if(fread(ex->fp, ex->body + phdr.p_vaddr - ex->v_addr, phdr.p_filesz, &ferr) == phdr.p_filesz)
+#endif
                             break;
                     }
 
