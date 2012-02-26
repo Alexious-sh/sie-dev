@@ -2,8 +2,9 @@
 ;ELFLoader
 ;(c) Z.Vova, Ganster
 ;Version: 3.0
+;Date: 26.02.2012 17:32:46
 
- 
+
 #pragma enable old_equal_ff
 ;FSWI_PATCH1
 0x000929B0: DCF09FE5
@@ -1020,6 +1021,6 @@
 
  ; Needed function
 +10E4000
-03FC: 0xA10E4000   ;  FF: unsigned int AddrLibrary()
+3FC: 0xA10E4000   ;  FF: unsigned int AddrLibrary()
 +0
 #pragma disable old_equal_ff

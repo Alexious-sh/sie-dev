@@ -4,6 +4,8 @@ iar="/media/disk-1/ELF/IAR/EmbeddedWorkbenchEvaluation/common/bin/iarbuild.exe"
 err="Break with errors"
 #cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/
 
+echo "$(date +'%d.%m.%Y %H:%M:%S')" > time.txt
+
 echo "CCLD  C72sw22..."
 wine $iar ElfLoader.ewp -make C72sw22 -log warnings
 if [[ ${?} != 0 ]] 
@@ -267,5 +269,7 @@ cd  ../../CL61sw00/Exe
 cd  ../../CF75sw23/Exe
 ../../parse.lua $(ompload -u ElfPack_CF75sw23.vkp)
 
+
+rm time.txt
 exit 0
 

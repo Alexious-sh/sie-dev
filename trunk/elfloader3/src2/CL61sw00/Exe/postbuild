@@ -1,9 +1,9 @@
 #!/bin/sh
 
-phone="S75sw52"
+phone="CL61sw00"
 outname="ElfPack_"$phone".vkp"
-swilibBegin="+0074000"
-AddrLibrary="03FC: 0xA0074000"
+swilibBegin="+1320000"
+AddrLibrary="03FC: 0xA1320000"
 directory=${PWD}
 
 

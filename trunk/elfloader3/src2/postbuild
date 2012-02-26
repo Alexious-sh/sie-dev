@@ -1,0 +1,27 @@
+#!/bin/sh
+
+directory=${1}
+phone=${2}
+outname="$directory/${3}"
+swilibBegin=${4}
+AddrLibrary=${5}
+Time=$(cat time.txt)
+
+wine elf2vkp.exe "${directory}/ELFLoader.elf" "${directory}/ElfLoader3.vkp" &> /dev/null
+
+echo ";"$phone > $outname
+cat copyright.txt >> $outname
+echo ";Date: "${Time} >> $outname
+echo -e "\n" >> $outname
+echo "#pragma enable old_equal_ff" >> $outname
+cat "$directory/ElfLoader3.vkp" >> $outname
+echo "" >> $outname
+echo " ; Needed function" >> $outname
+echo "$swilibBegin" >> $outname
+echo "$AddrLibrary   ;  FF: unsigned int AddrLibrary()" >> $outname
+echo "+0" >> $outname
+echo "#pragma disable old_equal_ff" >> $outname
+
+rm "${directory}/ElfLoader3.vkp"
+rm "${directory}/ELFLoader.elf"
+exit 0
