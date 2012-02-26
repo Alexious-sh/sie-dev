@@ -2,8 +2,9 @@
 ;ELFLoader
 ;(c) Z.Vova, Ganster
 ;Version: 3.0
+;Date: 26.02.2012 17:32:46
 
- 
+
 #pragma enable old_equal_ff
 ;FSWI_PATCH1
 0x000929B4: DCF09FE5

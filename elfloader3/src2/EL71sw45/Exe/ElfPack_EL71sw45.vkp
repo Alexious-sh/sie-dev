@@ -2,8 +2,9 @@
 ;ELFLoader
 ;(c) Z.Vova, Ganster
 ;Version: 3.0
+;Date: 26.02.2012 17:32:46
 
- 
+
 #pragma enable old_equal_ff
 ;SWILIB_FUNC171,SWILIB_FUNC172
 0x000745C4: 988407A0848407A0
