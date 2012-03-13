@@ -7,7 +7,8 @@
 	RSEG	FSWI_PATCH1:CODE:ROOT
 	CODE32
 
-	LDR	PC,main_jumper
+	LDR	PC, main_jumper
+
         
         #ifndef NEWSGOLD
         RSEG	FSWI_PATCH3:DATA

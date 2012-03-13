@@ -443,7 +443,7 @@ __arch int CloseLib(Elf32_Lib* lib, int immediate)
         if(!realtime_libclean && !immediate) goto end;
         
         Elf32_Exec* ex = lib->ex;
-#ifdef _test_linux
+#ifndef _test_linux
 	if(ex->dyn[DT_FINI]) ((LIB_FUNC*)(ex->body + ex->dyn[DT_FINI] - ex->v_addr))();
 #endif
 	
