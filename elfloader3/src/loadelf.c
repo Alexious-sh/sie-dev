@@ -8,6 +8,7 @@
 
 #include "loader.h"
 
+#ifndef _test_linux
 #ifdef __thumb_mode
 extern __arm void *memcpy_a (void *dest, const void *src, size_t size);
 
@@ -25,6 +26,11 @@ __arm unsigned int AddrLibrary_a()
 #define memcpy_a memcpy
 #define SUBPROC_a SUBPROC
 #define AddrLibrary_a AddrLibrary
+#endif
+
+#else
+  #define memcpy_a memcpy
+  #define AddrLibrary_a() 1
 #endif
 
 
@@ -122,8 +128,13 @@ __arch int elfclose(Elf32_Exec* ex)
 
 __arch int sub_elfclose(Elf32_Exec* ex)
 {
-  //elfclose(ex);
+  
+#ifdef _test_linux
+  elfclose(ex);
+#else
   SUBPROC_a((void*)elfclose, ex);
+#endif
+  
   return 0;
 }
 

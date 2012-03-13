@@ -139,7 +139,7 @@ __arch Elf32_Word findExport (Elf32_Exec* ex, const char* name)
 
 
 
-__arch inline Elf32_Word FindFunction(Elf32_Lib* lib, const char *name)
+__arch Elf32_Word FindFunction(Elf32_Lib* lib, const char *name)
 {
     if(!lib) return 0;
     return findExport(lib->ex, name);
@@ -321,12 +321,12 @@ try_again:
     ex->switab = (int*)AddrLibrary_a();
     ex->fname  = name;
     
-    const char *p = strrchr(name, '\\');
+    const char *p = strrchr_a(name, '\\');
     if(p)
     {
       ++p;
       ex->temp_env = malloc(p - name + 2);
-      memcpy(ex->temp_env, name, p - name);
+      memcpy_a(ex->temp_env, name, p - name);
       ex->temp_env[p - name] = 0;
     } else
 	ex->temp_env = 0;
@@ -424,7 +424,7 @@ try_again:
  /*
   * Вычесть общее количество клиентов либ
   */
-__arch inline void sub_clients(Elf32_Lib* lib)
+__arch void sub_clients(Elf32_Lib* lib)
 {
   lib->users_cnt--;
 }
@@ -443,7 +443,7 @@ __arch int CloseLib(Elf32_Lib* lib, int immediate)
         if(!realtime_libclean && !immediate) goto end;
         
         Elf32_Exec* ex = lib->ex;
-#ifdef _test_linux
+#ifndef _test_linux
 	if(ex->dyn[DT_FINI]) ((LIB_FUNC*)(ex->body + ex->dyn[DT_FINI] - ex->v_addr))();
 #endif
 	
@@ -586,14 +586,35 @@ __arch void *SHARED_TOP()
 __arch int dlclean_cache()
 {
   if(!lib_top) return -1;
-
+  
+  Elf32_Lib *bigger = 0;
+  Global_Queue *tmp = lib_top, *mem = lib_top, *prev = 0;
   int cleaned = 0;
+  while(tmp)
+  {
+    // найдем либу которая юзает само либы
+    bigger = tmp->lib;
+    prev = tmp->prev;
+    
+    if( bigger->users_cnt < 1 )
+    {
+      // закроем её, и она закроет весь хлам который сама юзает
+      CloseLib(bigger, 1); // срочняком кроим их!
+      ++cleaned;
+    }
+    
+    // либ у нас поменьшало, мб топ изменился, чекаем
+    if(mem != lib_top )
+    {
+      tmp = lib_top;
+      mem = lib_top;
+    }
+    else // не неизменился, идем дальше тогда
+      tmp = prev;
+  }
   
   return cleaned;
 }
-
-
-
 
 
 

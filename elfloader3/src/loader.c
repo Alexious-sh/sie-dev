@@ -122,7 +122,7 @@ __arch static inline unsigned int _look_sym(Elf32_Exec *ex, const char *name)
 /* функци€ пролетаетс€ рекурсивно по либам которые в зависимост€х */
 __arch unsigned int try_search_in_base(Elf32_Exec* ex, const char *name, int bind_type)
 {
-    printf("Searching in libs...\n");
+    printf("'%s' Searching in libs... ", name);
     unsigned int address = 0;
 
     if(ex->type == EXEC_LIB && !ex->dyn[DT_SYMBOLIC])
@@ -143,6 +143,12 @@ __arch unsigned int try_search_in_base(Elf32_Exec* ex, const char *name, int bin
             }
         }
     }
+    
+    if(!address)
+	printf(" not found!\n");
+    else 
+	printf(" found\n");
+    
     return address;
 }
 
@@ -267,7 +273,8 @@ __hash_err:
             case R_ARM_RABS32:
                 printf("R_ARM_RABS32\n");
                 *addr += (unsigned int)(ex->body - ex->v_addr);
-                printf("*addr = %X\n", *addr);
+                name = ex->strtab + sym->st_name;
+                printf("%s: *addr = %X\n", *addr, name);
                 break;
             case R_ARM_ABS32:
                 printf("R_ARM_ABS32\n");
@@ -344,11 +351,14 @@ skeep_err:
 
                 /* в ABS32 релоке в *addr всегда должен быть 0 */
                 *addr += func;
+                printf("%s: *addr = %X\n", *addr, name);
                 break;
 		
             case R_ARM_RELATIVE:
                 printf("R_ARM_RELATIVE\n");
                 *addr += (unsigned int)(ex->body - ex->v_addr);
+                name = ex->strtab + sym->st_name;
+                printf("%s: *addr = %X\n", *addr, name);
                 break;
 
             case R_ARM_GLOB_DAT:
@@ -450,6 +460,7 @@ skeep_err1:
             case R_ARM_REL32:
                 printf("R_ARM_REL32\n");
                 *addr += sym->st_value - (unsigned int)addr;
+                printf("    %X\n", *addr);
                 break;
 
             default:
