@@ -1,32 +1,7 @@
 //EL71v45
 
 
-        RSEG	SWILIB_FUNC2EE_2F5:CODE
-	EXTERN	sub_elfclose
-	EXTERN	dlopen
-	EXTERN	dlsym
-        EXTERN	dlclose
-        EXTERN	setenv
-        EXTERN	unsetenv
-        EXTERN	getenv
-        EXTERN	clearenv
-        EXTERN  environ
-	EXTERN  dlerror
-        EXTERN  dlclean_cache
-        EXTERN  SHARED_TOP
-        
-	DCD	sub_elfclose
-	DCD	dlopen
-	DCD	dlsym
-        DCD     dlclose
-        DCD	setenv
-	DCD	unsetenv
-        DCD     getenv
-        DCD     clearenv
-        DCD	environ
-        DCD	dlerror
-        DCD	dlclean_cache
-	DCD	SHARED_TOP
+#include "ep3.asm"
 
 
 	RSEG	DATA_N

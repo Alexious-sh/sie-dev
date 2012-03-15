@@ -314,7 +314,10 @@ __hash_err:
                     switch(reloc_type)
                     {
                     case STT_NOTYPE:
-                        func = sym->st_value;
+                        if(bind_type != STB_LOCAL)
+                           func = (unsigned int)ex->body + sym->st_value;
+                        else
+                           func = sym->st_value;
                         goto skeep_err;
 
                     default:
@@ -386,7 +389,10 @@ skeep_err:
                     switch(reloc_type)
                     {
                     case STT_NOTYPE:
-                        func = sym->st_value;
+                        if(bind_type != STB_LOCAL)
+                           func = (unsigned int)ex->body + sym->st_value;
+                        else
+                           func = sym->st_value;
                         goto skeep_err1;
 			
 
