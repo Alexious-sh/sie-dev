@@ -274,7 +274,7 @@ __hash_err:
                 printf("R_ARM_RABS32\n");
                 *addr += (unsigned int)(ex->body - ex->v_addr);
                 name = ex->strtab + sym->st_name;
-                printf("%s: *addr = %X\n", *addr, name);
+                printf("*addr = %X\n", *addr);
                 break;
             case R_ARM_ABS32:
                 printf("R_ARM_ABS32\n");
@@ -321,7 +321,12 @@ __hash_err:
                     switch(reloc_type)
                     {
                     case STT_NOTYPE:
-                        func = sym->st_value;
+			 printf("STT_NOTYPE\n");
+			 if(bind_type != STB_LOCAL)
+			    func = ex->body + sym->st_value;
+			 else
+			    func = sym->st_value;
+			 
                         goto skeep_err;
 
                     default:
@@ -348,17 +353,19 @@ __hash_err:
                 }
 
 skeep_err:
-
+		if(func < 0x6D00) {
+		  printf("WARNING: SEEE HEER!!!! %s\n", name);
+		}
                 /* в ABS32 релоке в *addr всегда должен быть 0 */
                 *addr += func;
-                printf("%s: *addr = %X\n", *addr, name);
+                printf("*addr = %X\n", *addr);
                 break;
 		
             case R_ARM_RELATIVE:
                 printf("R_ARM_RELATIVE\n");
                 *addr += (unsigned int)(ex->body - ex->v_addr);
                 name = ex->strtab + sym->st_name;
-                printf("%s: *addr = %X\n", *addr, name);
+                printf("*addr = %X\n", *addr);
                 break;
 
             case R_ARM_GLOB_DAT:
@@ -460,7 +467,7 @@ skeep_err1:
             case R_ARM_REL32:
                 printf("R_ARM_REL32\n");
                 *addr += sym->st_value - (unsigned int)addr;
-                printf("    %X\n", *addr);
+                printf("*addr = %X\n", *addr);
                 break;
 
             default:

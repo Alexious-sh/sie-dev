@@ -58,3 +58,4 @@ __root unsigned int max_log_size = 512;
 
 __root CFG_HDR cfghdr13={CFG_CHECKBOX, "Loader warnings", 0, 2};
 __root unsigned int loader_warnings = 1;
+
