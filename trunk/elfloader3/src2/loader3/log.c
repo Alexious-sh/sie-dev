@@ -1,20 +1,18 @@
 
 #include "loader.h"
+#include "../config_struct.h"
 
-
-extern char ep_log_way[];
-extern unsigned int max_log_size;
 
 
 __arch void ep_log(Elf32_Exec *ex, const char *data, int size)
 {
-    if(!*ep_log_way || !max_log_size) return;
+    if(!*config->ep_log_way || !config->max_log_size) return;
     
     unsigned int err;
     int log_size;
     TDate td;
     TTime tt;
-    int fp = open(ep_log_way, A_Create | A_Append | A_BIN | A_WriteOnly, P_WRITE, &err);
+    int fp = open(config->ep_log_way, A_Create | A_Append | A_BIN | A_WriteOnly, P_WRITE, &err);
     if(fp == -1) return;
     
     
@@ -30,7 +28,7 @@ __arch void ep_log(Elf32_Exec *ex, const char *data, int size)
                      tt.hour, tt.min, tt.sec,
                      ex->fname, data );
     
-    if(log_size+sz > max_log_size) {
+    if(log_size+sz > config->max_log_size) {
       setfilesize(fp, 0, &err);
     }
     

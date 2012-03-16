@@ -1,61 +1,64 @@
 #include <inc/cfg_items.h>
 #include "loader3\loader.h"
+#include "config_struct.h"
 //Конфигурация
 
 
-__root CFG_HDR cfghdr1={CFG_UINT,"Alpha-chan threshold",0,255};
-__root unsigned int ALPHA_THRESHOLD=128;
-
-__root CFG_HDR cfghdr2={CFG_UINT,"PNG cache size",20,200};
-__root unsigned int CACHE_PNG=50;
-
-
-__root CFG_HDR cfghdr3={CFG_CBOX,"Default bit-depth",0,3};
+const config_structure_t config_structure = 
+{
+  {CFG_UINT, "Alpha-chan threshold", 0,255},
+  128,
+  
+  {CFG_UINT,"PNG cache size",20,200},
+  50,
+  
+  {CFG_CBOX,"Default bit-depth",0,3},
 #if NEWSGOLD || X75
-__root unsigned int DEFAULT_COLOR = 2;
+  2,
 #else
-__root unsigned int DEFAULT_COLOR = 1;
+  1,
 #endif
-__root CFG_CBOX_ITEM cfgcbox3_1[3]={"8 bits","16 bits","24 bits+alpha"};
-
-
-__root CFG_HDR cfghdr4={CFG_CHECKBOX,"Load daemon in subproc",0,2};
-__root unsigned int load_in_suproc = 1;
-
-
-__root CFG_HDR cfghdr5={CFG_STR_UTF8, "Image folder way", 0, 127};
+  {"8 bits","16 bits","24 bits+alpha"},
+  
+  {CFG_CHECKBOX,"Load daemon in subproc",0,2},
+  1,
+  
+  {CFG_STR_UTF8, "Image folder way", 0, 127},
 #if NEWSGOLD || X75
-__root char IMAGE_FOLDER[128]="4:\\ZBin\\img\\";
+  "4:\\ZBin\\img\\",
 #else
-__root char IMAGE_FOLDER[128]="0:\\ZBin\\img\\";
-#endif
-
-__root CFG_HDR cfghdr6={CFG_STR_UTF8, "Daemons folder way", 0, 127};
-#if NEWSGOLD || X75
-__root char DAEMONS_FOLDER[128]="4:\\ZBin\\Daemons\\";
-#else
-__root char DAEMONS_FOLDER[128]="0:\\ZBin\\Daemons\\";
+  "0:\\ZBin\\img\\",
 #endif
 
-__root CFG_HDR cfghdr7={CFG_STR_UTF8, "swi.blib way", 0, 127};
+  {CFG_STR_UTF8, "Daemons folder way", 0, 127},
 #if NEWSGOLD || X75
-__root char SWIBLIB_WAY[128]="4:\\ZBin\\swi.blib";
+  "4:\\ZBin\\Daemons\\",
 #else
-__root char SWIBLIB_WAY[128]="0:\\ZBin\\swi.blib";
+  "0:\\ZBin\\Daemons\\",
 #endif
+  
+  {CFG_STR_UTF8, "swi.blib way", 0, 127},
+#if NEWSGOLD || X75
+  "4:\\ZBin\\swi.blib",
+#else
+  "0:\\ZBin\\swi.blib",
+#endif
+  
+  {CFG_CHECKBOX,"Realtime lib cache cleaner",0,2},
+  0,
+  
+  {CFG_STR_UTF8, "LD_LIBRARY_PATH", 0, 255},
+  "0:\\ZBin\\lib\\;4:\\ZBin\\lib\\;",
+  
+  {CFG_STR_UTF8, "Optional log way", 0, 127},
+  "0:\\ep3_log.txt",
+  
+  {CFG_UINT,"Max log size in bytes",0,50*1024},
+  512,
+  
+  {CFG_CHECKBOX, "Loader warnings", 0, 2},
+  0
+};
 
-__root CFG_HDR cfghdr8={CFG_CHECKBOX,"Realtime lib cache cleaner",0,2};
-__root unsigned int realtime_libclean = 1;
 
-__root CFG_HDR cfghdr10={CFG_STR_UTF8, "LD_LIBRARY_PATH", 0, 255};
-__root char LD_LIBRARY_PATH_env[256]="0:\\ZBin\\lib\\;4:\\ZBin\\lib\\;";
-
-__root CFG_HDR cfghdr11={CFG_STR_UTF8, "Optional log way", 0, 127};
-__root char ep_log_way[128]="0:\\ep3_log.txt";
-
-__root CFG_HDR cfghdr12={CFG_UINT,"Max log size in bytes",0,50*1024};
-__root unsigned int max_log_size = 512;
-
-__root CFG_HDR cfghdr13={CFG_CHECKBOX, "Loader warnings", 0, 2};
-__root unsigned int loader_warnings = 1;
 

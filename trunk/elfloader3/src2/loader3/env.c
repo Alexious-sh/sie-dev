@@ -3,7 +3,7 @@
 
 
 char **l__environ = 0;
-static char **l_last_environ = 0;
+char **l_last_environ = 0;
 
 
 
@@ -140,8 +140,9 @@ __arm char *getenv(const char *var)
     int len;
     char **ep;
 
-    if (!(ep=l__environ))
+    if (!(ep=l__environ) || !var)
 	return NULL;
+    
     len = strlen(var);
     while(*ep) {
 	if (memcmp(var, *ep, len) == 0 && (*ep)[len] == '=') {

@@ -2,10 +2,32 @@
 
 iar="/media/disk-1/ELF/IAR/EmbeddedWorkbenchEvaluation/common/bin/iarbuild.exe"
 err="Break with errors"
-#cd /home/vova7890/Общее/__svn/trunk/elfloader3/src2/
+no_compile=0
+no_generate_vkp=0
+args=$@
+
+for i in ${args}; do
+  if [ $i == "--no_compile" ]; then
+    no_compile=1
+  elif [ $i == "--no_gen_vkp" ]; then
+    no_generate_vkp=1
+  elif [ $i == "--help" ]; then
+    echo " Automated script for buld siemens loader v0.1 "
+    echo "                  (c) Z.Vova(STANOK) 2011-2012 "
+    echo "	Usage:"
+    echo "		--no_compile - do not compile elfloader"
+    echo "		--no_gen_vkp - do not generate patchs"
+    echo ""
+    exit 0
+  else
+    echo "Unknow parameter $i"
+  fi
+done
+
 
 echo "$(date +'%d.%m.%Y %H:%M:%S')" > time.txt
 
+if [ $no_compile == 0 ]; then
 echo "CCLD  C72sw22..."
 wine $iar ElfLoader.ewp -make C72sw22 -log warnings
 if [[ ${?} != 0 ]] 
@@ -120,6 +142,9 @@ if [[ ${?} != 0 ]]
 then echo $err && exit 1 
 fi
 
+fi
+
+if [ $no_generate_vkp == 0 ]; then
 echo "HEX  C72sw22..."
 cd C72sw22/Exe
 ./postbuild &
@@ -143,7 +168,6 @@ cd  ../../CF75sw23/Exe
 echo "HEX  CX70sw56..."
 cd ../../CX70sw56/Exe
 ./postbuild
-
 
 echo "HEX  CX75sw25..."
 cd  ../../CX75sw25/Exe
@@ -196,6 +220,7 @@ cd  ../../SL75sw52/Exe
 echo "HEX  CL61sw00..."
 cd  ../../CL61sw00/Exe
 ./postbuild
+fi
 #=============================================================================
 echo "Upload elfpacks on server?[Yes/No]"
 read is
@@ -269,7 +294,7 @@ cd  ../../CL61sw00/Exe
 cd  ../../CF75sw23/Exe
 ../../parse.lua $(ompload -u ElfPack_CF75sw23.vkp)
 
-
+cd ../../
 rm time.txt
 exit 0
 
