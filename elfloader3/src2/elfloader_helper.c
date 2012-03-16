@@ -3,20 +3,14 @@
 #include "conf_loader.h"
 #include "loader3\loader.h"
 #include "loader3\env.h"
-#include "loader3\Mutex.h"
+#include "config_struct.h"
 
 
 //#define __ELFTHREAD
 #define ELF_PROC_RUNER_ID 0x4409
 const int elf_run_prio = 0x2;
 int lock_thread = 0;
-extern unsigned int load_in_suproc;
-extern unsigned int run_elf_in_thread;
-extern char IMAGE_FOLDER[];
-extern char DAEMONS_FOLDER[];
-extern char SWIBLIB_WAY[];
-extern int dlclean_cache();
-extern char LD_LIBRARY_PATH_env[];
+int dlclean_cache();
 //Mutex mutex;
 
 
@@ -76,11 +70,11 @@ __arch int elfload(char *filename, void *param1, void *param2, void *param3){
 
 __arm void InitLoaderSystem()
 {
-  if(!*LD_LIBRARY_PATH_env){
-    strcpy(LD_LIBRARY_PATH_env, "0:\\ZBin\\lib\\;4:\\ZBin\\lib\\;");
+  if(!*(config->LD_LIBRARY_PATH_env)){
+    strncpy(config->LD_LIBRARY_PATH_env, "0:\\ZBin\\lib\\;4:\\ZBin\\lib\\;", sizeof(config->LD_LIBRARY_PATH_env));
   }
   
-  setenv("LD_LIBRARY_PATH", LD_LIBRARY_PATH_env, 1);
+  setenv("LD_LIBRARY_PATH", config->LD_LIBRARY_PATH_env, 1);
 }
 
 
@@ -175,6 +169,9 @@ __arm void MyIDLECSMonClose(void *data)
   KillGBSproc(HELPER_CEPID);
   dlclean_cache();
   clearenv();
+  if(config)
+    mfree(config);
+  
   BXR1(data,OldOnClose);
   //  OldOnClose(data);
   //  asm("NOP\n");
@@ -187,7 +184,7 @@ __arm void LoadDaemons(void)
   unsigned int err;
   unsigned int pathlen;
   char name[256];
-  strcpy(name, DAEMONS_FOLDER);
+  strcpy(name, config->DAEMONS_FOLDER);
   //name[0]=DEFAULT_DISK_N+'0';
   pathlen=strlen(name);
   strcat(name,"*.elf");
@@ -224,7 +221,7 @@ __arm void LoadLibrary(void)
   int sz;
   int f;
   char fn[64];
-  strcpy(fn, SWIBLIB_WAY);
+  strcpy(fn, config->SWIBLIB_WAY);
   //fn[0]=DEFAULT_DISK_N+'0';
   if (lt)
   {
@@ -279,8 +276,14 @@ __no_init char smallicons_str[32];
 __no_init char bigicons_str[32];
 
 
+#pragma segment="DATA_Z"
 __arm void MyIDLECSMonCreate(void *data)
 {
+  /* рамные сегменты с приставко Z должны обнулятся, их никто не обнулял, как оно работало вообще??? */
+  void *must_zero = (void *)__segment_begin("DATA_Z");
+  size_t len = (unsigned int)__segment_end("DATA_Z") - (unsigned int)__segment_begin("DATA_Z");
+  memset(must_zero, 0, len);
+  
   static const int smallicons[2]={(int)smallicons_str,0};
   static const int bigicons[2]={(int)bigicons_str,0};
   
@@ -322,8 +325,8 @@ __arm void MyIDLECSMonCreate(void *data)
   //strcpy(smallicons_str+1,":\\ZBin\\img\\elf_small.png");
   //strcpy(bigicons_str+1,":\\ZBin\\img\\elf_big.png");
   //smallicons_str[0]=bigicons_str[0]=DEFAULT_DISK_N+'0';
-  sprintf(smallicons_str, "%self_small.png", IMAGE_FOLDER);
-  sprintf(bigicons_str, "%self_big.png", IMAGE_FOLDER);
+  sprintf(smallicons_str, "%self_small.png", config->IMAGE_FOLDER);
+  sprintf(bigicons_str, "%self_big.png", config->IMAGE_FOLDER);
   RegExplorerExt(&elf_reg);
 
   /* ну а хуле, плюшки для блондинок */

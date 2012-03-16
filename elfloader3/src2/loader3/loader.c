@@ -5,7 +5,7 @@
  */
 
 #include "loader.h"
-
+#include "../config_struct.h"
 
 /* for testing on pc */
 #ifdef _test_linux
@@ -44,7 +44,7 @@ __arm int memcmp_a (const void *m1, const void *m2, size_t n)
 #endif
 
 unsigned int ferr;
-extern unsigned int loader_warnings;
+
 
 // Проверка валидности эльфа
 __arch int CheckElf(Elf32_Ehdr *ehdr)
@@ -275,7 +275,7 @@ __hash_err:
                 if( !ex->symtab )
                 {
 		    int csz = sprintf(dbg, "warning: symtab not found, but relocation R_ARM_ABS32 is exist");
-		    if(loader_warnings)
+		    if(config->loader_warnings)
 		      ep_log(ex, dbg, csz);
 		    *addr = (unsigned int)ex->body;
 		    break;
@@ -284,7 +284,7 @@ __hash_err:
                 if( !ex->strtab )
                 {
 		    int csz = sprintf(dbg, "warning: symtab not found, but relocation R_ARM_ABS32 is exist");
-		    if(loader_warnings)
+		    if(config->loader_warnings)
 		      ep_log(ex, dbg, csz);
 		    
 		    *addr = (unsigned int)ex->body;

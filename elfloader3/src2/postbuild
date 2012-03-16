@@ -6,21 +6,44 @@ outname="$directory/${3}"
 swilibBegin=${4}
 AddrLibrary=${5}
 Time=$(cat time.txt)
+FF="${directory}/FF_${phone}.bin"
+FF_EXISTS=0
 
+
+if [ -f $FF ]
+then
+echo 'FullFlash found, generating vkp without recovery info'
+FF_EXISTS=1
+wine elf2vkp.exe "${directory}/ELFLoader.elf" "${directory}/ElfLoader3.vkp" "${FF}" &> /dev/null
+else
+echo 'FullFlash not found, generating vkp without recovery info'
 wine elf2vkp.exe "${directory}/ELFLoader.elf" "${directory}/ElfLoader3.vkp" &> /dev/null
+fi
 
 echo ";"$phone > $outname
 cat copyright.txt >> $outname
 echo ";Date: "${Time} >> $outname
 echo -e "\n" >> $outname
+
+# если фул не найден - старые данные == FF
+if [ $FF_EXISTS == 0 ]
+then
 echo "#pragma enable old_equal_ff" >> $outname
+fi
 cat "$directory/ElfLoader3.vkp" >> $outname
+if [ $FF_EXISTS == 0 ]
+then
+ echo "#pragma disable old_equal_ff" >> $outname
+fi
+
 echo "" >> $outname
 echo " ; Needed function" >> $outname
 echo "$swilibBegin" >> $outname
+
+echo "#pragma enable old_equal_ff" >> $outname
 echo "$AddrLibrary   ;  FF: unsigned int AddrLibrary()" >> $outname
-echo "+0" >> $outname
 echo "#pragma disable old_equal_ff" >> $outname
+echo "+0" >> $outname
 
 rm "${directory}/ElfLoader3.vkp"
 rm "${directory}/ELFLoader.elf"

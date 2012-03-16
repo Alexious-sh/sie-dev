@@ -2,12 +2,7 @@
 #include <inc/pnglist.h>
 #include <inc/png.h>
 #include <inc/swilib.h>
-
-extern unsigned int DEFAULT_COLOR;
-extern unsigned int ALPHA_THRESHOLD;
-extern unsigned int CACHE_PNG;
-extern unsigned int DEFAULT_DISK_N;
-extern char IMAGE_FOLDER[];
+#include "config_struct.h"
 
 
 #define number 8
@@ -87,7 +82,7 @@ __arm IMGHDR* create_imghdr(const char *fname, int type)
   {
     if (color_type == PNG_COLOR_TYPE_GRAY) 
       type=PNG_1;
-    else type=DEFAULT_COLOR+1;
+    else type = config->DEFAULT_COLOR+1;
   }
   
   if (bit_depth < 8) png_set_gray_1_2_4_to_8(png_ptr);
@@ -143,7 +138,7 @@ __arm IMGHDR* create_imghdr(const char *fname, int type)
           png_read_row(png_ptr, (png_bytep)pp.row, NULL);
           for (unsigned int x = 0; x<width; ++x)
           {
-            if (pp.row[x*4+3]<ALPHA_THRESHOLD)
+            if (pp.row[x*4+3] < config->ALPHA_THRESHOLD)
               *iimg++=0xC0;
             else
             {
@@ -165,7 +160,7 @@ __arm IMGHDR* create_imghdr(const char *fname, int type)
           png_read_row(png_ptr, (png_bytep)pp.row, NULL);
           for (unsigned int x = 0; x<width; ++x)
           {
-            if (pp.row[x*4+3]<ALPHA_THRESHOLD)
+            if (pp.row[x*4+3] < config->ALPHA_THRESHOLD)
               *iimg++=0xE000;
             else
             {
@@ -353,7 +348,7 @@ __arm IMGHDR *add_png_in_cache(const char *fname, IMGHDR *img)
     }
     i++;
   }
-  while(i<=CACHE_PNG); //Пока количество элементов меньше допустимого
+  while(i<= config->CACHE_PNG); //Пока количество элементов меньше допустимого
   pl_prev->next=NULL; //Обрежем список
   UnlockSched();
   //Остальное можно сделать с разлоченной многозадачностью
@@ -423,7 +418,7 @@ __arm IMGHDR* PatchGetPIT(unsigned int pic)
       {
         if (i&mask40)  
         {
-          char *next=strcpy_tolow(fname,IMAGE_FOLDER); // Картинка вроде как есть на диске
+          char *next=strcpy_tolow(fname, config->IMAGE_FOLDER); // Картинка вроде как есть на диске
 	  //*fname=DEFAULT_DISK_N+'0';
           print10(next,pic);
           img=find_png_in_cache(fname);
@@ -437,7 +432,7 @@ __arm IMGHDR* PatchGetPIT(unsigned int pic)
 	LockSched();
 	*bp|=mask80; // Записи нет, ставим флаг что есть
 	UnlockSched();
-        char *next=strcpy_tolow(fname,IMAGE_FOLDER);
+        char *next=strcpy_tolow(fname, config->IMAGE_FOLDER);
 	//*fname=DEFAULT_DISK_N+'0';
         print10(next,pic);
         img=find_png_in_cache(fname);

@@ -1,12 +1,29 @@
 #!/bin/sh
 
-
+args=$@
 founded_elfs=$(find ./ -name "ELF*.elf")
 founded_vkps=$(find ./ -name "Elf*.vkp")
 founded_a79=$(find ./ -name "ELF*.a79")
 founded_hex=$(find ./ -name "ELF*.hex")
 founded_list=$(find ./ -name "List")
 founded_obj=$(find ./ -name "Obj")
+no_list_clear=0
+no_obj_clear=0
+
+for i in ${args}; do
+  if [ $i == "--no_obj" ]; then
+    no_obj_clear=1
+  elif [ $i == "--no_list" ]; then
+    no_list_clear=1
+  elif [ $i == "--help" ]; then
+    echo "	Usage:"
+    echo "		--no_obj - do not clean Obj dirs"
+    echo "		--no_list - do not clean List dirs"
+    echo ""
+    exit 0
+  fi
+done
+
 
 #echo "elfs:"$founded_elfs
 #echo "vkps:"$founded_vkps
@@ -31,14 +48,18 @@ if [[ $founded_hex != "" ]]
 then rm $founded_hex
 fi
 
-echo "Removing List folder..."
-if [[ $founded_list != "" ]]
-then rm -rf $founded_list
+if [ $no_list_clear == 0 ]; then
+  echo "Removing List folder..."
+  if [[ $founded_list != "" ]]
+    then rm -rf $founded_list
+  fi
 fi
 
-echo "Removing Obj folder..."
-if [[ $founded_obj != "" ]]
-then rm -rf $founded_obj
+if [ $no_obj_clear == 0 ]; then
+  echo "Removing Obj folder..."
+  if [[ $founded_obj != "" ]]
+    then rm -rf $founded_obj
+  fi
 fi
 
 echo "Done."

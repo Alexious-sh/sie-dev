@@ -7,12 +7,12 @@
 
 #include "loader.h"
 #include "env.h"
+#include "../config_struct.h"
 
 
 #ifndef _test_linux
 extern int __e_div(int delitelb, int delimoe);
 #endif
-extern unsigned int realtime_libclean;
 char tmp[258] = {0}, dlerr[128]={0};
 
 #ifdef __thumb_mode
@@ -192,6 +192,7 @@ __arch const char * findShared(const char *name)
 #else
     const char *env = getenv("LD_LIBRARY_PATH");
 #endif
+    if(!env || !*env) return 0;
     
     for(int i=0;; ++i)
     {
@@ -440,7 +441,7 @@ __arch int CloseLib(Elf32_Lib* lib, int immediate)
 
     if(lib->users_cnt < 1) // нету больше юзеров либы :(
     {
-        if(!realtime_libclean && !immediate) goto end;
+        if(!config->realtime_libclean && !immediate) goto end;
         
         Elf32_Exec* ex = lib->ex;
 #ifndef _test_linux
