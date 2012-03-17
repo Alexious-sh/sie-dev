@@ -331,7 +331,12 @@ __arm void MyIDLECSMonCreate(void *data)
 
   /* ну а хуле, плюшки для блондинок */
   if( *RamPressedKey() != '#')
-    LoadDaemons();
+  {
+    if(config->load_in_suproc)
+      SUBPROC((void *)LoadDaemons);
+    else
+      LoadDaemons();
+  }
   
   extern BXR1(void *, void (*)(void *));
   BXR1(data,OldOnCreate);
