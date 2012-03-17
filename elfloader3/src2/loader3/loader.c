@@ -338,7 +338,6 @@ __hash_err:
                 if(!func && bind_type != STB_WEAK)
                 {
                     int csz = sprintf(dbg, "[2] Undefined reference to `%s'\n", name?name : "");
-                    //l_msg(1, (int)dbg);
                     ep_log(ex, dbg, csz);
                     return E_UNDEF;
                 }
@@ -369,7 +368,6 @@ skeep_err:
                 if( !ex->strtab )
                 {
                     int csz = sprintf(dbg, "Relocation R_ARM_GLOB_DAT cannot run without strtab\n");
-                    //l_msg(1, (int)dbg);
                     ep_log(ex, dbg, csz);
                     mfree(reltab);
                     return E_STRTAB;
