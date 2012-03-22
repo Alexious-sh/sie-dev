@@ -147,7 +147,7 @@ __arch unsigned int try_search_in_base(Elf32_Exec* ex, const char *name, int bin
     if(!address)
 	printf(" not found!\n");
     else 
-	printf(" found\n");
+	printf(" %X found\n", address);
     
     return address;
 }
@@ -403,7 +403,11 @@ skeep_err:
                     switch(reloc_type)
                     {
                     case STT_NOTYPE:
-                        func = sym->st_value;
+                        printf("STT_NOTYPE\n");
+			 if(bind_type != STB_LOCAL)
+			    func = ex->body + sym->st_value;
+			 else
+			    func = sym->st_value;
                         goto skeep_err1;
 			
 
@@ -443,6 +447,8 @@ skeep_err1:
                 }
                 else
                     *addr = sym->st_value;
+		
+		printf("Adr 0x%X\n", *addr);
 
                 break;
 

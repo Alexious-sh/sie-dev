@@ -136,6 +136,12 @@ if [[ ${?} != 0 ]]
 then echo $err && exit 1 
 fi
 
+echo "CCLD  CL61sw00_db128..."
+wine $iar ElfLoader.ewp -make CL61sw00_db128 -log warnings 
+if [[ ${?} != 0 ]] 
+then echo $err && exit 1 
+fi
+
 echo "CCLD  CF75sw23..."
 wine $iar ElfLoader.ewp -make CF75sw23 -log warnings
 if [[ ${?} != 0 ]] 
@@ -219,82 +225,14 @@ cd  ../../SL75sw52/Exe
 
 echo "HEX  CL61sw00..."
 cd  ../../CL61sw00/Exe
+./postbuild &
+
+echo "HEX  CL61sw00_db128..."
+cd  ../../CL61sw00_db128/Exe
 ./postbuild
 fi
 #=============================================================================
-echo "Upload elfpacks on server?[Yes/No]"
-read is
-
-if [[ ${is,,} != "yes" ]] 
-then exit 0
-fi
-
-cd  ../../C72sw22/Exe
-../../parse.lua $(ompload -u ElfPack_C72sw22.vkp)
-
-cd  ../../C75sw22/Exe
-../../parse.lua $(ompload -u ElfPack_C75sw22.vkp)
-
-cd  ../../C75sw24/Exe
-../../parse.lua $(ompload -u ElfPack_C75sw24.vkp)
-
-cd  ../../C81sw51/Exe
-../../parse.lua $(ompload -u ElfPack_C81sw51.vkp)
-
-cd  ../../CX70sw56/Exe
-../../parse.lua $(ompload -u ElfPack_CX70sw56.vkp)
-
-cd  ../../CX75sw25/Exe
-../../parse.lua $(ompload -u ElfPack_CX75sw25.vkp)
-
-cd  ../../E71sw45/Exe
-../../parse.lua $(ompload -u ElfPack_E71sw45.vkp)
-
-echo "Please wait for 10 minutes"
-i=600; while [ $i != 0 ]; do i=`expr $i - 1`; echo -ne "\r$i"; sleep 1; done
-echo ""
-
-cd  ../../EL71sw45/Exe
-../../parse.lua $(ompload -u ElfPack_EL71sw45.vkp)
-
-cd  ../../S65sw58/Exe
-../../parse.lua $(ompload -u ElfPack_S65sw58.vkp)
-
-cd  ../../S68sw47/Exe
-../../parse.lua $(ompload -u ElfPack_S68sw47.vkp)
-
-cd  ../../S68sw52/Exe
-../../parse.lua $(ompload -u ElfPack_S68sw52.vkp)
-
-cd  ../../S75sw47/Exe
-../../parse.lua $(ompload -u ElfPack_S75sw47.vkp)
-
-cd  ../../S75sw52/Exe
-../../parse.lua $(ompload -u ElfPack_S75sw52.vkp)
-
-cd  ../../SK65sw50/Exe
-../../parse.lua $(ompload -u ElfPack_SK65sw50.vkp)
-
-echo "Please wait for 10 minutes"
-i=600; while [ $i != 0 ]; do i=`expr $i - 1`; echo -ne "\r$i"; sleep 1; done
-echo ""
-
-cd  ../../SL65sw53/Exe
-../../parse.lua $(ompload -u ElfPack_SL65sw53.vkp)
-
-cd  ../../SL75sw47/Exe
-../../parse.lua $(ompload -u ElfPack_SL75sw47.vkp)
-
-cd  ../../SL75sw52/Exe
-../../parse.lua $(ompload -u ElfPack_SL75sw52.vkp)
-
-cd  ../../CL61sw00/Exe
-../../parse.lua $(ompload -u ElfPack_CL61sw00.vkp)
-
-cd  ../../CF75sw23/Exe
-../../parse.lua $(ompload -u ElfPack_CF75sw23.vkp)
-
 cd ../../
-rm time.txt
+#rm time.txt
 exit 0
 

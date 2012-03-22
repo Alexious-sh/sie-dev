@@ -14,6 +14,11 @@
         EXTERN  dlclean_cache
         EXTERN  SHARED_TOP
         EXTERN	sub_elfclose
+        EXTERN  elfopen
+        EXTERN  elf_entry
+        EXTERN  GetBinSize
+        EXTERN  LoadSections
+        EXTERN  DoRelocation
         
         DCD	sub_elfclose
         DCD	dlopen
@@ -27,4 +32,12 @@
         DCD	dlerror
         DCD	dlclean_cache
         DCD	SHARED_TOP
+        
         DCD	elfclose
+        DCD	elfopen
+        DCD	elf_entry
+        
+        DCD	GetBinSize
+        DCD	LoadSections
+        DCD	DoRelocation
+        

@@ -1,0 +1,13 @@
+#!/bin/sh
+
+phone="CL61sw00_db128"
+outname="ElfPack_"$phone".vkp"
+swilibBegin="+1320000"
+AddrLibrary="03FC: 0xA1320000"
+directory=${PWD}
+
+
+cd ../../
+./postbuild "$directory" "$phone" "$outname" "$swilibBegin" "$AddrLibrary"
+
+exit 0
