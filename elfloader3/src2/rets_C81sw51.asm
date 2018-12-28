@@ -44,7 +44,7 @@ PITret:
 
 
 	defadr	StoreErrInfoAndAbort,0xA01CE3F8
-	defadr	StoreErrString,0xA01CE2C0
+	defadr	StoreErrString,0xA01CE2C4
 
 
 	END
